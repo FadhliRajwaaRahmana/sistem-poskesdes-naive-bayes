@@ -109,14 +109,14 @@ export default async function DashboardPage() {
   return (
     <section className="space-y-6 pb-10">
       {/* High-Contrast Hero Banner */}
-      <div className="animate-fade-in flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between p-8 rounded-2xl bg-slate-900 shadow-xl overflow-hidden relative">
+      <div className="animate-fade-in relative flex flex-col gap-8 overflow-hidden rounded-3xl bg-slate-900 p-6 shadow-xl sm:p-8 lg:flex-row lg:items-start lg:justify-between">
         <div className="absolute right-0 top-0 w-64 h-64 bg-primary/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/4 pointer-events-none"></div>
-        <div className="relative z-10">
+        <div className="relative z-10 max-w-2xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-white text-xs font-bold mb-4">
             <ActivitySquare className="size-4" />
             <span>Dashboard Admin</span>
           </div>
-          <h2 className="text-3xl font-black tracking-tight text-white">
+          <h2 className="text-3xl font-black tracking-tight text-white sm:text-4xl">
             Ringkasan Sistem
           </h2>
           <p className="mt-2 text-sm font-medium text-slate-400 max-w-lg leading-relaxed">
@@ -124,20 +124,20 @@ export default async function DashboardPage() {
           </p>
         </div>
 
-        <div className="relative z-10 flex flex-wrap gap-3">
+        <div className="relative z-10 flex w-full flex-col gap-3 sm:max-w-sm lg:w-auto lg:min-w-[250px] lg:self-start">
           <Link
             href="/dashboard/diagnosa"
-            className="inline-flex h-12 items-center justify-center rounded-xl bg-primary px-6 py-3 text-sm font-bold text-white shadow-[var(--shadow-button)] transition-all hover:bg-primary-hover hover:-translate-y-0.5 active:scale-95"
+            className="inline-flex h-14 w-full items-center justify-start gap-3 rounded-2xl bg-primary px-5 py-3 text-sm font-bold text-white shadow-[var(--shadow-button)] transition-all hover:-translate-y-0.5 hover:bg-primary-hover active:scale-95 [&_svg]:text-white"
           >
-            <Stethoscope className="mr-2 size-5" />
-            Diagnosa Baru
+            <Stethoscope className="size-5 shrink-0" />
+            <span className="text-white">Diagnosa Baru</span>
           </Link>
           <Link
             href="/dashboard/perhitungan"
-            className="inline-flex h-12 items-center justify-center rounded-xl bg-white/10 px-6 py-3 text-sm font-bold text-white border border-white/20 transition-all hover:bg-white/20 hover:-translate-y-0.5 active:scale-95"
+            className="inline-flex h-14 w-full items-center justify-start gap-3 rounded-2xl border border-white/20 bg-white/[0.12] px-5 py-3 text-sm font-bold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition-all hover:-translate-y-0.5 hover:bg-white/[0.18] active:scale-95 [&_svg]:text-white"
           >
-            <Calculator className="mr-2 size-5" />
-            Perhitungan
+            <Calculator className="size-5 shrink-0 text-white" />
+            <span className="text-white">Perhitungan</span>
           </Link>
         </div>
       </div>

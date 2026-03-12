@@ -75,6 +75,7 @@ function NavLinks({
             <span
               className={clsx(
                 "text-sm font-semibold whitespace-nowrap transition-all duration-300",
+                isActive ? "text-white" : "text-slate-500 group-hover:text-slate-900",
                 isCollapsed ? "opacity-0 w-0 hidden" : "opacity-100 w-auto block"
               )}
             >
