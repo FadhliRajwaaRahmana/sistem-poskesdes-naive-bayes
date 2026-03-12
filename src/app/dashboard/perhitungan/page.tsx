@@ -65,15 +65,16 @@ export default async function PerhitunganPage({ searchParams }: PerhitunganPageP
   return (
     <section className="space-y-8 pb-12">
       {/* ───── Page Header ───── */}
-      <div className="animate-fade-in">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <h2 className="text-3xl font-extrabold tracking-tight text-slate-900">Perhitungan Naive Bayes</h2>
-            <p className="mt-2 max-w-2xl text-base leading-relaxed text-slate-500">
-              Lihat data training aktif, probabilitas prior, likelihood setiap gejala terhadap penyakit, lalu
-              jalankan simulasi perhitungan tanpa menyimpan ke riwayat diagnosa.
-            </p>
-          </div>
+      <div className="animate-fade-in relative overflow-hidden rounded-2xl bg-slate-900 px-6 py-10 shadow-lg sm:px-12 sm:py-12">
+        <div className="absolute -right-10 -top-10 opacity-10">
+          <Calculator className="size-64" />
+        </div>
+        <div className="relative z-10 max-w-2xl">
+          <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">Perhitungan Naive Bayes</h2>
+          <p className="mt-4 text-base leading-relaxed text-slate-300">
+            Lihat data training aktif, probabilitas prior, likelihood setiap gejala terhadap penyakit, lalu
+            jalankan simulasi perhitungan tanpa menyimpan ke riwayat diagnosa.
+          </p>
         </div>
       </div>
 
@@ -85,7 +86,7 @@ export default async function PerhitunganPage({ searchParams }: PerhitunganPageP
           return (
             <div
               key={card.label}
-              className={`stagger-${index + 1} group animate-slide-up bg-white/80 backdrop-blur-2xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-[2rem] p-6 lg:p-8 transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:-translate-y-1`}
+              className={`stagger-${index + 1} group animate-slide-up card-container transition-all hover:-translate-y-1 hover:shadow-[var(--shadow-card-hover)]`}
             >
               <div className="flex items-center justify-between">
                 <p className="text-sm font-semibold text-slate-500">{card.label}</p>
@@ -101,7 +102,7 @@ export default async function PerhitunganPage({ searchParams }: PerhitunganPageP
       </div>
 
       {/* ───── Simulation Form ───── */}
-      <div className="animate-slide-up stagger-4 bg-white/80 backdrop-blur-2xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-[2rem] p-6 lg:p-8">
+      <div className="animate-slide-up stagger-4 card-container">
         <div className="mb-6 flex items-center gap-4">
           <div className="bg-indigo-100 text-indigo-600 p-3 rounded-2xl">
             <Play className="size-6" />
@@ -140,14 +141,14 @@ export default async function PerhitunganPage({ searchParams }: PerhitunganPageP
           <div className="flex flex-wrap gap-4 pt-4">
             <button
               type="submit"
-              className="inline-flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 rounded-xl transition-all active:scale-95 px-6 py-3 font-semibold text-sm gap-2"
+              className="inline-flex items-center justify-center rounded-xl bg-primary px-6 py-3.5 text-sm font-bold text-white shadow-[var(--shadow-button)] transition-all hover:-translate-y-0.5 hover:bg-primary-hover active:scale-95 gap-2"
             >
               <Play className="size-4" />
               Jalankan Simulasi
             </button>
             <a
               href="/dashboard/perhitungan"
-              className="inline-flex items-center justify-center bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-sm hover:shadow-md rounded-xl transition-all active:scale-95 px-6 py-3 font-semibold text-sm gap-2"
+              className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-6 py-3.5 text-sm font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:shadow-md active:scale-95 gap-2"
             >
               <RotateCcw className="size-4" />
               Reset
@@ -160,7 +161,7 @@ export default async function PerhitunganPage({ searchParams }: PerhitunganPageP
       {simulation ? (
         <div className="animate-fade-in space-y-8">
           {/* Selected Symptoms + Note */}
-          <div className="bg-white/80 backdrop-blur-2xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-[2rem] p-6 lg:p-8">
+          <div className="card-container">
             <div className="flex items-center gap-4">
               <div className="bg-emerald-100 text-emerald-600 p-3 rounded-2xl">
                 <BarChart3 className="size-6" />
@@ -183,7 +184,7 @@ export default async function PerhitunganPage({ searchParams }: PerhitunganPageP
           </div>
 
           {/* Ranking */}
-          <div className="bg-white/80 backdrop-blur-2xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-[2rem] p-6 lg:p-8">
+          <div className="card-container">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
               <div className="flex items-center gap-4">
                 <div className="bg-amber-100 text-amber-600 p-3 rounded-2xl">
@@ -254,7 +255,7 @@ export default async function PerhitunganPage({ searchParams }: PerhitunganPageP
           </div>
 
           {/* Breakdown per disease */}
-          <div className="bg-white/80 backdrop-blur-2xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-[2rem] p-6 lg:p-8 space-y-6">
+          <div className="card-container space-y-6">
             <div className="flex items-center gap-4 mb-2">
               <div className="bg-sky-100 text-sky-600 p-3 rounded-2xl">
                 <Table className="size-6" />
@@ -300,8 +301,8 @@ export default async function PerhitunganPage({ searchParams }: PerhitunganPageP
 
                 <div className="w-full overflow-auto">
                   <table className="w-full caption-bottom text-sm">
-                    <thead className="bg-slate-50/50 text-slate-500 font-semibold">
-                      <tr className="border-b border-slate-100">
+                    <thead className="bg-slate-100 text-slate-700 font-bold">
+                      <tr className="border-b border-slate-200">
                         <th className="h-12 px-6 text-left align-middle">Gejala</th>
                         <th className="h-12 px-6 text-left align-middle">Match</th>
                         <th className="h-12 px-6 text-left align-middle">Rumus</th>
@@ -348,7 +349,7 @@ export default async function PerhitunganPage({ searchParams }: PerhitunganPageP
           </div>
         </div>
       ) : (
-        <div className="animate-fade-in bg-white/80 backdrop-blur-2xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-[2rem] px-6 py-16 text-center">
+        <div className="animate-fade-in card-container px-6 py-16 text-center">
           <div className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-500 mb-6 shadow-inner">
             <Calculator className="size-8" />
           </div>
@@ -360,7 +361,7 @@ export default async function PerhitunganPage({ searchParams }: PerhitunganPageP
       )}
 
       {/* ───── Prior Table ───── */}
-      <div className="animate-fade-in bg-white/80 backdrop-blur-2xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-[2rem] p-6 lg:p-8">
+      <div className="animate-fade-in card-container">
         <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">
             <div className="bg-rose-100 text-rose-600 p-3 rounded-2xl">
@@ -375,10 +376,10 @@ export default async function PerhitunganPage({ searchParams }: PerhitunganPageP
             Berdasarkan {overview.totalTraining} data training
           </span>
         </div>
-        <div className="w-full overflow-hidden rounded-xl border border-slate-100">
+        <div className="w-full overflow-hidden rounded-xl border border-slate-200">
           <table className="w-full caption-bottom text-sm">
-            <thead className="bg-slate-50/50 text-slate-500 font-semibold">
-              <tr className="border-b border-slate-100">
+            <thead className="bg-slate-100 text-slate-700 font-bold">
+              <tr className="border-b border-slate-200">
                 <th className="h-12 px-6 text-left align-middle">Penyakit</th>
                 <th className="h-12 px-6 text-left align-middle">
                   Jumlah Training
@@ -415,7 +416,7 @@ export default async function PerhitunganPage({ searchParams }: PerhitunganPageP
       </div>
 
       {/* ───── Likelihood Table ───── */}
-      <div className="animate-fade-in bg-white/80 backdrop-blur-2xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-[2rem] p-6 lg:p-8">
+      <div className="animate-fade-in card-container">
         <div className="flex items-center gap-4 mb-6">
           <div className="bg-purple-100 text-purple-600 p-3 rounded-2xl">
             <Table className="size-6" />
@@ -430,11 +431,11 @@ export default async function PerhitunganPage({ searchParams }: PerhitunganPageP
             </p>
           </div>
         </div>
-        <div className="w-full overflow-auto rounded-xl border border-slate-100">
+        <div className="w-full overflow-auto rounded-xl border border-slate-200">
           <table className="w-full caption-bottom text-sm">
-            <thead className="bg-slate-50/50 text-slate-500 font-semibold">
-              <tr className="border-b border-slate-100">
-                <th className="h-12 px-6 text-left align-middle border-r border-slate-100">Gejala</th>
+            <thead className="bg-slate-100 text-slate-700 font-bold">
+              <tr className="border-b border-slate-200">
+                <th className="h-12 px-6 text-left align-middle border-r border-slate-200">Gejala</th>
                 {overview.penyakitMaster.map((penyakit) => (
                   <th key={penyakit.id} className="h-12 px-4 text-center align-middle">
                     <span className="rounded-lg bg-white border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm">
@@ -477,7 +478,7 @@ export default async function PerhitunganPage({ searchParams }: PerhitunganPageP
       </div>
 
       {/* ───── Training Samples ───── */}
-      <div className="animate-fade-in bg-white/80 backdrop-blur-2xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-[2rem] p-6 lg:p-8">
+      <div className="animate-fade-in card-container">
         <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">
             <div className="bg-teal-100 text-teal-600 p-3 rounded-2xl">
