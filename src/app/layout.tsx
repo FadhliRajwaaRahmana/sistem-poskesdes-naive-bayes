@@ -8,9 +8,37 @@ const fontSans = Plus_Jakarta_Sans({
   display: "swap",
 });
 
+const appName = process.env.NEXT_PUBLIC_APP_NAME ?? "Sistem Diagnosa POSKESDES";
+const appUrl = process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
+
 export const metadata: Metadata = {
-  title: "Sistem Diagnosa POSKESDES",
+  metadataBase: new URL(appUrl),
+  applicationName: appName,
+  title: {
+    default: appName,
+    template: `%s | ${appName}`,
+  },
   description: "Sistem klasifikasi penyakit pasien POSKESDES berbasis Naive Bayes.",
+  keywords: [
+    "POSKESDES",
+    "Naive Bayes",
+    "diagnosa pasien",
+    "sistem pakar",
+    "kesehatan desa",
+  ],
+  openGraph: {
+    type: "website",
+    locale: "id_ID",
+    url: appUrl,
+    title: appName,
+    description: "Platform admin POSKESDES untuk diagnosa pasien, pengelolaan dataset, dan simulasi perhitungan Naive Bayes.",
+    siteName: appName,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: appName,
+    description: "Platform admin POSKESDES untuk diagnosa pasien berbasis Naive Bayes.",
+  },
 };
 
 export default function RootLayout({
