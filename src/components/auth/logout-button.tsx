@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -13,14 +12,13 @@ export function LogoutButton({
   variant?: "default" | "sidebar";
   isCollapsed?: boolean;
 }) {
-  const router = useRouter();
   const [isPending, setIsPending] = useState(false);
 
   async function handleLogout() {
     setIsPending(true);
     await authClient.signOut();
-    router.replace("/login");
-    router.refresh();
+    // Force a new document request so the login page sees the cleared auth cookie.
+    window.location.replace("/login");
   }
 
   return (

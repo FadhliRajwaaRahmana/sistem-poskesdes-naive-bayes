@@ -1,13 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { User, Lock, Loader2, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
 export function LoginForm() {
-  const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -30,8 +28,8 @@ export function LoginForm() {
       return;
     }
 
-    router.replace("/dashboard");
-    router.refresh();
+    // Force a new document request so the dashboard reads the fresh auth cookie.
+    window.location.replace("/dashboard");
   }
 
   return (
