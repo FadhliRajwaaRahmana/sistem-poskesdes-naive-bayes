@@ -261,11 +261,17 @@ export default async function DashboardPage() {
             <div className="space-y-3">
               <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 transition-colors hover:bg-slate-50 hover:border-slate-300">
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Diagnosa Terakhir</p>
-                <p className="font-bold text-slate-900 text-sm">
-                  {latestDiagnosa
-                    ? <div className="flex items-center gap-2"><span className="truncate max-w-[120px] block">{latestDiagnosa.namaPasien}</span> <ArrowRight className="size-3 text-slate-400 shrink-0" /> <span className="text-primary truncate block">{latestDiagnosa.hasilDiagnosa}</span></div>
-                    : "Belum ada diagnosa."}
-                </p>
+                <div className="font-bold text-slate-900 text-sm">
+                  {latestDiagnosa ? (
+                    <div className="flex items-center gap-2">
+                      <span className="block max-w-[120px] truncate">{latestDiagnosa.namaPasien}</span>
+                      <ArrowRight className="size-3 shrink-0 text-slate-400" />
+                      <span className="block truncate text-primary">{latestDiagnosa.hasilDiagnosa}</span>
+                    </div>
+                  ) : (
+                    "Belum ada diagnosa."
+                  )}
+                </div>
               </div>
               <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 transition-colors hover:bg-slate-50 hover:border-slate-300">
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Status Dataset</p>
