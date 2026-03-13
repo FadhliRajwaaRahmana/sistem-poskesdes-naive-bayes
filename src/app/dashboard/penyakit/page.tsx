@@ -96,88 +96,98 @@ export default async function PenyakitPage({ searchParams }: PenyakitPageProps) 
   const errorMessage = getFlashMessage(params.error);
 
   return (
-    <section className="animate-fade-in space-y-6">
+    <section className="animate-fade-in space-y-8 pb-10">
       {/* ── Page Header ── */}
-      <div className="flex items-center gap-4 rounded-2xl bg-slate-900 p-6 lg:p-8 text-white shadow-lg mb-6">
-        <div className="bg-white/10 p-3 rounded-2xl">
-          <Bug className="h-8 w-8 text-white" />
-        </div>
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Data Penyakit</h2>
-          <p className="mt-1 text-sm text-slate-300 max-w-2xl">
-            Kelola daftar penyakit yang akan menjadi target klasifikasi Naive Bayes.
-          </p>
+      <div className="flex flex-col gap-4 rounded-[2rem] bg-slate-900 p-8 sm:p-10 text-white shadow-xl relative overflow-hidden">
+        <div className="absolute right-0 top-0 w-80 h-80 bg-rose-500/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/4 pointer-events-none"></div>
+        <div className="relative z-10 flex items-center gap-5">
+          <div className="rounded-2xl bg-white/10 border border-white/20 p-4 text-white backdrop-blur-md shadow-lg">
+            <Bug className="h-8 w-8" />
+          </div>
+          <div>
+            <h2 className="text-3xl font-black tracking-tight text-white sm:text-4xl">Data Penyakit</h2>
+            <p className="text-slate-300 mt-2 font-medium max-w-lg leading-relaxed">
+              Kelola master data penyakit yang akan menjadi target klasifikasi sistem Naive Bayes.
+            </p>
+          </div>
         </div>
       </div>
 
       {/* ── Flash Messages ── */}
       {successMessage ? (
-        <div className="animate-slide-down flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-800 shadow-sm">
-          <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" />
-          <span className="font-medium">{successMessage}</span>
+        <div className="animate-slide-down flex items-center gap-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 shadow-sm">
+          <div className="rounded-xl bg-emerald-100 p-2 border border-emerald-200">
+            <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+          </div>
+          <span className="text-sm font-bold text-emerald-800">{successMessage}</span>
         </div>
       ) : null}
 
       {errorMessage ? (
-        <div className="animate-slide-down flex items-center gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm text-rose-800 shadow-sm">
-          <XCircle className="h-5 w-5 shrink-0 text-rose-600" />
-          <span className="font-medium">{errorMessage}</span>
+        <div className="animate-slide-down flex items-center gap-4 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 shadow-sm">
+          <div className="rounded-xl bg-rose-100 p-2 border border-rose-200">
+            <XCircle className="h-5 w-5 text-rose-600" />
+          </div>
+          <span className="text-sm font-bold text-rose-800">{errorMessage}</span>
         </div>
       ) : null}
 
       {/* ── Add Form Section ── */}
-      <div className="animate-slide-up stagger-1 card-container p-6 lg:p-8">
-        <div className="mb-6 flex items-center gap-3">
-          <div className="bg-slate-100 text-slate-700 p-2 rounded-xl border border-slate-200">
-            <Plus className="h-5 w-5" />
+      <div className="animate-slide-up stagger-1 card-container">
+        <div className="mb-6 flex items-center gap-4">
+          <div className="bg-rose-100 text-rose-600 p-3 rounded-xl border border-rose-200">
+            <Plus className="h-5 w-5 stroke-[2.5]" />
           </div>
-          <h3 className="text-lg font-semibold text-slate-800">
-            Tambah Penyakit Baru
-          </h3>
+          <div>
+            <h3 className="text-xl font-black text-slate-800 tracking-tight">
+              Tambah Penyakit Baru
+            </h3>
+            <p className="text-sm font-semibold text-slate-500 mt-0.5">Isi detail penyakit beserta deskripsinya.</p>
+          </div>
         </div>
 
-        <form action={createPenyakit} className="grid gap-5">
-          <div className="grid gap-5 md:grid-cols-2">
-            <div className="space-y-2.5">
-              <label className="text-sm font-semibold text-slate-700 ml-1">
+        <form action={createPenyakit} className="grid gap-6 border-t border-slate-100 pt-6">
+          <div className="grid gap-6 md:grid-cols-2">
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-700 uppercase tracking-widest ml-1">
                 Kode Penyakit
               </label>
               <input
                 type="text"
                 name="kode"
-                placeholder="Contoh: P06"
-                className="input-field"
+                placeholder="Contoh: P01"
+                className="input-field h-12"
                 required
               />
             </div>
-            <div className="space-y-2.5">
-              <label className="text-sm font-semibold text-slate-700 ml-1">
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-700 uppercase tracking-widest ml-1">
                 Nama Penyakit
               </label>
               <input
                 type="text"
                 name="nama"
                 placeholder="Masukkan nama penyakit"
-                className="input-field"
+                className="input-field h-12"
                 required
               />
             </div>
           </div>
-          <div className="space-y-2.5">
-            <label className="text-sm font-semibold text-slate-700 ml-1">
-              Deskripsi{" "}
-              <span className="font-normal text-slate-400">(opsional)</span>
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-700 uppercase tracking-widest ml-1">
+              Deskripsi Medis{" "}
+              <span className="font-normal text-slate-400 capitalize normal-case tracking-normal">(Opsional)</span>
             </label>
             <textarea
               name="deskripsi"
-              placeholder="Deskripsi singkat penyakit"
+              placeholder="Jelaskan secara singkat mengenai penyakit ini..."
               className="input-field min-h-[100px] resize-y"
             />
           </div>
-          <div className="flex justify-end pt-4">
+          <div className="flex justify-end pt-2">
             <button
               type="submit"
-              className="inline-flex items-center justify-center rounded-xl bg-primary px-6 py-3.5 text-sm font-bold text-white shadow-[var(--shadow-button)] transition-all hover:bg-primary-hover hover:-translate-y-0.5 active:scale-95"
+              className="inline-flex h-12 w-full sm:w-auto items-center justify-center rounded-xl bg-slate-900 px-8 text-sm font-bold text-white shadow-lg shadow-slate-900/20 transition-all hover:bg-slate-800 hover:-translate-y-0.5 active:scale-95"
             >
               <Plus className="mr-2 h-5 w-5" />
               Simpan Penyakit
@@ -187,39 +197,39 @@ export default async function PenyakitPage({ searchParams }: PenyakitPageProps) 
       </div>
 
       {/* ── List Section ── */}
-      <div className="animate-slide-up stagger-2 card-container overflow-hidden flex flex-col">
+      <div className="animate-slide-up stagger-2 card-container !p-0 overflow-hidden flex flex-col">
         {/* List Header + Search */}
-        <div className="border-b border-slate-200 p-6 lg:p-8 flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between bg-slate-50">
+        <div className="border-b border-slate-200 p-6 lg:p-8 flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between bg-slate-50/50">
           <div>
-            <h3 className="text-lg font-semibold text-slate-800">
-              Daftar Penyakit
+            <h3 className="text-xl font-black text-slate-800 tracking-tight">
+              Daftar Penyakit Tersimpan
             </h3>
-            <p className="text-sm text-slate-500 mt-1">
-              Total <span className="font-medium text-slate-700">{totalPenyakit}</span> penyakit • Halaman <span className="font-medium text-slate-700">{currentPage}</span> dari {totalPages}
+            <p className="mt-1.5 text-sm font-medium text-slate-500">
+              Total <span className="font-bold text-rose-600 bg-rose-100 px-1.5 py-0.5 rounded-md">{totalPenyakit}</span> penyakit • Halaman <span className="font-bold text-slate-700">{currentPage}</span> / {totalPages}
             </p>
           </div>
 
-          <form method="get" className="flex w-full items-center gap-3 lg:w-auto">
+          <form method="get" className="flex w-full items-center gap-2 lg:w-auto">
             <div className="relative flex-1 lg:flex-initial">
-              <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
                 name="q"
                 defaultValue={q}
                 placeholder="Cari penyakit…"
-                className="input-field pl-10 lg:w-72"
+                className="input-field pl-11 h-11 lg:w-72"
               />
             </div>
             <button
               type="submit"
-              className="inline-flex items-center justify-center rounded-xl bg-slate-800 px-6 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-slate-700 hover:-translate-y-0.5 active:scale-95"
+              className="inline-flex h-11 items-center justify-center rounded-xl bg-slate-900 px-6 text-sm font-bold text-white shadow-sm transition-all hover:bg-slate-800 active:scale-95"
             >
               Cari
             </button>
             {q && (
               <a
                 href="/dashboard/penyakit"
-                className="inline-flex items-center justify-center rounded-xl bg-white border border-slate-300 px-6 py-3 text-sm font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:-translate-y-0.5 active:scale-95"
+                className="inline-flex h-11 items-center justify-center rounded-xl bg-white border border-slate-200 px-5 text-sm font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:border-slate-300 active:scale-95"
               >
                 Reset
               </a>
@@ -228,88 +238,88 @@ export default async function PenyakitPage({ searchParams }: PenyakitPageProps) 
         </div>
 
         {/* List Items / Empty State */}
-        <div className="p-4 lg:p-6 bg-slate-50/50">
+        <div className="p-4 lg:p-6 bg-slate-50/30">
           {penyakitList.length === 0 ? (
-            <div className="flex flex-col items-center justify-center px-6 py-20 text-center rounded-2xl border-2 border-dashed border-slate-200 bg-white">
-              <div className="bg-slate-100 p-4 rounded-full mb-4">
-                <Bug className="h-8 w-8 text-slate-400" />
+            <div className="flex flex-col items-center justify-center px-6 py-16 text-center rounded-2xl border-2 border-dashed border-slate-200 bg-white">
+              <div className="flex h-20 w-20 items-center justify-center bg-slate-100 border border-slate-200 rounded-3xl mb-5 shadow-sm">
+                <Bug className="h-10 w-10 text-slate-400" />
               </div>
-              <p className="text-base font-semibold text-slate-700">
-                {q ? "Penyakit tidak ditemukan" : "Belum ada data penyakit"}
+              <p className="text-lg font-black text-slate-800">
+                {q ? "Penyakit Tidak Ditemukan" : "Belum Ada Data Penyakit"}
               </p>
-              <p className="mt-2 text-sm text-slate-500 max-w-sm">
+              <p className="mt-2 text-sm font-medium text-slate-500 max-w-md leading-relaxed">
                 {q
                   ? "Coba gunakan kata kunci lain untuk mencari penyakit yang Anda butuhkan."
                   : "Mulai tambahkan data penyakit baru menggunakan form di atas."}
               </p>
             </div>
           ) : (
-            <div className="space-y-0">
+            <div className="flex flex-col gap-4">
               {penyakitList.map((penyakit, idx) => (
                 <div
                   key={penyakit.id}
-                  className={`animate-slide-up stagger-${Math.min(idx + 1, 8)} flex flex-col sm:flex-row sm:items-start gap-4 bg-white p-6 border border-slate-200 shadow-sm mb-3 rounded-xl transition-all hover:shadow-md hover:border-slate-300 group`}
+                  className={`animate-slide-up stagger-${Math.min(idx + 1, 8)} flex flex-col xl:flex-row xl:items-start gap-4 bg-white p-6 border border-slate-200 shadow-sm rounded-xl transition-all duration-300 hover:shadow-md hover:border-primary/30 group`}
                 >
                   <div className="flex-1 w-full">
-                    <form action={updatePenyakit} id={`update-form-${penyakit.id}`} className="grid gap-4">
+                    <form action={updatePenyakit} id={`update-form-${penyakit.id}`} className="grid gap-5">
                       <input type="hidden" name="id" value={penyakit.id} />
 
-                      <div className="grid gap-4 md:grid-cols-[120px_1fr]">
-                        <div className="space-y-1.5">
-                          <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider ml-1">
+                      <div className="grid gap-5 md:grid-cols-[140px_1fr]">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
                             Kode
                           </label>
                           <input
                             type="text"
                             name="kode"
                             defaultValue={penyakit.kode}
-                            className="input-field"
+                            className="input-field h-11 font-bold text-rose-600"
                             required
                           />
                         </div>
-                        <div className="space-y-1.5">
-                          <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider ml-1">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
                             Nama Penyakit
                           </label>
                           <input
                             type="text"
                             name="nama"
                             defaultValue={penyakit.nama}
-                            className="input-field"
+                            className="input-field h-11 font-bold"
                             required
                           />
                         </div>
                       </div>
 
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider ml-1">
-                          Deskripsi
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
+                          Deskripsi Medis
                         </label>
                         <textarea
                           name="deskripsi"
                           defaultValue={penyakit.deskripsi ?? ""}
-                          className="input-field min-h-[40px] resize-y"
+                          className="input-field min-h-[60px] resize-y text-sm leading-relaxed"
                           placeholder="Deskripsi singkat..."
                         />
                       </div>
                     </form>
                   </div>
 
-                  <div className="flex sm:flex-col items-center gap-2 pt-2 sm:pt-6 sm:pl-6 sm:border-l sm:border-slate-100">
+                  <div className="flex sm:flex-row xl:flex-col items-center gap-2 pt-4 xl:pt-6 xl:pl-6 xl:border-l border-slate-100 mt-2 xl:mt-0 border-t xl:border-t-0">
                     <button
                       type="submit"
                       form={`update-form-${penyakit.id}`}
-                      className="inline-flex w-full sm:w-auto items-center justify-center bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 hover:border-emerald-300 rounded-xl px-4 py-2 text-sm font-medium transition-all active:scale-95 shadow-sm"
+                      className="inline-flex h-11 w-full xl:w-32 items-center justify-center bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 hover:border-emerald-300 rounded-xl px-4 text-sm font-bold transition-all active:scale-95 shadow-sm"
                       title="Simpan Perubahan"
                     >
                       <Pencil className="mr-2 h-4 w-4" />
                       Simpan
                     </button>
-                    <form action={deletePenyakit} className="w-full sm:w-auto">
+                    <form action={deletePenyakit} className="w-full xl:w-32">
                       <input type="hidden" name="id" value={penyakit.id} />
                       <button
                         type="submit"
-                        className="inline-flex w-full sm:w-auto items-center justify-center bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 hover:border-rose-300 rounded-xl px-4 py-2 text-sm font-medium transition-all active:scale-95 shadow-sm"
+                        className="inline-flex h-11 w-full items-center justify-center bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 hover:border-rose-300 rounded-xl px-4 text-sm font-bold transition-all active:scale-95 shadow-sm"
                         title="Hapus Penyakit"
                       >
                         <Trash2 className="mr-2 h-4 w-4" />
@@ -325,16 +335,16 @@ export default async function PenyakitPage({ searchParams }: PenyakitPageProps) 
 
         {/* ── Pagination ── */}
         {totalPages > 1 && (
-          <div className="border-t border-slate-200 bg-slate-50 p-5 lg:px-8">
+          <div className="border-t border-slate-200 bg-slate-50 p-6 lg:px-8">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-slate-500">
+              <p className="text-sm font-medium text-slate-500">
                 Menampilkan{" "}
-                <span className="font-semibold text-slate-700">
+                <span className="font-bold text-slate-800">
                   {(currentPage - 1) * PAGE_SIZE + 1}–
                   {Math.min(currentPage * PAGE_SIZE, totalPenyakit)}
                 </span>{" "}
                 dari{" "}
-                <span className="font-semibold text-slate-700">
+                <span className="font-bold text-slate-800">
                   {totalPenyakit}
                 </span>{" "}
                 data
@@ -343,29 +353,29 @@ export default async function PenyakitPage({ searchParams }: PenyakitPageProps) 
                 <a
                   href={buildPageHref(q, currentPage - 1)}
                   aria-disabled={currentPage <= 1}
-                  className={`inline-flex items-center justify-center rounded-xl border px-4 py-2 text-sm font-medium shadow-sm transition-all active:scale-95 ${
+                  className={`inline-flex h-10 items-center justify-center rounded-xl border px-4 text-sm font-bold shadow-sm transition-all active:scale-95 ${
                     currentPage <= 1
                       ? "pointer-events-none opacity-50 border-slate-200 bg-slate-50 text-slate-400"
                       : "bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50"
                   }`}
                 >
-                  <ChevronLeft className="mr-1.5 h-4 w-4" />
+                  <ChevronLeft className="mr-1 h-4 w-4" />
                   Sebelumnya
                 </a>
-                <div className="flex items-center justify-center bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm font-medium text-slate-700 shadow-sm min-w-[3rem]">
+                <div className="flex h-10 w-10 items-center justify-center bg-primary/10 border border-primary/20 text-primary rounded-xl font-black shadow-sm">
                   {currentPage}
                 </div>
                 <a
                   href={buildPageHref(q, currentPage + 1)}
                   aria-disabled={currentPage >= totalPages}
-                  className={`inline-flex items-center justify-center rounded-xl border px-4 py-2 text-sm font-medium shadow-sm transition-all active:scale-95 ${
+                  className={`inline-flex h-10 items-center justify-center rounded-xl border px-4 text-sm font-bold shadow-sm transition-all active:scale-95 ${
                     currentPage >= totalPages
                       ? "pointer-events-none opacity-50 border-slate-200 bg-slate-50 text-slate-400"
                       : "bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50"
                   }`}
                 >
                   Selanjutnya
-                  <ChevronRight className="ml-1.5 h-4 w-4" />
+                  <ChevronRight className="ml-1 h-4 w-4" />
                 </a>
               </div>
             </div>

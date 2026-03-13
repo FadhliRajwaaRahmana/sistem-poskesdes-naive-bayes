@@ -100,44 +100,46 @@ export default async function DashboardPage() {
   const topResultCount = diagnosaByResult[0]?._count.hasilDiagnosa ?? 0;
 
   const stats = [
-    { label: "Total Gejala", value: totalGejala, hint: "Master data gejala", icon: Thermometer, href: "/dashboard/gejala", color: "text-blue-600 bg-blue-100" },
-    { label: "Total Penyakit", value: totalPenyakit, hint: "Klasifikasi penyakit", icon: Bug, href: "/dashboard/penyakit", color: "text-rose-600 bg-rose-100" },
-    { label: "Data Training", value: totalTraining, hint: "Dataset sistem", icon: Database, href: "/dashboard/data-training", color: "text-amber-600 bg-amber-100" },
-    { label: "Riwayat Diagnosa", value: totalDiagnosa, hint: "Total pasien", icon: ClipboardList, href: "/dashboard/riwayat", color: "text-emerald-600 bg-emerald-100" },
+    { label: "Total Gejala", value: totalGejala, hint: "Master data gejala", icon: Thermometer, href: "/dashboard/gejala", color: "text-secondary bg-secondary/10 border-secondary/20" },
+    { label: "Total Penyakit", value: totalPenyakit, hint: "Klasifikasi penyakit", icon: Bug, href: "/dashboard/penyakit", color: "text-rose-600 bg-rose-100 border-rose-200" },
+    { label: "Data Training", value: totalTraining, hint: "Dataset sistem", icon: Database, href: "/dashboard/data-training", color: "text-amber-600 bg-amber-100 border-amber-200" },
+    { label: "Riwayat Diagnosa", value: totalDiagnosa, hint: "Total pasien", icon: ClipboardList, href: "/dashboard/riwayat", color: "text-emerald-600 bg-emerald-100 border-emerald-200" },
   ];
 
   return (
     <section className="space-y-6 pb-10">
       {/* High-Contrast Hero Banner */}
-      <div className="animate-fade-in relative flex flex-col gap-8 overflow-hidden rounded-3xl bg-slate-900 p-6 shadow-xl sm:p-8 lg:flex-row lg:items-start lg:justify-between">
-        <div className="absolute right-0 top-0 w-64 h-64 bg-primary/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/4 pointer-events-none"></div>
+      <div className="animate-fade-in relative flex flex-col gap-8 overflow-hidden rounded-[2rem] bg-slate-900 p-8 shadow-xl sm:p-10 lg:flex-row lg:items-center lg:justify-between">
+        <div className="absolute right-0 top-0 w-80 h-80 bg-primary/30 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/4 pointer-events-none"></div>
+        <div className="absolute left-0 bottom-0 w-64 h-64 bg-secondary/20 rounded-full blur-[80px] translate-y-1/2 -translate-x-1/4 pointer-events-none"></div>
+        
         <div className="relative z-10 max-w-2xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-white text-xs font-bold mb-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-white text-xs font-bold mb-4 backdrop-blur-md">
             <ActivitySquare className="size-4" />
             <span>Dashboard Admin</span>
           </div>
           <h2 className="text-3xl font-black tracking-tight text-white sm:text-4xl">
-            Ringkasan Sistem
+            Ringkasan Sistem Diagnosa
           </h2>
-          <p className="mt-2 text-sm font-medium text-slate-400 max-w-lg leading-relaxed">
-            Pantau seluruh data statistik POSKESDES secara real-time. Kelola penyakit, gejala, dan evaluasi hasil klasifikasi.
+          <p className="mt-3 text-base font-medium text-slate-300 max-w-lg leading-relaxed">
+            Pantau seluruh data statistik POSKESDES secara real-time. Kelola penyakit, gejala, dan evaluasi hasil klasifikasi Naive Bayes dengan mudah.
           </p>
         </div>
 
-        <div className="relative z-10 flex w-full flex-col gap-3 sm:max-w-sm lg:w-auto lg:min-w-[250px] lg:self-start">
+        <div className="relative z-10 flex w-full flex-col gap-3 sm:max-w-sm lg:w-auto lg:min-w-[250px] shrink-0">
           <Link
             href="/dashboard/diagnosa"
-            className="inline-flex h-14 w-full items-center justify-start gap-3 rounded-2xl bg-primary px-5 py-3 text-sm font-bold text-white shadow-[var(--shadow-button)] transition-all hover:-translate-y-0.5 hover:bg-primary-hover active:scale-95 [&_svg]:text-white"
+            className="inline-flex h-14 w-full items-center justify-center gap-3 rounded-2xl bg-gradient-to-br from-primary to-teal-500 px-6 py-3 text-sm font-bold text-white shadow-[var(--shadow-button)] transition-all hover:-translate-y-0.5 hover:shadow-lg active:scale-95"
           >
-            <Stethoscope className="size-5 shrink-0" />
-            <span className="text-white">Diagnosa Baru</span>
+            <Stethoscope className="size-5 shrink-0 text-white" />
+            <span className="text-white">Mulai Diagnosa Baru</span>
           </Link>
           <Link
             href="/dashboard/perhitungan"
-            className="inline-flex h-14 w-full items-center justify-start gap-3 rounded-2xl border border-white/20 bg-white/[0.12] px-5 py-3 text-sm font-bold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition-all hover:-translate-y-0.5 hover:bg-white/[0.18] active:scale-95 [&_svg]:text-white"
+            className="inline-flex h-14 w-full items-center justify-center gap-3 rounded-2xl border border-white/20 bg-white/10 px-6 py-3 text-sm font-bold text-white backdrop-blur-md transition-all hover:-translate-y-0.5 hover:bg-white/20 active:scale-95"
           >
             <Calculator className="size-5 shrink-0 text-white" />
-            <span className="text-white">Perhitungan</span>
+            <span className="text-white">Detail Perhitungan</span>
           </Link>
         </div>
       </div>
@@ -150,19 +152,19 @@ export default async function DashboardPage() {
             <Link
               key={item.label}
               href={item.href}
-              className={`stagger-${index + 1} card-container group animate-slide-up block transition-all hover:-translate-y-1 hover:border-primary/30`}
+              className={`stagger-${index + 1} card-container group animate-slide-up block hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg`}
             >
               <div className="flex items-center justify-between">
-                <div className={`flex size-12 items-center justify-center rounded-xl ${item.color}`}>
+                <div className={`flex size-12 items-center justify-center rounded-2xl border shadow-sm ${item.color} transition-transform group-hover:scale-110`}>
                   <Icon className="size-6" />
+                </div>
+                <div className="text-4xl font-black tracking-tight text-slate-900 group-hover:text-primary transition-colors">
+                  {item.value}
                 </div>
               </div>
               <div className="mt-6">
-                <p className="text-4xl font-black tracking-tight text-slate-900 group-hover:text-primary transition-colors">
-                  {item.value}
-                </p>
-                <p className="mt-1 font-bold text-slate-700">{item.label}</p>
-                <p className="text-xs font-medium text-slate-500 mt-1">{item.hint}</p>
+                <p className="font-bold text-slate-700">{item.label}</p>
+                <p className="text-xs font-semibold text-slate-400 mt-1">{item.hint}</p>
               </div>
             </Link>
           );
@@ -174,29 +176,30 @@ export default async function DashboardPage() {
         {/* Activity Chart */}
         <div className="animate-slide-up stagger-5 col-span-4 card-container flex flex-col">
           <div className="flex items-center gap-4 mb-8">
-            <div className="flex size-10 items-center justify-center rounded-lg bg-slate-100 text-slate-700">
-              <BarChart3 className="size-5" />
+            <div className="flex size-12 items-center justify-center rounded-2xl bg-slate-50 border border-slate-100 text-primary shadow-sm">
+              <BarChart3 className="size-6" />
             </div>
             <div>
-              <h3 className="text-xl font-bold tracking-tight text-slate-900">Aktivitas 7 Hari</h3>
-              <p className="text-sm font-medium text-slate-500">Intensitas diagnosa pasien per hari</p>
+              <h3 className="text-xl font-extrabold tracking-tight text-slate-900">Aktivitas 7 Hari</h3>
+              <p className="text-sm font-semibold text-slate-500 mt-0.5">Intensitas diagnosa pasien per hari</p>
             </div>
           </div>
 
-          <div className="mt-auto grid grid-cols-7 items-end gap-3 sm:gap-6 h-[240px]">
+          <div className="mt-auto grid grid-cols-7 items-end gap-3 sm:gap-6 h-[260px] p-2">
             {sevenDayBuckets.map((item) => (
               <div key={item.key} className="group flex flex-col items-center gap-3 h-full justify-end">
-                <div className="text-sm font-bold text-slate-400 group-hover:text-primary transition-colors">
-                  {item.value}
+                <div className="text-sm font-black text-slate-400 group-hover:text-primary transition-colors">
+                  {item.value > 0 ? item.value : ""}
                 </div>
-                <div className="w-full rounded-t-lg rounded-b-sm bg-slate-200 transition-all duration-300 group-hover:bg-primary group-hover:shadow-[0_0_20px_rgba(67,56,202,0.3)]"
+                <div className="w-full rounded-t-xl rounded-b-sm bg-slate-100 transition-all duration-500 ease-out group-hover:bg-primary group-hover:shadow-[0_0_20px_rgba(13,148,136,0.3)] relative overflow-hidden"
                   style={{
-                    height: `${Math.max((item.value / maxWeeklyDiagnosa) * 100, item.value > 0 ? 10 : 2)}%`,
+                    height: `${Math.max((item.value / maxWeeklyDiagnosa) * 100, item.value > 0 ? 12 : 4)}%`,
                     backgroundColor: item.value > 0 ? 'var(--primary)' : undefined,
-                    opacity: item.value > 0 ? 1 : 0.5
                   }}
-                />
-                <div className="text-center text-xs font-bold text-slate-500 mt-1">
+                >
+                  {item.value > 0 && <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"></div>}
+                </div>
+                <div className="text-center text-xs font-bold text-slate-500 mt-2">
                   {item.label}
                 </div>
               </div>
@@ -204,21 +207,21 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        <div className="col-span-3 space-y-6">
+        <div className="col-span-3 space-y-6 flex flex-col">
           {/* Top Results */}
-          <div className="animate-slide-up stagger-6 card-container">
+          <div className="animate-slide-up stagger-6 card-container flex-1">
             <div className="flex items-center gap-4 mb-8">
-              <div className="flex size-10 items-center justify-center rounded-lg bg-slate-100 text-slate-700">
-                <TrendingUp className="size-5" />
+              <div className="flex size-12 items-center justify-center rounded-2xl bg-slate-50 border border-slate-100 text-secondary shadow-sm">
+                <TrendingUp className="size-6" />
               </div>
               <div>
-                <h3 className="text-xl font-bold tracking-tight text-slate-900">Top Penyakit</h3>
-                <p className="text-sm font-medium text-slate-500">Hasil diagnosis terbanyak</p>
+                <h3 className="text-xl font-extrabold tracking-tight text-slate-900">Top Penyakit</h3>
+                <p className="text-sm font-semibold text-slate-500 mt-0.5">Hasil diagnosis terbanyak</p>
               </div>
             </div>
 
             {diagnosaByResult.length === 0 ? (
-              <div className="mt-8 flex h-32 items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 text-sm font-bold text-slate-400">
+              <div className="flex h-32 items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 text-sm font-bold text-slate-400">
                 Data belum tersedia.
               </div>
             ) : (
@@ -228,14 +231,14 @@ export default async function DashboardPage() {
                   const width = topResultCount > 0 ? (count / topResultCount) * 100 : 0;
 
                   return (
-                    <div key={item.hasilDiagnosa} className="space-y-3">
+                    <div key={item.hasilDiagnosa} className="space-y-3 group">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="font-bold text-slate-900">{item.hasilDiagnosa}</span>
-                        <span className="font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-md">{count} kasus ({totalDiagnosa > 0 ? formatPercentage((count / totalDiagnosa) * 100) : "0%"})</span>
+                        <span className="font-bold text-slate-800">{item.hasilDiagnosa}</span>
+                        <span className="font-bold text-secondary bg-secondary/10 px-2.5 py-1 rounded-lg border border-secondary/20 shadow-sm">{count} kasus ({totalDiagnosa > 0 ? formatPercentage((count / totalDiagnosa) * 100) : "0%"})</span>
                       </div>
-                      <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
+                      <div className="h-3 w-full overflow-hidden rounded-full bg-slate-100 shadow-inner">
                         <div
-                          className="h-full rounded-full bg-primary"
+                          className="h-full rounded-full bg-gradient-to-r from-secondary to-blue-400 transition-all duration-1000 ease-out"
                           style={{ width: `${width}%` }}
                         />
                       </div>
@@ -249,26 +252,26 @@ export default async function DashboardPage() {
           {/* System Spotlight */}
           <div className="animate-slide-up stagger-7 card-container">
             <div className="flex items-center gap-4 mb-6">
-              <div className="flex size-10 items-center justify-center rounded-lg bg-slate-100 text-slate-700">
+              <div className="flex size-10 items-center justify-center rounded-xl bg-amber-100 text-amber-600 border border-amber-200 shadow-sm">
                 <Zap className="size-5" />
               </div>
-              <h3 className="text-xl font-bold tracking-tight text-slate-900">Info Sistem</h3>
+              <h3 className="text-lg font-extrabold tracking-tight text-slate-900">Info Sistem</h3>
             </div>
 
-            <div className="space-y-4">
-              <div className="rounded-xl border-2 border-slate-100 p-4">
-                <p className="text-xs font-black uppercase tracking-wider text-slate-400 mb-1">Diagnosa Terakhir</p>
+            <div className="space-y-3">
+              <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 transition-colors hover:bg-slate-50 hover:border-slate-300">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Diagnosa Terakhir</p>
                 <p className="font-bold text-slate-900 text-sm">
                   {latestDiagnosa
-                    ? <>{latestDiagnosa.namaPasien} <span className="text-slate-400 mx-1">&rarr;</span> <span className="text-primary">{latestDiagnosa.hasilDiagnosa}</span></>
+                    ? <div className="flex items-center gap-2"><span className="truncate max-w-[120px] block">{latestDiagnosa.namaPasien}</span> <ArrowRight className="size-3 text-slate-400 shrink-0" /> <span className="text-primary truncate block">{latestDiagnosa.hasilDiagnosa}</span></div>
                     : "Belum ada diagnosa."}
                 </p>
               </div>
-              <div className="rounded-xl border-2 border-slate-100 p-4">
-                <p className="text-xs font-black uppercase tracking-wider text-slate-400 mb-1">Status Dataset</p>
+              <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 transition-colors hover:bg-slate-50 hover:border-slate-300">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Status Dataset</p>
                 <p className="font-bold text-slate-900 text-sm">
                   {totalTraining > 0
-                    ? <><span className="text-success">{totalTraining} Baris</span> untuk {totalPenyakit} Penyakit</>
+                    ? <><span className="text-emerald-600">{totalTraining} Baris</span> untuk {totalPenyakit} Penyakit</>
                     : "Data Kosong."}
                 </p>
               </div>
@@ -279,19 +282,19 @@ export default async function DashboardPage() {
 
       {/* Recent Diagnoses List */}
       <div className="animate-slide-up stagger-8 card-container !p-0 overflow-hidden">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b-2 border-slate-100 p-6 sm:p-8 bg-slate-50/50">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 p-6 sm:p-8 bg-slate-50/80 backdrop-blur-sm">
           <div className="flex items-center gap-4">
-             <div className="flex size-10 items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-700 shadow-sm">
-              <ActivitySquare className="size-5" />
+             <div className="flex size-12 items-center justify-center rounded-2xl bg-white border border-slate-200 text-slate-700 shadow-sm">
+              <ClipboardList className="size-6" />
             </div>
             <div>
-              <h3 className="text-xl font-bold tracking-tight text-slate-900">Riwayat Terkini</h3>
-              <p className="text-sm font-medium text-slate-500 mt-1">5 aktivitas diagnosa pasien terakhir</p>
+              <h3 className="text-xl font-extrabold tracking-tight text-slate-900">Riwayat Terkini</h3>
+              <p className="text-sm font-semibold text-slate-500 mt-0.5">5 aktivitas diagnosa pasien terakhir</p>
             </div>
           </div>
           <Link
             href="/dashboard/riwayat"
-            className="mt-4 sm:mt-0 inline-flex items-center justify-center h-10 px-5 rounded-lg bg-white text-sm font-bold text-slate-700 shadow-sm border-2 border-slate-200 hover:border-slate-300 hover:text-primary hover:shadow-md transition-all active:scale-95"
+            className="mt-4 sm:mt-0 inline-flex items-center justify-center h-11 px-5 rounded-xl bg-white text-sm font-bold text-slate-700 shadow-sm border border-slate-200 hover:border-primary hover:text-primary hover:shadow-md transition-all active:scale-95"
           >
             Lihat Semua Riwayat
             <ArrowRight className="ml-2 size-4" />
@@ -300,7 +303,7 @@ export default async function DashboardPage() {
 
         <div className="p-6 sm:p-8">
           {recentDiagnosa.length === 0 ? (
-            <div className="flex h-32 items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 text-sm font-bold text-slate-400">
+            <div className="flex h-32 items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 text-sm font-bold text-slate-400">
               Belum ada riwayat aktivitas.
             </div>
           ) : (
@@ -308,15 +311,15 @@ export default async function DashboardPage() {
               {recentDiagnosa.map((item) => (
                 <article
                   key={item.id}
-                  className="group flex flex-col gap-4 rounded-xl border-2 border-slate-100 p-5 transition-all hover:border-primary/40 hover:shadow-md sm:flex-row sm:items-center sm:justify-between"
+                  className="group flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 transition-all duration-300 hover:border-primary/40 hover:shadow-lg sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div>
-                    <h4 className="text-lg font-black text-slate-900">{item.namaPasien}</h4>
-                    <p className="text-sm font-bold text-slate-500 mt-1">
+                    <h4 className="text-lg font-black text-slate-900 group-hover:text-primary transition-colors">{item.namaPasien}</h4>
+                    <p className="text-sm font-semibold text-slate-500 mt-1">
                       {dateFormatter.format(item.tanggal)} <span className="mx-2 text-slate-300">•</span> Admin: {item.user.name}
                     </p>
                     <div className="mt-3">
-                       <span className="inline-flex items-center rounded-md bg-slate-100 px-3 py-1.5 text-sm font-bold text-slate-700">
+                       <span className="inline-flex items-center rounded-lg bg-primary/10 border border-primary/20 px-3 py-1.5 text-sm font-bold text-slate-700">
                           Hasil: <span className="ml-1.5 text-primary">{item.hasilDiagnosa}</span>
                        </span>
                     </div>
@@ -325,7 +328,7 @@ export default async function DashboardPage() {
                     {item.diagnosaGejala.map((gejala) => (
                       <span
                         key={gejala.id}
-                        className="inline-flex items-center rounded-md border-2 border-slate-100 bg-white px-2.5 py-1 text-xs font-bold text-slate-600"
+                        className="inline-flex items-center rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-bold text-slate-600 shadow-sm"
                       >
                         {gejala.gejala.kode}
                       </span>
