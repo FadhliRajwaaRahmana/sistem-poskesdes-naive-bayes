@@ -4,6 +4,46 @@ Aplikasi admin berbasis Next.js untuk membantu POSKESDES melakukan klasifikasi p
 
 Branch utama repository ini adalah `master`.
 
+## Daftar Isi
+
+Lompat cepat:
+[Instalasi Lokal](#instalasi-lokal) | [Prasyarat](#prasyarat) | [Langkah Setup Lengkap](#langkah-setup-lengkap) | [Cara Penggunaan](#cara-penggunaan)
+
+- [Ringkasan Fitur](#ringkasan-fitur)
+- [Tech Stack](#tech-stack)
+- [Alur Aplikasi](#alur-aplikasi)
+- [Halaman yang Tersedia](#halaman-yang-tersedia)
+- [Arsitektur Kode](#arsitektur-kode)
+- [Frontend](#frontend)
+- [Backend](#backend)
+- [Mesin Naive Bayes](#mesin-naive-bayes)
+- [Detail Perhitungan Naive Bayes](#detail-perhitungan-naive-bayes)
+- [Struktur Folder Aktif](#struktur-folder-aktif)
+- [Database](#database)
+- [Ringkasan Relasi](#ringkasan-relasi)
+- [Detail Tabel dan Kolom](#detail-tabel-dan-kolom)
+- [Seed Data Bawaan](#seed-data-bawaan)
+- [Instalasi Lokal](#instalasi-lokal)
+- [Prasyarat](#prasyarat)
+- [Opsi 1: Clone dari GitHub](#opsi-1-clone-dari-github)
+- [Opsi 2: Download ZIP](#opsi-2-download-zip)
+- [Langkah Setup Lengkap](#langkah-setup-lengkap)
+- [1. Install dependency](#1-install-dependency)
+- [2. Buat file environment](#2-buat-file-environment)
+- [3. Buat database PostgreSQL](#3-buat-database-postgresql)
+- [4. Isi file `.env`](#4-isi-file-env)
+- [5. Generate Prisma Client](#5-generate-prisma-client)
+- [6. Sinkronkan schema ke database](#6-sinkronkan-schema-ke-database)
+- [7. Isi data awal](#7-isi-data-awal)
+- [8. Buat akun admin pertama](#8-buat-akun-admin-pertama)
+- [9. Jalankan aplikasi](#9-jalankan-aplikasi)
+- [10. Login ke sistem](#10-login-ke-sistem)
+- [Cara Penggunaan](#cara-penggunaan)
+- [Panduan Operasional Singkat](#panduan-operasional-singkat)
+- [Catatan Penting](#catatan-penting)
+- [Validasi yang Tersedia di Repo](#validasi-yang-tersedia-di-repo)
+- [Status Scan Repository](#status-scan-repository)
+
 ## Ringkasan Fitur
 
 - Login admin dengan `better-auth` menggunakan username dan password.
