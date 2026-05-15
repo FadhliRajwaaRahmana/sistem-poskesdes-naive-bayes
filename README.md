@@ -121,164 +121,227 @@ Schema didefinisikan di [prisma/schema.prisma](prisma/schema.prisma).
 
 ## Instalasi Lokal
 
-### Prasyarat
+Panduan ini ditujukan untuk menjalankan aplikasi di PC/laptop Anda sendiri.
 
-- **Node.js** 20.x atau lebih baru (disarankan LTS).
-- **npm** (sudah ikut terpasang bersama Node.js).
-- **PostgreSQL** lokal yang sudah berjalan, atau akses ke PostgreSQL cloud (Aiven, Supabase, dsb.).
-- **Git** (opsional, untuk clone repository).
+### Prasyarat (Wajib Diinstall)
 
-### Opsi 1: Clone dari GitHub
+Pastikan semua software berikut sudah terinstall di komputer Anda **sebelum** memulai setup:
+
+| No | Software | Versi Minimum | Fungsi | Link Download |
+| --- | --- | --- | --- | --- |
+| 1 | **Node.js** | v20.x LTS | Runtime JavaScript untuk menjalankan aplikasi | [nodejs.org/en/download](https://nodejs.org/en/download) |
+| 2 | **npm** | v10.x | Package manager (otomatis ikut saat install Node.js) | *(sudah termasuk di Node.js)* |
+| 3 | **PostgreSQL** | v14 atau lebih baru | Database server | [postgresql.org/download](https://www.postgresql.org/download/) |
+| 4 | **Git** | Versi terbaru | Untuk clone repository (opsional jika download ZIP) | [git-scm.com/downloads](https://git-scm.com/downloads) |
+
+**Cara cek apakah sudah terinstall** — buka terminal/Command Prompt/PowerShell, jalankan:
+
+```bash
+node -v        # Harus muncul v20.x.x atau lebih baru
+npm -v         # Harus muncul 10.x.x atau lebih baru
+psql --version # Harus muncul psql (PostgreSQL) 14.x atau lebih baru
+git --version  # Harus muncul git version 2.x.x
+```
+
+> **Catatan untuk Windows:** Saat install PostgreSQL, catat **password** yang Anda buat untuk user `postgres`. Password ini akan dipakai di langkah konfigurasi nanti. Pastikan juga service PostgreSQL sudah **berjalan** (cek di Services / Task Manager).
+
+### Mendapatkan Source Code
+
+**Opsi 1: Clone dari GitHub (disarankan)**
 
 ```bash
 git clone -b master https://github.com/FadhliRajwaa/sistem-poskesdes-naive-bayes.git
 cd sistem-poskesdes-naive-bayes
 ```
 
-### Opsi 2: Download ZIP
+**Opsi 2: Download ZIP**
 
-1. Download ZIP dari halaman repository GitHub.
-2. Extract ke folder lokal.
-3. Buka terminal di folder hasil extract.
+1. Buka halaman repository di GitHub.
+2. Klik tombol hijau **Code** → **Download ZIP**.
+3. Extract ZIP ke folder pilihan Anda.
+4. Buka terminal di folder hasil extract.
 
-### Langkah Setup
+### Langkah Setup (Jalankan Berurutan)
 
-#### 1. Install dependency
+#### Langkah 1 — Install dependency
 
 ```bash
 npm install
 ```
 
-#### 2. Buat file environment
+Perintah ini mengunduh semua library yang dibutuhkan. Tunggu sampai selesai (bisa beberapa menit tergantung koneksi internet).
 
-Windows PowerShell:
+#### Langkah 2 — Buat file environment
+
+File `.env` berisi konfigurasi koneksi database dan akun admin. Salin dari template:
+
+**Windows (PowerShell):**
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-macOS/Linux:
+**Windows (Command Prompt):**
+
+```cmd
+copy .env.example .env
+```
+
+**macOS/Linux:**
 
 ```bash
 cp .env.example .env
 ```
 
-#### 3. Buat database PostgreSQL (jika pakai lokal)
+#### Langkah 3 — Buat database PostgreSQL
+
+Buka **pgAdmin** (ikut terinstall bersama PostgreSQL) atau **psql** di terminal, lalu buat database baru:
+
+**Via psql (terminal):**
+
+```bash
+psql -U postgres
+```
+
+Masukkan password PostgreSQL Anda, lalu jalankan:
 
 ```sql
 CREATE DATABASE poskesdes_db;
+\q
 ```
 
-Jika menggunakan cloud (Aiven/Supabase), bisa langsung pakai database default yang disediakan.
+**Via pgAdmin (GUI):**
 
-#### 4. Isi file `.env`
+1. Buka pgAdmin → klik kanan **Databases** → **Create** → **Database...**
+2. Isi **Database name**: `poskesdes_db`
+3. Klik **Save**.
 
-**Untuk database lokal:**
+#### Langkah 4 — Isi file `.env`
+
+Buka file `.env` dengan text editor (Notepad, VS Code, dsb.) dan sesuaikan nilai-nilainya:
 
 ```env
+# Ganti "your_password" dengan password PostgreSQL Anda
 DATABASE_URL="postgresql://postgres:your_password@localhost:5432/poskesdes_db?schema=public"
+
 BETTER_AUTH_SECRET="ganti-dengan-secret-random-minimal-32-karakter"
 BETTER_AUTH_URL="http://localhost:3000"
 NEXT_PUBLIC_APP_NAME="Sistem Diagnosis POSKESDES"
 
+# Akun admin yang akan dibuat otomatis (bisa diganti sesuai keinginan)
 ADMIN_NAME="Admin Poskesdes"
 ADMIN_USERNAME="admin"
 ADMIN_EMAIL="admin@poskesdes.local"
 ADMIN_PASSWORD="password123"
 ```
 
-**Untuk database Aiven:**
+> **Yang wajib diganti:** `your_password` di `DATABASE_URL` dengan password PostgreSQL yang Anda buat saat instalasi.
 
-```env
-DATABASE_URL="postgresql://avnadmin:PASSWORD@HOST.aivencloud.com:PORT/defaultdb?sslmode=require"
-```
-
-Ganti `PASSWORD`, `HOST`, dan `PORT` sesuai halaman Overview service PostgreSQL Aiven Anda.
-
-Tips membuat secret acak di PowerShell:
-
-```powershell
-([guid]::NewGuid().ToString("N") + [guid]::NewGuid().ToString("N"))
-```
-
-#### 5. Generate Prisma Client
+#### Langkah 5 — Generate Prisma Client
 
 ```bash
 npm run db:generate
 ```
 
-#### 6. Sinkronkan schema ke database
+#### Langkah 6 — Buat tabel di database
 
 ```bash
 npx prisma db push
 ```
 
-Perintah ini membuat semua tabel sesuai schema Prisma. Aman dijalankan baik untuk database lokal maupun cloud.
+Perintah ini membuat semua tabel yang dibutuhkan aplikasi di database `poskesdes_db`.
 
-#### 7. Isi data awal (seed)
+#### Langkah 7 — Isi data awal (seed)
 
 ```bash
 npm run db:seed
 ```
 
-Ini akan mengisi: 5 penyakit, 20 gejala, 100 nilai likelihood, dan 20 standar pertumbuhan WHO.
+Perintah ini mengisi database dengan data awal yang dibutuhkan sistem:
 
-#### 8. Buat akun admin pertama
+| Data | Jumlah | Keterangan |
+| --- | --- | --- |
+| Penyakit | 5 | C1 Marasmus, C2 Kwashiorkor, C3 Marasmik-Kwashiorkor, C4 Gizi Kurang, C5 Stunting |
+| Gejala | 20 | G01-G20 (gejala klinis gizi buruk pada balita) |
+| Nilai Likelihood | 100 | 20 gejala × 5 penyakit, nilai dari tabel pakar |
+| Standar Pertumbuhan WHO | 20 | BB/TB normal per umur (0-60 bulan) dan jenis kelamin |
+
+> **Penting:** Langkah ini **wajib** dijalankan. Tanpa seed data, aplikasi tidak bisa melakukan diagnosis karena tidak ada data penyakit, gejala, dan nilai likelihood.
+
+#### Langkah 8 — Buat akun admin pertama
 
 ```bash
 npm run auth:bootstrap
 ```
 
-Script ini membuat akun admin dari nilai `ADMIN_*` di `.env`.
+Script ini membuat akun admin berdasarkan nilai `ADMIN_*` yang Anda isi di file `.env`.
 
-#### 9. Jalankan aplikasi
+#### Langkah 9 — Jalankan aplikasi
 
 ```bash
 npm run dev
 ```
 
-Buka `http://localhost:3000` di browser.
+Buka browser dan akses:
 
-#### 10. Login
+```
+http://localhost:3000
+```
 
-Gunakan username dan password dari `.env`:
+#### Langkah 10 — Login
 
-- **Username:** nilai `ADMIN_USERNAME` (default: `admin`)
-- **Password:** nilai `ADMIN_PASSWORD` (default: `password123`)
+Gunakan kredensial admin dari `.env`:
+
+- **Username:** `admin` (atau sesuai nilai `ADMIN_USERNAME`)
+- **Password:** `password123` (atau sesuai nilai `ADMIN_PASSWORD`)
+
+### Ringkasan Semua Perintah (Quick Reference)
+
+Jika sudah pernah setup sebelumnya dan hanya ingin menjalankan ulang:
+
+```bash
+npm install              # Install dependency
+npm run db:generate      # Generate Prisma Client
+npx prisma db push       # Buat/sync tabel database
+npm run db:seed          # Isi data awal
+npm run auth:bootstrap   # Buat akun admin
+npm run dev              # Jalankan aplikasi
+```
 
 ---
 
 ## Deploy ke Vercel
 
+Jika ingin aplikasi bisa diakses online (bukan hanya di lokal), Anda bisa deploy ke Vercel.
+
 ### Prasyarat
 
-- Akun [Vercel](https://vercel.com).
-- Database PostgreSQL cloud yang dapat diakses dari internet (misal: [Aiven](https://aiven.io), [Supabase](https://supabase.com), [Neon](https://neon.tech), dsb.).
+- Akun [Vercel](https://vercel.com) (gratis).
+- Database PostgreSQL cloud yang bisa diakses dari internet, misalnya:
+  - [Aiven](https://aiven.io) (gratis trial 30 hari)
+  - [Supabase](https://supabase.com) (gratis tier tersedia)
+  - [Neon](https://neon.tech) (gratis tier tersedia)
 - Repository sudah di-push ke GitHub.
 
 ### Langkah Deploy
 
 #### 1. Siapkan database cloud
 
-Pastikan database cloud sudah disetup:
-
-- Schema sudah di-push (`npx prisma db push` dari lokal dengan `DATABASE_URL` mengarah ke cloud).
-- Seed data sudah dijalankan (`npm run db:seed`).
-- Admin sudah dibuat (`npm run auth:bootstrap`).
-
-Semua perintah di atas bisa dijalankan dari mesin lokal dengan mengganti `DATABASE_URL` di `.env` ke connection string cloud. Contoh:
-
-```env
-DATABASE_URL="postgresql://avnadmin:PASSWORD@HOST.aivencloud.com:PORT/defaultdb?sslmode=require"
-```
-
-Lalu jalankan:
+Database cloud harus diisi data terlebih dahulu **dari mesin lokal Anda**. Ganti `DATABASE_URL` di file `.env` lokal ke connection string database cloud, lalu jalankan 3 perintah ini:
 
 ```bash
-npx prisma db push
-npm run db:seed
-npm run auth:bootstrap
+npx prisma db push       # Buat tabel di database cloud
+npm run db:seed          # Isi data awal (5 penyakit, 20 gejala, dll.)
+npm run auth:bootstrap   # Buat akun admin
 ```
+
+Contoh `DATABASE_URL` untuk Aiven:
+
+```env
+DATABASE_URL="postgresql://avnadmin:PASSWORD@HOST.aivencloud.com:PORT/poskesdes_db?sslmode=require"
+```
+
+> Setelah selesai, Anda bisa kembalikan `DATABASE_URL` ke database lokal jika mau tetap develop di lokal.
 
 #### 2. Import project di Vercel
 
@@ -289,19 +352,19 @@ npm run auth:bootstrap
 
 #### 3. Set environment variables di Vercel
 
-Di halaman konfigurasi project Vercel, tambahkan environment variables berikut:
+Di halaman konfigurasi project Vercel (Settings → Environment Variables), tambahkan:
 
 | Variable | Nilai | Keterangan |
 | --- | --- | --- |
-| `DATABASE_URL` | `postgresql://avnadmin:...@....aivencloud.com:17991/defaultdb?sslmode=require` | Connection string database cloud |
-| `BETTER_AUTH_SECRET` | *(secret acak min 32 karakter)* | Wajib sama dengan yang dipakai saat bootstrap admin |
+| `DATABASE_URL` | `postgresql://avnadmin:...@....aivencloud.com:PORT/poskesdes_db?sslmode=require` | Connection string database cloud |
+| `BETTER_AUTH_SECRET` | *(secret yang sama dengan saat bootstrap)* | **Wajib sama** dengan yang dipakai saat `auth:bootstrap` |
 | `BETTER_AUTH_URL` | `https://nama-project.vercel.app` | URL production Vercel Anda |
 | `NEXT_PUBLIC_APP_NAME` | `Sistem Diagnosis POSKESDES` | Nama aplikasi |
 
 **Penting:**
-- `BETTER_AUTH_URL` harus diisi dengan URL production Vercel (bukan `localhost`).
-- `BETTER_AUTH_SECRET` harus **sama** dengan yang digunakan saat `auth:bootstrap` agar session dan password hash tetap valid.
-- Variable `ADMIN_*` tidak perlu di-set di Vercel (hanya dipakai saat bootstrap lokal).
+- `BETTER_AUTH_URL` harus URL production Vercel (**bukan** `http://localhost:3000`).
+- `BETTER_AUTH_SECRET` harus **sama persis** dengan saat bootstrap admin, karena password hash bergantung pada secret ini.
+- Variable `ADMIN_*` **tidak perlu** di-set di Vercel (hanya dipakai saat bootstrap dari lokal).
 
 #### 4. Deploy
 
@@ -311,16 +374,16 @@ Klik **Deploy**. Vercel akan build dan deploy otomatis. Setelah selesai, buka UR
 
 - Buka `https://nama-project.vercel.app/login`.
 - Login dengan username dan password admin yang sudah di-bootstrap.
-- Cek dashboard, data penyakit (5), gejala (20), dan coba lakukan diagnosis.
+- Pastikan dashboard menampilkan: 5 penyakit, 20 gejala, dan data standar WHO.
 
 ### Troubleshooting Deploy
 
 | Masalah | Solusi |
 | --- | --- |
-| Build error Prisma | Pastikan `prisma generate` berjalan saat build. Ini sudah otomatis via `postinstall` di Vercel. Jika tidak, tambahkan `"postinstall": "prisma generate"` di `scripts` package.json. |
-| Database connection timeout | Pastikan `?sslmode=require` ada di `DATABASE_URL` untuk cloud database. |
+| Build error Prisma | Pastikan `"postinstall": "prisma generate"` ada di `scripts` di `package.json` (sudah ada). |
+| Database connection timeout | Pastikan `?sslmode=require` ada di akhir `DATABASE_URL`. |
 | Login gagal setelah deploy | Pastikan `BETTER_AUTH_SECRET` di Vercel **sama persis** dengan saat `auth:bootstrap`. |
-| `BETTER_AUTH_URL` salah | Harus berupa URL full production (https://...), bukan localhost. |
+| Halaman kosong / error 500 | Pastikan seed data sudah dijalankan ke database cloud (`npm run db:seed`). |
 
 ---
 
@@ -390,7 +453,7 @@ Cukup ganti nilai `DATABASE_URL` di file `.env`:
 DATABASE_URL="postgresql://postgres:password@localhost:5432/poskesdes_db?schema=public"
 
 # Cloud (Aiven):
-DATABASE_URL="postgresql://avnadmin:PASSWORD@HOST.aivencloud.com:PORT/defaultdb?sslmode=require"
+DATABASE_URL="postgresql://avnadmin:PASSWORD@HOST.aivencloud.com:PORT/poskesdes_db?sslmode=require"
 ```
 
 Setelah ganti, restart dev server (`npm run dev`). Tidak perlu ubah kode apapun.
