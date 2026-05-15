@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
+import { toast } from "sonner";
 import { User, Lock, Loader2, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -23,12 +24,14 @@ export function LoginForm() {
     });
 
     if (error) {
-      setError(error.message || "Username atau password tidak valid.");
+      const msg = error.message || "Username atau password tidak valid.";
+      setError(msg);
+      toast.error(msg);
       setIsPending(false);
       return;
     }
 
-    // Force a new document request so the dashboard reads the fresh auth cookie.
+    toast.success("Login berhasil! Mengalihkan ke dashboard...");
     window.location.replace("/dashboard");
   }
 

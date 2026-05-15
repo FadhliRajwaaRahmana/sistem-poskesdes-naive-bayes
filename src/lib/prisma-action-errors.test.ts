@@ -1,40 +1,30 @@
-import assert from "node:assert/strict";
-import test from "node:test";
+import { describe, it, expect } from "vitest";
+import { getEntityActionErrorMessage, getDiagnosisActionErrorMessage } from "./prisma-action-errors";
 
-test("getEntityActionErrorMessage memberi pesan relasi untuk delete", async () => {
-  const loadedModule = await import("./prisma-action-errors").catch(() => null);
+describe("prisma-action-errors", () => {
+  it("getEntityActionErrorMessage memberi pesan relasi untuk delete", () => {
+    expect(
+      getEntityActionErrorMessage({
+        code: "P2003",
+        entityName: "Penyakit",
+        action: "delete",
+      }),
+    ).toBe("Penyakit tidak bisa dihapus karena masih dipakai pada data lain.");
+  });
 
-  assert.ok(loadedModule, "Module prisma-action-errors.ts harus tersedia.");
-  assert.equal(
-    loadedModule.getEntityActionErrorMessage({
-      code: "P2003",
-      entityName: "Penyakit",
-      action: "delete",
-    }),
-    "Penyakit tidak bisa dihapus karena masih dipakai pada data lain.",
-  );
-});
+  it("getEntityActionErrorMessage tidak memakai pesan hapus untuk update", () => {
+    expect(
+      getEntityActionErrorMessage({
+        code: "P2003",
+        entityName: "Penyakit",
+        action: "update",
+      }),
+    ).toBe("Relasi data untuk penyakit tidak valid.");
+  });
 
-test("getEntityActionErrorMessage tidak memakai pesan hapus untuk update", async () => {
-  const loadedModule = await import("./prisma-action-errors").catch(() => null);
-
-  assert.ok(loadedModule, "Module prisma-action-errors.ts harus tersedia.");
-  assert.equal(
-    loadedModule.getEntityActionErrorMessage({
-      code: "P2003",
-      entityName: "Penyakit",
-      action: "update",
-    }),
-    "Relasi data untuk penyakit tidak valid.",
-  );
-});
-
-test("getDiagnosisActionErrorMessage memberi pesan input relasi yang jelas", async () => {
-  const loadedModule = await import("./prisma-action-errors").catch(() => null);
-
-  assert.ok(loadedModule, "Module prisma-action-errors.ts harus tersedia.");
-  assert.equal(
-    loadedModule.getDiagnosisActionErrorMessage("P2003"),
-    "Gejala yang dipilih sudah berubah. Silakan pilih ulang gejala lalu proses diagnosis lagi.",
-  );
+  it("getDiagnosisActionErrorMessage memberi pesan input relasi yang jelas", () => {
+    expect(getDiagnosisActionErrorMessage("P2003")).toBe(
+      "Gejala yang dipilih sudah berubah. Silakan pilih ulang gejala lalu proses diagnosis lagi.",
+    );
+  });
 });

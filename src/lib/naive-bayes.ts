@@ -144,7 +144,8 @@ function buildDiagnosisComputation(
 
     const steps: DiagnosisStep[] = selectedGejalaIds.map((gejalaId) => {
       const gejala = gejalaMap.get(gejalaId);
-      const likelihood = likelihoodMap.get(gejalaId) ?? 0;
+      // Epsilon kecil agar zero-probability tidak mematikan seluruh score penyakit
+      const likelihood = likelihoodMap.get(gejalaId) ?? 0.001;
       return {
         kodeGejala: gejala?.kode ?? "?",
         namaGejala: gejala?.nama ?? "Tidak diketahui",

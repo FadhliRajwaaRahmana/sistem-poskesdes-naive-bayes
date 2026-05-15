@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
+import { toast } from "sonner";
 import { LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -17,7 +18,7 @@ export function LogoutButton({
   async function handleLogout() {
     setIsPending(true);
     await authClient.signOut();
-    // Force a new document request so the login page sees the cleared auth cookie.
+    toast.success("Berhasil keluar dari sistem.");
     window.location.replace("/login");
   }
 

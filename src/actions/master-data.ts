@@ -272,7 +272,7 @@ export async function updateLikelihood(formData: FormData) {
       create: { penyakitId, gejalaId, likelihood },
     });
   } catch (error) {
-    redirectWithMessage(penyakitPath, "error", getActionErrorMessage(error, "Likelihood", "update"));
+    redirectWithMessage(`${penyakitPath}?detail=${penyakitId}`, "error", getActionErrorMessage(error, "Likelihood", "update"));
   }
 
   revalidateMasterData([penyakitPath, gejalaPath, diagnosisPath, perhitunganPath]);

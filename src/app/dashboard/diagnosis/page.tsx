@@ -1,10 +1,10 @@
 import { DiagnosisForm } from "./diagnosis-form";
 import { prisma } from "@/lib/prisma";
 import { getDiagnosisComputation } from "@/lib/naive-bayes";
+import { requireSession } from "@/lib/session";
 import {
   Stethoscope,
   CheckCircle2,
-  XCircle,
   Printer,
   Award,
   ShieldAlert,
@@ -21,15 +21,12 @@ type DiagnosisPageProps = {
   searchParams?: Promise<PageSearchParams>;
 };
 
-function getFlashMessage(value: string | string[] | undefined) {
-  return typeof value === "string" ? value : null;
-}
-
 function getSearchValue(value: string | string[] | undefined) {
   return typeof value === "string" ? value : undefined;
 }
 
 export default async function DiagnosisPage({ searchParams }: DiagnosisPageProps) {
+  await requireSession();
   const params = searchParams ? await searchParams : {};
   const gejalaList = await prisma.gejala.findMany({ orderBy: { kode: "asc" } });
   const diagnosisId = getSearchValue(params.diagnosisId);
@@ -53,9 +50,6 @@ export default async function DiagnosisPage({ searchParams }: DiagnosisPageProps
   const computation = savedDiagnosis && savedDiagnosis.diagnosisGejala.length > 0
     ? await getDiagnosisComputation(savedDiagnosis.diagnosisGejala.map((dg) => dg.gejalaId))
     : null;
-
-  const successMessage = getFlashMessage(params.success);
-  const errorMessage = getFlashMessage(params.error);
 
   const isGiziBaik = savedDiagnosis?.hasilDiagnosis === "Gizi Baik";
 
@@ -81,24 +75,6 @@ export default async function DiagnosisPage({ searchParams }: DiagnosisPageProps
           </div>
         </div>
       </div>
-
-      {/* Flash Messages */}
-      {successMessage && (
-        <div className="stagger-2 animate-scale-in rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 shadow-sm flex items-center gap-4">
-          <div className="rounded-xl bg-emerald-100 p-2 text-emerald-600 shadow-sm border border-emerald-200">
-            <CheckCircle2 className="size-6 shrink-0 stroke-[2.5]" />
-          </div>
-          <p className="text-sm font-bold text-emerald-800">{successMessage}</p>
-        </div>
-      )}
-      {errorMessage && (
-        <div className="stagger-2 animate-scale-in rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 shadow-sm flex items-center gap-4">
-          <div className="rounded-xl bg-rose-100 p-2 text-rose-600 shadow-sm border border-rose-200">
-            <XCircle className="size-6 shrink-0 stroke-[2.5]" />
-          </div>
-          <p className="text-sm font-bold text-rose-800">{errorMessage}</p>
-        </div>
-      )}
 
       <div className="grid gap-8 xl:grid-cols-[1.3fr_1fr]">
         {/* Form Card */}

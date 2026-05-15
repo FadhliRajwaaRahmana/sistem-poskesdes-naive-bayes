@@ -8,8 +8,6 @@ import {
   Pencil,
   Trash2,
   KeyRound,
-  CheckCircle2,
-  XCircle,
   ChevronLeft,
   ChevronRight,
   UserCircle,
@@ -33,10 +31,6 @@ function pv(v: string | string[] | undefined) {
   return Number.isNaN(p) || p < 1 ? 1 : p;
 }
 
-function flash(v: string | string[] | undefined) {
-  return typeof v === "string" ? v : null;
-}
-
 function buildHref(q: string, page: number) {
   const query = new URLSearchParams();
   if (q) query.set("q", q);
@@ -51,8 +45,6 @@ export default async function PenggunaPage({ searchParams }: PenggunaPageProps) 
 
   const q = sv(params.q).trim();
   const requestedPage = pv(params.page);
-  const successMessage = flash(params.success);
-  const errorMessage = flash(params.error);
 
   const where = {
     role: "USER" as const,
@@ -101,24 +93,6 @@ export default async function PenggunaPage({ searchParams }: PenggunaPageProps) 
           </div>
         </div>
       </div>
-
-      {/* Flash Messages */}
-      {successMessage && (
-        <div className="animate-slide-up flex items-center gap-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 shadow-sm">
-          <div className="rounded-xl bg-emerald-100 p-2 border border-emerald-200">
-            <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-          </div>
-          <span className="text-sm font-bold text-emerald-800">{successMessage}</span>
-        </div>
-      )}
-      {errorMessage && (
-        <div className="animate-slide-up flex items-center gap-4 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 shadow-sm">
-          <div className="rounded-xl bg-rose-100 p-2 border border-rose-200">
-            <XCircle className="h-5 w-5 text-rose-600" />
-          </div>
-          <span className="text-sm font-bold text-rose-800">{errorMessage}</span>
-        </div>
-      )}
 
       {/* Add Form */}
       <div className="animate-slide-up stagger-1 card-container">

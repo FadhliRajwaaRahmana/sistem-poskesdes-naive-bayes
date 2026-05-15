@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 const fontSans = Plus_Jakarta_Sans({
@@ -50,6 +51,15 @@ export default function RootLayout({
     <html lang="id" className="scroll-smooth">
       <body className={`${fontSans.variable} font-sans antialiased text-slate-800 bg-slate-50 min-h-screen selection:bg-teal-500/30 selection:text-teal-900`}>
         {children}
+        <Toaster
+          position="top-right"
+          richColors
+          closeButton
+          toastOptions={{
+            className: "font-sans",
+            duration: 4000,
+          }}
+        />
       </body>
     </html>
   );

@@ -9,8 +9,6 @@ import {
   Trash2,
   ChevronLeft,
   ChevronRight,
-  CheckCircle2,
-  XCircle,
   ArrowLeft,
   Eye,
   ListChecks,
@@ -23,10 +21,6 @@ type PenyakitPageProps = {
 };
 
 const PAGE_SIZE = 10;
-
-function getFlashMessage(value: string | string[] | undefined) {
-  return typeof value === "string" ? value : null;
-}
 
 function getSearchValue(value: string | string[] | undefined) {
   return typeof value === "string" ? value : "";
@@ -90,9 +84,6 @@ async function renderDetailView(detailId: string, params: PageSearchParams) {
     penyakit.penyakitGejala.map((pg) => [pg.gejalaId, pg.likelihood])
   );
 
-  const successMessage = getFlashMessage(params.success);
-  const errorMessage = getFlashMessage(params.error);
-
   return (
     <section className="animate-fade-in space-y-8 pb-10">
       {/* Header */}
@@ -120,25 +111,6 @@ async function renderDetailView(detailId: string, params: PageSearchParams) {
         <ArrowLeft className="mr-2 h-4 w-4" />
         Kembali ke Daftar Penyakit
       </a>
-
-      {/* Flash Messages */}
-      {successMessage ? (
-        <div className="animate-slide-down flex items-center gap-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 shadow-sm">
-          <div className="rounded-xl bg-emerald-100 p-2 border border-emerald-200">
-            <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-          </div>
-          <span className="text-sm font-bold text-emerald-800">{successMessage}</span>
-        </div>
-      ) : null}
-
-      {errorMessage ? (
-        <div className="animate-slide-down flex items-center gap-4 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 shadow-sm">
-          <div className="rounded-xl bg-rose-100 p-2 border border-rose-200">
-            <XCircle className="h-5 w-5 text-rose-600" />
-          </div>
-          <span className="text-sm font-bold text-rose-800">{errorMessage}</span>
-        </div>
-      ) : null}
 
       {/* Info Card */}
       <div className="animate-slide-up stagger-1 card-container">
@@ -313,9 +285,6 @@ export default async function PenyakitPage({ searchParams }: PenyakitPageProps) 
     take: PAGE_SIZE,
   });
 
-  const successMessage = getFlashMessage(params.success);
-  const errorMessage = getFlashMessage(params.error);
-
   return (
     <section className="animate-fade-in space-y-8 pb-10">
       {/* ── Page Header ── */}
@@ -333,25 +302,6 @@ export default async function PenyakitPage({ searchParams }: PenyakitPageProps) 
           </div>
         </div>
       </div>
-
-      {/* ── Flash Messages ── */}
-      {successMessage ? (
-        <div className="animate-slide-down flex items-center gap-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 shadow-sm">
-          <div className="rounded-xl bg-emerald-100 p-2 border border-emerald-200">
-            <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-          </div>
-          <span className="text-sm font-bold text-emerald-800">{successMessage}</span>
-        </div>
-      ) : null}
-
-      {errorMessage ? (
-        <div className="animate-slide-down flex items-center gap-4 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 shadow-sm">
-          <div className="rounded-xl bg-rose-100 p-2 border border-rose-200">
-            <XCircle className="h-5 w-5 text-rose-600" />
-          </div>
-          <span className="text-sm font-bold text-rose-800">{errorMessage}</span>
-        </div>
-      ) : null}
 
       {/* ── Add Form Section ── */}
       <div className="animate-slide-up stagger-1 card-container">

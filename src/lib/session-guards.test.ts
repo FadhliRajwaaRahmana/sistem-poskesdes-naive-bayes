@@ -1,12 +1,26 @@
-import assert from "node:assert/strict";
-import test from "node:test";
+import { describe, it, expect } from "vitest";
+import { hasAdminRole, hasUserRole, isAuthenticated } from "./session-guards";
 
-test("hasAdminRole hanya menerima role ADMIN", async () => {
-  const loadedModule = await import("./session-guards").catch(() => null);
+describe("session-guards", () => {
+  it("hasAdminRole hanya menerima role ADMIN", () => {
+    expect(hasAdminRole("ADMIN")).toBe(true);
+    expect(hasAdminRole("USER")).toBe(false);
+    expect(hasAdminRole(undefined)).toBe(false);
+    expect(hasAdminRole(null)).toBe(false);
+  });
 
-  assert.ok(loadedModule, "Module session-guards.ts harus tersedia.");
-  assert.equal(loadedModule.hasAdminRole("ADMIN"), true);
-  assert.equal(loadedModule.hasAdminRole("USER"), false);
-  assert.equal(loadedModule.hasAdminRole(undefined), false);
-  assert.equal(loadedModule.hasAdminRole(null), false);
+  it("hasUserRole hanya menerima role USER", () => {
+    expect(hasUserRole("USER")).toBe(true);
+    expect(hasUserRole("ADMIN")).toBe(false);
+    expect(hasUserRole(undefined)).toBe(false);
+    expect(hasUserRole(null)).toBe(false);
+  });
+
+  it("isAuthenticated menerima ADMIN dan USER", () => {
+    expect(isAuthenticated("ADMIN")).toBe(true);
+    expect(isAuthenticated("USER")).toBe(true);
+    expect(isAuthenticated("GUEST")).toBe(false);
+    expect(isAuthenticated(undefined)).toBe(false);
+    expect(isAuthenticated(null)).toBe(false);
+  });
 });

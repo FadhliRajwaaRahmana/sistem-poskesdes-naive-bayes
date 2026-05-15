@@ -29,6 +29,7 @@ export function computePemantauanStatus(
   if (currentDiagnosis !== previousDiagnosis) {
     const currentSeverity = SEVERITY_ORDER[currentDiagnosis] ?? 99;
     const previousSeverity = SEVERITY_ORDER[previousDiagnosis] ?? 99;
+    if (currentSeverity === previousSeverity) return "Tetap";
     return currentSeverity > previousSeverity
       ? "Membaik (Pindah Kategori)"
       : "Memburuk (Pindah Kategori)";

@@ -9,7 +9,7 @@ import { parseDiagnosisDate, resolveSelectedGejala } from "@/lib/diagnosis-valid
 import { getDiagnosisActionErrorMessage } from "@/lib/prisma-action-errors";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/session";
-import { evaluateAutoSymptoms, isGiziBaik } from "@/lib/who-standards";
+import { evaluateAutoSymptoms } from "@/lib/who-standards";
 
 const diagnosisPath = "/dashboard/diagnosis";
 const rekamMedisPath = "/dashboard/rekam-medis";
@@ -101,9 +101,7 @@ export async function submitDiagnosis(formData: FormData) {
   // Merge auto + manual gejala (deduplicated)
   const allGejalaIds = Array.from(new Set([...autoGejalaIds, ...data.gejalaIds]));
 
-  // Check "Gizi Baik"
-  const giziBaikResult = isGiziBaik(autoResult.autoGejalaKodes, data.gejalaIds.length > 0 ? ["manual"] : []);
-  const isGiziBaikCase = allGejalaIds.length === 0 && giziBaikResult;
+  const isGiziBaikCase = allGejalaIds.length === 0;
 
   let hasilDiagnosis: string;
   let penyakitId: string | null = null;
