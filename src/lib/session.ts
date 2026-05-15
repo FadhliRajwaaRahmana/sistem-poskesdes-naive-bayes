@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
-import { hasAdminRole } from "@/lib/session-guards";
+import { hasAdminRole, isAuthenticated } from "@/lib/session-guards";
 
 export async function getSession() {
   return auth.api.getSession({
@@ -12,6 +12,20 @@ export async function getSession() {
 export async function getCurrentUser() {
   const session = await getSession();
   return session?.user ?? null;
+}
+
+export async function requireSession() {
+  const session = await getSession();
+
+  if (!session?.user) {
+    redirect("/login");
+  }
+
+  if (!isAuthenticated(session.user.role)) {
+    redirect(`/login?error=${encodeURIComponent("Akun tidak valid.")}`);
+  }
+
+  return session;
 }
 
 export async function requireAdminSession() {

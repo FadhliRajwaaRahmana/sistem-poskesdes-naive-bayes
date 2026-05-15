@@ -1,7 +1,8 @@
-import { createPenyakit, deletePenyakit, updatePenyakit } from "@/actions/master-data";
+import { createPenyakit, deletePenyakit, updatePenyakit, updateLikelihood } from "@/actions/master-data";
 import { prisma } from "@/lib/prisma";
+import { requireAdminSession } from "@/lib/session";
 import {
-  Bug,
+  HeartPulse,
   Plus,
   Search,
   Pencil,
@@ -10,6 +11,9 @@ import {
   ChevronRight,
   CheckCircle2,
   XCircle,
+  ArrowLeft,
+  Eye,
+  ListChecks,
 } from "lucide-react";
 
 type PageSearchParams = Record<string, string | string[] | undefined>;
@@ -52,8 +56,225 @@ function buildPageHref(q: string, page: number) {
   return queryString ? `/dashboard/penyakit?${queryString}` : "/dashboard/penyakit";
 }
 
+async function renderDetailView(detailId: string, params: PageSearchParams) {
+  const totalPenyakit = await prisma.penyakit.count();
+  const prior = totalPenyakit > 0 ? (1 / totalPenyakit) : 0;
+
+  const penyakit = await prisma.penyakit.findUnique({
+    where: { id: detailId },
+    include: {
+      penyakitGejala: {
+        include: { gejala: true },
+        orderBy: { gejala: { kode: "asc" } },
+      },
+    },
+  });
+
+  if (!penyakit) {
+    return (
+      <section className="animate-fade-in space-y-8 pb-10">
+        <div className="card-container text-center py-16">
+          <p className="text-lg font-black text-slate-800">Penyakit Tidak Ditemukan</p>
+          <p className="mt-2 text-sm text-slate-500">Data penyakit dengan ID tersebut tidak ditemukan.</p>
+          <a href="/dashboard/penyakit" className="mt-6 inline-flex h-11 items-center justify-center rounded-xl bg-slate-900 px-6 text-sm font-bold text-white shadow-sm transition-all hover:bg-slate-800 active:scale-95">
+            <ArrowLeft className="mr-2 h-4 w-4" /> Kembali ke Daftar
+          </a>
+        </div>
+      </section>
+    );
+  }
+
+  const allGejala = await prisma.gejala.findMany({ orderBy: { kode: "asc" } });
+
+  const likelihoodMap = new Map(
+    penyakit.penyakitGejala.map((pg) => [pg.gejalaId, pg.likelihood])
+  );
+
+  const successMessage = getFlashMessage(params.success);
+  const errorMessage = getFlashMessage(params.error);
+
+  return (
+    <section className="animate-fade-in space-y-8 pb-10">
+      {/* Header */}
+      <div className="flex flex-col gap-4 rounded-[2rem] bg-slate-900 p-8 sm:p-10 text-white shadow-xl relative overflow-hidden">
+        <div className="absolute right-0 top-0 w-80 h-80 bg-rose-500/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/4 pointer-events-none" />
+        <div className="relative z-10 flex items-center gap-5">
+          <div className="rounded-2xl bg-white/10 border border-white/20 p-4 text-white backdrop-blur-md shadow-lg">
+            <HeartPulse className="h-8 w-8" />
+          </div>
+          <div>
+            <h2 className="text-3xl font-black tracking-tight text-white sm:text-4xl">
+              Detail Penyakit
+            </h2>
+            <p className="text-slate-300 mt-2 font-medium leading-relaxed">
+              <span className="text-white font-bold">{penyakit.kode}</span> — {penyakit.nama}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <a
+        href="/dashboard/penyakit"
+        className="inline-flex h-11 items-center justify-center rounded-xl bg-white border border-slate-200 px-5 text-sm font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:border-slate-300 active:scale-95"
+      >
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        Kembali ke Daftar Penyakit
+      </a>
+
+      {/* Flash Messages */}
+      {successMessage ? (
+        <div className="animate-slide-down flex items-center gap-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 shadow-sm">
+          <div className="rounded-xl bg-emerald-100 p-2 border border-emerald-200">
+            <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+          </div>
+          <span className="text-sm font-bold text-emerald-800">{successMessage}</span>
+        </div>
+      ) : null}
+
+      {errorMessage ? (
+        <div className="animate-slide-down flex items-center gap-4 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 shadow-sm">
+          <div className="rounded-xl bg-rose-100 p-2 border border-rose-200">
+            <XCircle className="h-5 w-5 text-rose-600" />
+          </div>
+          <span className="text-sm font-bold text-rose-800">{errorMessage}</span>
+        </div>
+      ) : null}
+
+      {/* Info Card */}
+      <div className="animate-slide-up stagger-1 card-container">
+        <div className="mb-6 flex items-center gap-4">
+          <div className="bg-rose-100 text-rose-600 p-3 rounded-xl border border-rose-200">
+            <HeartPulse className="h-5 w-5 stroke-[2.5]" />
+          </div>
+          <h3 className="text-xl font-black text-slate-800 tracking-tight">Informasi Penyakit</h3>
+        </div>
+
+        <div className="grid gap-5 border-t border-slate-100 pt-6">
+          <div className="grid gap-5 md:grid-cols-3">
+            <div className="space-y-1">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Kode</p>
+              <p className="text-lg font-black text-rose-600">{penyakit.kode}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Nama Penyakit</p>
+              <p className="text-lg font-black text-slate-800">{penyakit.nama}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Prior Probability</p>
+              <p className="text-lg font-black text-sky-600">
+                P({penyakit.kode}) = 1/{totalPenyakit} = {prior.toFixed(4)}
+              </p>
+            </div>
+          </div>
+
+          {penyakit.deskripsi ? (
+            <div className="space-y-1">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Deskripsi Medis</p>
+              <p className="text-sm font-medium text-slate-700 leading-relaxed bg-slate-50 rounded-xl p-4 border border-slate-100">
+                {penyakit.deskripsi}
+              </p>
+            </div>
+          ) : null}
+
+          {penyakit.saranPenanganan ? (
+            <div className="space-y-1">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Saran Penanganan</p>
+              <p className="text-sm font-medium text-slate-700 leading-relaxed bg-emerald-50 rounded-xl p-4 border border-emerald-100">
+                {penyakit.saranPenanganan}
+              </p>
+            </div>
+          ) : null}
+        </div>
+      </div>
+
+      {/* Gejala Terkait + Likelihood */}
+      <div className="animate-slide-up stagger-2 card-container !p-0 overflow-hidden">
+        <div className="border-b border-slate-200 p-6 lg:p-8 bg-slate-50/50">
+          <div className="flex items-center gap-4">
+            <div className="bg-sky-100 text-sky-600 p-3 rounded-xl border border-sky-200">
+              <ListChecks className="h-5 w-5 stroke-[2.5]" />
+            </div>
+            <div>
+              <h3 className="text-xl font-black text-slate-800 tracking-tight">
+                Gejala Terkait & Nilai Likelihood
+              </h3>
+              <p className="text-sm font-semibold text-slate-500 mt-0.5">
+                P(Gejala | {penyakit.kode}) — Edit nilai likelihood untuk setiap gejala.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-4 lg:p-6 bg-slate-50/30">
+          <div className="flex flex-col gap-3">
+            {allGejala.map((gejala, idx) => {
+              const currentLikelihood = likelihoodMap.get(gejala.id) ?? 0;
+              return (
+                <div
+                  key={gejala.id}
+                  className={`animate-slide-up stagger-${Math.min(idx + 1, 8)} bg-white p-4 border border-slate-200 rounded-xl shadow-sm transition-all hover:shadow-md hover:border-slate-300`}
+                >
+                  <form
+                    action={updateLikelihood}
+                    className="flex flex-col gap-3 sm:flex-row sm:items-center"
+                  >
+                    <input type="hidden" name="penyakitId" value={penyakit.id} />
+                    <input type="hidden" name="gejalaId" value={gejala.id} />
+
+                    <div className="flex items-center gap-3 sm:w-20 shrink-0">
+                      <span className="text-xs font-black text-sky-600 bg-sky-50 border border-sky-200 px-2 py-1 rounded-lg">
+                        {gejala.kode}
+                      </span>
+                    </div>
+
+                    <p className="text-sm font-bold text-slate-700 sm:flex-1">
+                      {gejala.nama}
+                    </p>
+
+                    <div className="flex items-center gap-3 sm:shrink-0">
+                      <div className="flex items-center gap-2">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
+                          Likelihood
+                        </label>
+                        <input
+                          type="number"
+                          name="likelihood"
+                          defaultValue={currentLikelihood}
+                          step="0.01"
+                          min="0"
+                          max="1"
+                          className="input-field h-10 w-24 text-center font-bold text-sm"
+                          required
+                        />
+                      </div>
+                      <button
+                        type="submit"
+                        className="inline-flex h-10 items-center justify-center rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 hover:border-emerald-300 px-4 text-sm font-bold transition-all active:scale-95 shadow-sm"
+                      >
+                        <Pencil className="mr-1.5 h-3.5 w-3.5" />
+                        Simpan
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default async function PenyakitPage({ searchParams }: PenyakitPageProps) {
+  await requireAdminSession();
   const params = searchParams ? await searchParams : {};
+  const detailId = typeof params.detail === "string" ? params.detail : null;
+
+  if (detailId) {
+    return renderDetailView(detailId, params);
+  }
+
   const q = getSearchValue(params.q).trim();
   const requestedPage = getPageValue(params.page);
 
@@ -102,12 +323,12 @@ export default async function PenyakitPage({ searchParams }: PenyakitPageProps) 
         <div className="absolute right-0 top-0 w-80 h-80 bg-rose-500/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/4 pointer-events-none"></div>
         <div className="relative z-10 flex items-center gap-5">
           <div className="rounded-2xl bg-white/10 border border-white/20 p-4 text-white backdrop-blur-md shadow-lg">
-            <Bug className="h-8 w-8" />
+            <HeartPulse className="h-8 w-8" />
           </div>
           <div>
             <h2 className="text-3xl font-black tracking-tight text-white sm:text-4xl">Data Penyakit</h2>
             <p className="text-slate-300 mt-2 font-medium max-w-lg leading-relaxed">
-              Kelola master data penyakit yang akan menjadi target klasifikasi sistem Naive Bayes.
+              Kelola master data penyakit gizi buruk yang akan menjadi target klasifikasi sistem Naive Bayes.
             </p>
           </div>
         </div>
@@ -155,7 +376,7 @@ export default async function PenyakitPage({ searchParams }: PenyakitPageProps) 
               <input
                 type="text"
                 name="kode"
-                placeholder="Contoh: P01"
+                placeholder="Contoh: C01"
                 className="input-field h-12"
                 required
               />
@@ -181,6 +402,17 @@ export default async function PenyakitPage({ searchParams }: PenyakitPageProps) 
             <textarea
               name="deskripsi"
               placeholder="Jelaskan secara singkat mengenai penyakit ini..."
+              className="input-field min-h-[100px] resize-y"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-700 uppercase tracking-widest ml-1">
+              Saran Penanganan{" "}
+              <span className="font-normal text-slate-400 capitalize normal-case tracking-normal">(Opsional)</span>
+            </label>
+            <textarea
+              name="saranPenanganan"
+              placeholder="Saran penanganan atau solusi untuk penyakit ini..."
               className="input-field min-h-[100px] resize-y"
             />
           </div>
@@ -242,7 +474,7 @@ export default async function PenyakitPage({ searchParams }: PenyakitPageProps) 
           {penyakitList.length === 0 ? (
             <div className="flex flex-col items-center justify-center px-6 py-16 text-center rounded-2xl border-2 border-dashed border-slate-200 bg-white">
               <div className="flex h-20 w-20 items-center justify-center bg-slate-100 border border-slate-200 rounded-3xl mb-5 shadow-sm">
-                <Bug className="h-10 w-10 text-slate-400" />
+                <HeartPulse className="h-10 w-10 text-slate-400" />
               </div>
               <p className="text-lg font-black text-slate-800">
                 {q ? "Penyakit Tidak Ditemukan" : "Belum Ada Data Penyakit"}
@@ -302,10 +534,29 @@ export default async function PenyakitPage({ searchParams }: PenyakitPageProps) 
                           placeholder="Deskripsi singkat..."
                         />
                       </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
+                          Saran Penanganan
+                        </label>
+                        <textarea
+                          name="saranPenanganan"
+                          defaultValue={penyakit.saranPenanganan ?? ""}
+                          className="input-field min-h-[60px] resize-y text-sm leading-relaxed"
+                          placeholder="Saran penanganan..."
+                        />
+                      </div>
                     </form>
                   </div>
 
                   <div className="flex sm:flex-row xl:flex-col items-center gap-2 pt-4 xl:pt-6 xl:pl-6 xl:border-l border-slate-100 mt-2 xl:mt-0 border-t xl:border-t-0">
+                    <a
+                      href={`/dashboard/penyakit?detail=${penyakit.id}`}
+                      className="inline-flex h-11 w-full xl:w-32 items-center justify-center bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 hover:border-sky-300 rounded-xl px-4 text-sm font-bold transition-all active:scale-95 shadow-sm"
+                      title="Lihat Detail & Likelihood"
+                    >
+                      <Eye className="mr-2 h-4 w-4" />
+                      Detail
+                    </a>
                     <button
                       type="submit"
                       form={`update-form-${penyakit.id}`}

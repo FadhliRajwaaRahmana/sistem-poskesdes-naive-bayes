@@ -10,7 +10,8 @@ import { requireAdminSession } from "@/lib/session";
 
 const gejalaPath = "/dashboard/gejala";
 const penyakitPath = "/dashboard/penyakit";
-const trainingPath = "/dashboard/data-training";
+const diagnosisPath = "/dashboard/diagnosis";
+const perhitunganPath = "/dashboard/perhitungan";
 
 const gejalaSchema = z.object({
   kode: z.string().trim().min(1, "Kode gejala wajib diisi.").max(10, "Kode gejala maksimal 10 karakter."),
@@ -20,16 +21,18 @@ const gejalaSchema = z.object({
 const penyakitSchema = z.object({
   kode: z.string().trim().min(1, "Kode penyakit wajib diisi.").max(10, "Kode penyakit maksimal 10 karakter."),
   nama: z.string().trim().min(1, "Nama penyakit wajib diisi.").max(100, "Nama penyakit maksimal 100 karakter."),
-  deskripsi: z.string().trim().max(500, "Deskripsi maksimal 500 karakter.").optional(),
+  deskripsi: z.string().trim().max(2000, "Deskripsi maksimal 2000 karakter.").optional(),
+  saranPenanganan: z.string().trim().max(2000, "Saran penanganan maksimal 2000 karakter.").optional(),
 });
 
 const idSchema = z.object({
   id: z.string().trim().min(1, "ID data tidak valid."),
 });
 
-const trainingSchema = z.object({
-  penyakitId: z.string().trim().min(1, "Penyakit wajib dipilih."),
-  gejalaIds: z.array(z.string().trim().min(1)).min(1, "Pilih minimal satu gejala."),
+const likelihoodSchema = z.object({
+  penyakitId: z.string().trim().min(1, "ID penyakit tidak valid."),
+  gejalaId: z.string().trim().min(1, "ID gejala tidak valid."),
+  likelihood: z.coerce.number().min(0, "Likelihood minimal 0.").max(1, "Likelihood maksimal 1."),
 });
 
 function getStringValue(value: FormDataEntryValue | null) {
@@ -85,7 +88,7 @@ export async function createGejala(formData: FormData) {
     redirectWithMessage(gejalaPath, "error", getActionErrorMessage(error, "Gejala", "create"));
   }
 
-  revalidateMasterData([gejalaPath, trainingPath, "/dashboard/diagnosa"]);
+  revalidateMasterData([gejalaPath, diagnosisPath, perhitunganPath]);
   redirectWithMessage(gejalaPath, "success", "Data gejala berhasil ditambahkan.");
 }
 
@@ -123,7 +126,7 @@ export async function updateGejala(formData: FormData) {
     redirectWithMessage(gejalaPath, "error", getActionErrorMessage(error, "Gejala", "update"));
   }
 
-  revalidateMasterData([gejalaPath, trainingPath, "/dashboard/diagnosa"]);
+  revalidateMasterData([gejalaPath, diagnosisPath, perhitunganPath]);
   redirectWithMessage(gejalaPath, "success", "Data gejala berhasil diperbarui.");
 }
 
@@ -148,7 +151,7 @@ export async function deleteGejala(formData: FormData) {
     redirectWithMessage(gejalaPath, "error", getActionErrorMessage(error, "Gejala", "delete"));
   }
 
-  revalidateMasterData([gejalaPath, trainingPath, "/dashboard/diagnosa"]);
+  revalidateMasterData([gejalaPath, diagnosisPath, perhitunganPath]);
   redirectWithMessage(gejalaPath, "success", "Data gejala berhasil dihapus.");
 }
 
@@ -159,6 +162,7 @@ export async function createPenyakit(formData: FormData) {
     kode: getStringValue(formData.get("kode")).toUpperCase(),
     nama: getStringValue(formData.get("nama")),
     deskripsi: getOptionalString(formData.get("deskripsi")),
+    saranPenanganan: getOptionalString(formData.get("saranPenanganan")),
   });
 
   if (!parsed.success) {
@@ -175,7 +179,7 @@ export async function createPenyakit(formData: FormData) {
     redirectWithMessage(penyakitPath, "error", getActionErrorMessage(error, "Penyakit", "create"));
   }
 
-  revalidateMasterData([penyakitPath, trainingPath, "/dashboard/diagnosa"]);
+  revalidateMasterData([penyakitPath, diagnosisPath, perhitunganPath]);
   redirectWithMessage(penyakitPath, "success", "Data penyakit berhasil ditambahkan.");
 }
 
@@ -190,6 +194,7 @@ export async function updatePenyakit(formData: FormData) {
     kode: getStringValue(formData.get("kode")).toUpperCase(),
     nama: getStringValue(formData.get("nama")),
     deskripsi: getOptionalString(formData.get("deskripsi")),
+    saranPenanganan: getOptionalString(formData.get("saranPenanganan")),
   });
 
   if (!parsedId.success || !parsedData.success) {
@@ -214,7 +219,7 @@ export async function updatePenyakit(formData: FormData) {
     redirectWithMessage(penyakitPath, "error", getActionErrorMessage(error, "Penyakit", "update"));
   }
 
-  revalidateMasterData([penyakitPath, trainingPath, "/dashboard/diagnosa"]);
+  revalidateMasterData([penyakitPath, diagnosisPath, perhitunganPath]);
   redirectWithMessage(penyakitPath, "success", "Data penyakit berhasil diperbarui.");
 }
 
@@ -239,62 +244,37 @@ export async function deletePenyakit(formData: FormData) {
     redirectWithMessage(penyakitPath, "error", getActionErrorMessage(error, "Penyakit", "delete"));
   }
 
-  revalidateMasterData([penyakitPath, trainingPath, "/dashboard/diagnosa"]);
+  revalidateMasterData([penyakitPath, diagnosisPath, perhitunganPath]);
   redirectWithMessage(penyakitPath, "success", "Data penyakit berhasil dihapus.");
 }
 
-export async function createTraining(formData: FormData) {
+export async function updateLikelihood(formData: FormData) {
   await requireAdminSession();
 
-  const parsed = trainingSchema.safeParse({
+  const parsed = likelihoodSchema.safeParse({
     penyakitId: getStringValue(formData.get("penyakitId")),
-    gejalaIds: Array.from(new Set(formData.getAll("gejalaIds").map((value) => getStringValue(value)).filter(Boolean))),
+    gejalaId: getStringValue(formData.get("gejalaId")),
+    likelihood: getStringValue(formData.get("likelihood")),
   });
 
   if (!parsed.success) {
-    redirectWithMessage(trainingPath, "error", parsed.error.issues[0]?.message ?? "Data training tidak valid.");
+    redirectWithMessage(penyakitPath, "error", parsed.error.issues[0]?.message ?? "Data likelihood tidak valid.");
   }
 
-  const data = parsed.data;
+  const { penyakitId, gejalaId, likelihood } = parsed.data;
 
   try {
-    await prisma.dataTraining.create({
-      data: {
-        penyakitId: data.penyakitId,
-        trainingGejala: {
-          create: data.gejalaIds.map((gejalaId) => ({ gejalaId })),
-        },
+    await prisma.penyakitGejala.upsert({
+      where: {
+        penyakitId_gejalaId: { penyakitId, gejalaId },
       },
+      update: { likelihood },
+      create: { penyakitId, gejalaId, likelihood },
     });
   } catch (error) {
-    redirectWithMessage(trainingPath, "error", getActionErrorMessage(error, "Data training", "create"));
+    redirectWithMessage(penyakitPath, "error", getActionErrorMessage(error, "Likelihood", "update"));
   }
 
-  revalidateMasterData([trainingPath, "/dashboard/diagnosa", "/dashboard/perhitungan"]);
-  redirectWithMessage(trainingPath, "success", "Data training berhasil ditambahkan.");
-}
-
-export async function deleteTraining(formData: FormData) {
-  await requireAdminSession();
-
-  const parsed = idSchema.safeParse({
-    id: getStringValue(formData.get("id")),
-  });
-
-  if (!parsed.success) {
-    redirectWithMessage(trainingPath, "error", parsed.error.issues[0]?.message ?? "ID data training tidak valid.");
-  }
-
-  const id = parsed.data.id;
-
-  try {
-    await prisma.dataTraining.delete({
-      where: { id },
-    });
-  } catch (error) {
-    redirectWithMessage(trainingPath, "error", getActionErrorMessage(error, "Data training", "delete"));
-  }
-
-  revalidateMasterData([trainingPath, "/dashboard/diagnosa", "/dashboard/perhitungan"]);
-  redirectWithMessage(trainingPath, "success", "Data training berhasil dihapus.");
+  revalidateMasterData([penyakitPath, gejalaPath, diagnosisPath, perhitunganPath]);
+  redirectWithMessage(`${penyakitPath}?detail=${penyakitId}`, "success", "Nilai likelihood berhasil diperbarui.");
 }

@@ -1,9 +1,13 @@
 import type { ReactNode } from "react";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
-import { requireAdminSession } from "@/lib/session";
+import { requireSession } from "@/lib/session";
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
-  const session = await requireAdminSession();
+  const session = await requireSession();
 
-  return <DashboardShell userName={session.user.name}>{children}</DashboardShell>;
+  return (
+    <DashboardShell userName={session.user.name} userRole={session.user.role ?? "USER"}>
+      {children}
+    </DashboardShell>
+  );
 }

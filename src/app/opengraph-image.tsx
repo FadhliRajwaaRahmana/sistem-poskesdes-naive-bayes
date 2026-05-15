@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-const appName = process.env.NEXT_PUBLIC_APP_NAME ?? "Sistem Diagnosa POSKESDES";
+const appName = process.env.NEXT_PUBLIC_APP_NAME ?? "Sistem Diagnosis POSKESDES";
 
 export const size = {
   width: 1200,
@@ -131,7 +131,7 @@ export default function OpenGraphImage() {
                   letterSpacing: 3,
                 }}
               >
-                Sistem Diagnosa Naive Bayes
+                Sistem Diagnosis Naive Bayes
               </div>
             </div>
           </div>
@@ -181,7 +181,7 @@ export default function OpenGraphImage() {
                 maxWidth: 880,
               }}
             >
-              Kelola gejala, penyakit, data training, dan diagnosa pasien berbasis Naive Bayes dalam satu dashboard yang rapi dan siap digunakan.
+              Kelola gejala, penyakit, dan diagnosis gizi balita berbasis Naive Bayes dalam satu dashboard yang rapi dan siap digunakan.
             </div>
           </div>
         </div>

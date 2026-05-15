@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/auth/login-form";
-import { hasAdminRole } from "@/lib/session-guards";
+import { isAuthenticated } from "@/lib/session-guards";
 import { getSession } from "@/lib/session";
 import { ActivitySquare, ShieldCheck, Stethoscope } from "lucide-react";
 
@@ -19,7 +19,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = searchParams ? await searchParams : {};
   const errorMessage = getSearchValue(params.error);
 
-  if (session?.user && hasAdminRole(session.user.role)) {
+  if (session?.user && isAuthenticated(session.user.role)) {
     redirect("/dashboard");
   }
 
@@ -46,10 +46,10 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             <span>Sistem Pakar Naive Bayes</span>
           </div>
           <h1 className="text-5xl font-black text-white leading-[1.15]">
-            Diagnosa Pasien Lebih Cepat & Presisi.
+            Diagnosis Balita Lebih Cepat & Presisi.
           </h1>
           <p className="text-lg text-slate-300 leading-relaxed font-medium">
-            Platform cerdas untuk membantu tenaga medis di Pos Kesehatan Desa dalam melakukan klasifikasi dan diagnosa penyakit secara efisien.
+            Platform cerdas untuk membantu tenaga medis di Pos Kesehatan Desa dalam melakukan diagnosis gizi buruk pada balita secara efisien.
           </p>
         </div>
 
@@ -69,7 +69,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               </div>
               <div className="text-center">
                 <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">POSKESDES</h1>
-                <p className="text-sm font-bold text-teal-600 uppercase tracking-widest mt-1">Sistem Diagnosa</p>
+                <p className="text-sm font-bold text-teal-600 uppercase tracking-widest mt-1">Sistem Diagnosis</p>
               </div>
             </div>
           </div>
@@ -77,7 +77,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] p-8 sm:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100">
             <div>
               <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Selamat Datang</h2>
-              <p className="text-slate-500 mt-2 font-medium text-base">Silakan masuk menggunakan kredensial admin Anda.</p>
+              <p className="text-slate-500 mt-2 font-medium text-base">Silakan masuk menggunakan kredensial Anda.</p>
             </div>
 
             {errorMessage ? (

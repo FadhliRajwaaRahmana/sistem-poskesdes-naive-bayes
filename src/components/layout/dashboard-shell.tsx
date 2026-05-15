@@ -9,28 +9,38 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
   Stethoscope,
-  Thermometer,
-  Bug,
-  Database,
+  ClipboardCheck,
+  HeartPulse,
   Calculator,
-  ClipboardList,
+  FileText,
+  Users,
+  History,
   Menu,
   X,
   ActivitySquare,
   ShieldCheck,
+  UserCircle,
   PanelLeftClose,
   PanelLeftOpen
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const menu = [
+type MenuItem = { href: string; label: string; icon: typeof LayoutDashboard };
+
+const adminMenu: MenuItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/diagnosa", label: "Diagnosa", icon: Stethoscope },
-  { href: "/dashboard/gejala", label: "Data Gejala", icon: Thermometer },
-  { href: "/dashboard/penyakit", label: "Data Penyakit", icon: Bug },
-  { href: "/dashboard/data-training", label: "Data Training", icon: Database },
+  { href: "/dashboard/diagnosis", label: "Diagnosis Balita", icon: Stethoscope },
+  { href: "/dashboard/gejala", label: "Data Gejala", icon: ClipboardCheck },
+  { href: "/dashboard/penyakit", label: "Data Penyakit", icon: HeartPulse },
   { href: "/dashboard/perhitungan", label: "Perhitungan", icon: Calculator },
-  { href: "/dashboard/riwayat", label: "Riwayat", icon: ClipboardList },
+  { href: "/dashboard/rekam-medis", label: "Rekam Medis", icon: FileText },
+  { href: "/dashboard/pengguna", label: "Kelola Pengguna", icon: Users },
+];
+
+const userMenu: MenuItem[] = [
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/dashboard/diagnosis", label: "Diagnosis Balita", icon: Stethoscope },
+  { href: "/dashboard/riwayat", label: "Riwayat Saya", icon: History },
 ];
 
 const sidebarCollapsedStorageKey = "sidebar-collapsed";
@@ -59,10 +69,12 @@ function getSidebarCollapsedSnapshot() {
 }
 
 function NavLinks({
+  menu,
   pathname,
   onNavigate,
   isCollapsed = false,
 }: {
+  menu: MenuItem[];
   pathname: string;
   onNavigate?: () => void;
   isCollapsed?: boolean;
@@ -97,7 +109,7 @@ function NavLinks({
                 transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
               />
             )}
-            
+
             <item.icon
               className={cn(
                 "relative z-10 shrink-0 transition-transform duration-300",
@@ -117,7 +129,6 @@ function NavLinks({
               {item.label}
             </span>
 
-            {/* Tooltip for collapsed state */}
             {isCollapsed && (
               <div className="absolute left-14 rounded-lg bg-slate-800 px-3 py-1.5 text-xs font-semibold text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 pointer-events-none z-50 whitespace-nowrap">
                 {item.label}
@@ -133,9 +144,11 @@ function NavLinks({
 export function DashboardShell({
   children,
   userName,
+  userRole,
 }: {
   children: ReactNode;
   userName: string;
+  userRole: string;
 }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -152,10 +165,14 @@ export function DashboardShell({
   };
 
   const getInitials = (name: string) => name.substring(0, 2).toUpperCase();
+  const isAdmin = userRole === "ADMIN";
+  const menu = isAdmin ? adminMenu : userMenu;
+  const roleLabel = isAdmin ? "Administrator" : "Pengguna";
+  const RoleIcon = isAdmin ? ShieldCheck : UserCircle;
 
   return (
     <div className="flex min-h-screen bg-slate-50 font-sans">
-      {/* Mobile Header (Glassmorphism) */}
+      {/* Mobile Header */}
       <header className="fixed top-0 inset-x-0 z-40 flex items-center justify-between border-b border-slate-200/50 bg-white/80 backdrop-blur-md px-4 py-3 lg:hidden print:hidden shadow-sm">
         <div className="flex items-center gap-3">
           <div className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-teal-500 text-white shadow-md shadow-primary/20">
@@ -174,7 +191,7 @@ export function DashboardShell({
         </button>
       </header>
 
-      {/* Mobile Sidebar via Framer Motion */}
+      {/* Mobile Sidebar */}
       <AnimatePresence>
         {mobileOpen && (
           <>
@@ -214,6 +231,7 @@ export function DashboardShell({
 
               <div className="flex-1 flex flex-col overflow-hidden">
                 <NavLinks
+                  menu={menu}
                   pathname={pathname}
                   onNavigate={() => setMobileOpen(false)}
                   isCollapsed={false}
@@ -223,11 +241,11 @@ export function DashboardShell({
               <div className="border-t border-slate-100 p-4 bg-slate-50/50">
                 <div className="flex items-center gap-3 mb-4 px-2">
                   <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-teal-100 text-teal-700">
-                    <ShieldCheck className="size-5" />
+                    <RoleIcon className="size-5" />
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-bold text-slate-900 truncate">{userName}</p>
-                    <p className="text-xs text-slate-500 font-medium">Administrator</p>
+                    <p className="text-xs text-slate-500 font-medium">{roleLabel}</p>
                   </div>
                 </div>
                 <LogoutButton variant="sidebar" isCollapsed={false} />
@@ -265,7 +283,7 @@ export function DashboardShell({
         </div>
 
         <div className="flex-1 overflow-hidden flex flex-col">
-          <NavLinks pathname={pathname} isCollapsed={isCollapsed} />
+          <NavLinks menu={menu} pathname={pathname} isCollapsed={isCollapsed} />
         </div>
 
         {/* User Profile Area */}
@@ -278,7 +296,7 @@ export function DashboardShell({
             isCollapsed ? "justify-center p-2" : "gap-3 p-3"
           )}>
             <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-teal-50 text-teal-700 font-bold">
-              {isCollapsed ? getInitials(userName) : <ShieldCheck className="size-5" />}
+              {isCollapsed ? getInitials(userName) : <RoleIcon className="size-5" />}
             </div>
 
             <div className={cn(
@@ -286,14 +304,14 @@ export function DashboardShell({
               isCollapsed ? "opacity-0 w-0 hidden" : "opacity-100 w-auto block"
             )}>
               <p className="text-sm font-bold text-slate-900 truncate">{userName}</p>
-              <p className="text-xs text-slate-500 font-medium">Administrator</p>
+              <p className="text-xs text-slate-500 font-medium">{roleLabel}</p>
             </div>
           </div>
 
           <LogoutButton variant="sidebar" isCollapsed={isCollapsed} />
         </div>
 
-        {/* Toggle Button Container */}
+        {/* Toggle Button */}
         <div className="absolute -right-3.5 top-8 z-50">
           <button
             onClick={toggleCollapse}

@@ -1,61 +1,37 @@
-# Sistem POSKESDES Naive Bayes
+# Sistem Pakar Diagnosis Gizi Buruk Pada Anak — POSKESDES
 
-Aplikasi admin berbasis Next.js untuk membantu POSKESDES melakukan klasifikasi penyakit pasien menggunakan metode Naive Bayes. Sistem ini menyediakan autentikasi admin, pengelolaan master data, pengelolaan data training, proses diagnosa pasien, simulasi perhitungan probabilitas, serta arsip riwayat diagnosa yang bisa difilter dan dicetak.
+Aplikasi web berbasis Next.js untuk membantu POSKESDES mendiagnosis penyakit gizi buruk pada balita menggunakan metode **Naive Bayes** dengan nilai likelihood tetap (expert-defined). Sistem dilengkapi preprocessing otomatis berdasarkan **standar WHO**, dua role pengguna (ADMIN dan USER/orangtua), fitur pemantauan per anak, serta filter per dusun.
 
 Branch utama repository ini adalah `master`.
 
 ## Daftar Isi
 
-Lompat cepat:
-[Instalasi Lokal](#instalasi-lokal) | [Prasyarat](#prasyarat) | [Langkah Setup Lengkap](#langkah-setup-lengkap) | [Cara Penggunaan](#cara-penggunaan)
-
 - [Ringkasan Fitur](#ringkasan-fitur)
 - [Tech Stack](#tech-stack)
-- [Alur Aplikasi](#alur-aplikasi)
 - [Halaman yang Tersedia](#halaman-yang-tersedia)
-- [Arsitektur Kode](#arsitektur-kode)
-- [Frontend](#frontend)
-- [Backend](#backend)
+- [Alur Diagnosis](#alur-diagnosis)
 - [Mesin Naive Bayes](#mesin-naive-bayes)
-- [Detail Perhitungan Naive Bayes](#detail-perhitungan-naive-bayes)
-- [Struktur Folder Aktif](#struktur-folder-aktif)
 - [Database](#database)
-- [Ringkasan Relasi](#ringkasan-relasi)
-- [Detail Tabel dan Kolom](#detail-tabel-dan-kolom)
-- [Seed Data Bawaan](#seed-data-bawaan)
 - [Instalasi Lokal](#instalasi-lokal)
-- [Prasyarat](#prasyarat)
-- [Opsi 1: Clone dari GitHub](#opsi-1-clone-dari-github)
-- [Opsi 2: Download ZIP](#opsi-2-download-zip)
-- [Langkah Setup Lengkap](#langkah-setup-lengkap)
-- [1. Install dependency](#1-install-dependency)
-- [2. Buat file environment](#2-buat-file-environment)
-- [3. Buat database PostgreSQL](#3-buat-database-postgresql)
-- [4. Isi file `.env`](#4-isi-file-env)
-- [5. Generate Prisma Client](#5-generate-prisma-client)
-- [6. Sinkronkan schema ke database](#6-sinkronkan-schema-ke-database)
-- [7. Isi data awal](#7-isi-data-awal)
-- [8. Buat akun admin pertama](#8-buat-akun-admin-pertama)
-- [9. Jalankan aplikasi](#9-jalankan-aplikasi)
-- [10. Login ke sistem](#10-login-ke-sistem)
+- [Deploy ke Vercel](#deploy-ke-vercel)
 - [Cara Penggunaan](#cara-penggunaan)
-- [Panduan Operasional Singkat](#panduan-operasional-singkat)
-- [Catatan Penting](#catatan-penting)
-- [Validasi yang Tersedia di Repo](#validasi-yang-tersedia-di-repo)
-- [Status Scan Repository](#status-scan-repository)
 
 ## Ringkasan Fitur
 
-- Login admin dengan `better-auth` menggunakan username dan password.
-- Dashboard ringkasan statistik gejala, penyakit, data training, dan riwayat diagnosa.
-- CRUD data gejala.
-- CRUD data penyakit.
-- Manajemen data training berbasis relasi penyakit-gejala.
-- Diagnosa pasien dengan perhitungan Naive Bayes.
-- Simulasi halaman perhitungan untuk melihat prior, likelihood, score, dan posterior tanpa menyimpan hasil.
-- Riwayat diagnosa lengkap dengan filter, ranking probabilitas, dan mode cetak.
-- Seed data awal gejala, penyakit, dan sampel training.
-- Script bootstrap admin agar akun admin pertama bisa dibuat otomatis dari `.env`.
+- Login dengan `better-auth` menggunakan username dan password.
+- **Dua role**: ADMIN (akses penuh) dan USER (diagnosis + riwayat sendiri).
+- Dashboard ringkasan statistik penyakit, gejala, diagnosis, dan balita.
+- CRUD master data gejala (20 gejala, G01-G20).
+- CRUD master data penyakit (5 penyakit, C1-C5) + saran penanganan.
+- Edit nilai likelihood per pasangan penyakit-gejala (100 nilai).
+- **Diagnosis balita** dengan preprocessing WHO otomatis (BB, TB, LiLA).
+- Hasil diagnosis lengkap: probabilitas, deskripsi, saran penanganan, detail perhitungan step-by-step.
+- **Rekam medis** dengan filter status (Gizi Baik/Gizi Buruk) dan filter dusun.
+- **Pemantauan per anak**: tracking status antar kunjungan (Kondisi Awal, Tetap, Menurun, Meningkat, Membaik, Memburuk).
+- Kelola akun pengguna (ADMIN membuat akun USER/orangtua).
+- Simulasi perhitungan Naive Bayes (prior, likelihood matrix, posterior).
+- Mode cetak untuk semua laporan.
+- Seed data lengkap: 5 penyakit, 20 gejala, 100 likelihood, 20 standar WHO.
 
 ## Tech Stack
 
@@ -63,355 +39,94 @@ Lompat cepat:
 | --- | --- |
 | Frontend | Next.js 16 App Router, React 19, Tailwind CSS 4, Framer Motion, Lucide React |
 | Backend | Next.js Server Components, Server Actions, Better Auth |
-| Database | PostgreSQL, Prisma ORM |
+| Database | PostgreSQL (lokal atau cloud via Aiven/Supabase/dsb.), Prisma ORM |
 | Validasi | Zod |
-| Tooling | TypeScript, ESLint, tsx, Node test runner |
-
-## Alur Aplikasi
-
-1. User membuka `/`, lalu diarahkan otomatis ke `/dashboard` jika sudah login sebagai admin, atau ke `/login` jika belum.
-2. Admin login memakai username dan password yang disimpan melalui `better-auth`.
-3. Setelah login, semua halaman dashboard dijaga oleh `requireAdminSession()` di [src/lib/session.ts](src/lib/session.ts).
-4. Admin dapat mengelola gejala, penyakit, dan data training dari menu dashboard.
-5. Saat form diagnosa dikirim, server action `submitDiagnosis()`:
-   - memvalidasi input pasien,
-   - memeriksa gejala yang masih valid di database,
-   - menghitung ranking penyakit dengan Naive Bayes,
-   - menyimpan hasil diagnosa, gejala terpilih, dan snapshot ranking probabilitas.
-6. Halaman riwayat menampilkan seluruh arsip diagnosa dan menyediakan mode print untuk laporan.
+| Tooling | TypeScript, ESLint, tsx |
 
 ## Halaman yang Tersedia
 
+### Menu ADMIN
+
 | Route | Fungsi |
 | --- | --- |
-| `/` | Redirect otomatis ke login atau dashboard |
-| `/login` | Form login admin |
 | `/dashboard` | Ringkasan statistik dan aktivitas terbaru |
-| `/dashboard/gejala` | CRUD master data gejala |
-| `/dashboard/penyakit` | CRUD master data penyakit |
-| `/dashboard/data-training` | Menambah dan menghapus sampel training |
-| `/dashboard/diagnosa` | Input data pasien dan proses diagnosa |
-| `/dashboard/perhitungan` | Simulasi perhitungan Naive Bayes |
-| `/dashboard/riwayat` | Arsip diagnosa, filter, pagination, dan cetak laporan |
-| `/api/auth/[...all]` | Endpoint auth Better Auth |
+| `/dashboard/diagnosis` | Input data balita + pengukuran, preprocessing WHO, proses diagnosis |
+| `/dashboard/penyakit` | CRUD penyakit + detail (deskripsi, saran, edit likelihood) |
+| `/dashboard/gejala` | CRUD gejala + detail (penyakit terkait, nilai likelihood) |
+| `/dashboard/perhitungan` | Simulasi perhitungan Naive Bayes (prior, likelihood matrix, posterior) |
+| `/dashboard/rekam-medis` | Riwayat diagnosis semua balita, filter dusun/status, pemantauan per anak |
+| `/dashboard/pengguna` | Kelola akun USER (orangtua) |
 
-## Arsitektur Kode
+### Menu USER (Orangtua)
 
-### Frontend
+| Route | Fungsi |
+| --- | --- |
+| `/dashboard` | Dashboard sederhana |
+| `/dashboard/diagnosis` | Input data balita + diagnosis |
+| `/dashboard/riwayat` | Riwayat diagnosis sendiri + pemantauan per anak |
 
-- Layout utama aplikasi didefinisikan di [src/app/layout.tsx](src/app/layout.tsx).
-- Theme dan utility class global ada di [src/app/globals.css](src/app/globals.css).
-- Shell dashboard dengan sidebar responsif ada di [src/components/layout/dashboard-shell.tsx](src/components/layout/dashboard-shell.tsx).
-- Form login client-side ada di [src/components/auth/login-form.tsx](src/components/auth/login-form.tsx).
-- Tombol logout client-side ada di [src/components/auth/logout-button.tsx](src/components/auth/logout-button.tsx).
-- Animasi transisi halaman dashboard menggunakan [src/app/dashboard/template.tsx](src/app/dashboard/template.tsx).
+## Alur Diagnosis
 
-### Backend
+1. Input data balita: nama, NIK, jenis kelamin, nama ibu, dusun.
+2. Input pengukuran: umur (bulan), berat badan (kg), tinggi badan (cm), LiLA (cm, opsional untuk < 12 bulan).
+3. **Preprocessing WHO otomatis**:
+   - BB di bawah standar WHO → G01 (Berat badan sangat rendah) otomatis tercentang.
+   - TB di bawah standar WHO → G13 (Tinggi badan tidak sesuai umur) otomatis tercentang.
+   - LiLA < 11.5 cm → G16 (LiLA < 11.5 cm / Gizi Buruk) otomatis tercentang (umur >= 12 bulan).
+   - LiLA 11.5-12.5 cm → peringatan Gizi Kurang.
+4. Pilih gejala klinis tambahan dari 20 gejala (checkbox).
+5. Jika **tidak ada gejala sama sekali** (pengukuran normal + tidak ada gejala manual) → hasil "Gizi Baik", disimpan tanpa perhitungan NB.
+6. Jika **ada gejala** → jalankan Naive Bayes → simpan hasil, ranking, dan saran penanganan.
 
-- Konfigurasi auth ada di [src/lib/auth.ts](src/lib/auth.ts).
-- Prisma client singleton ada di [src/lib/prisma.ts](src/lib/prisma.ts).
-- Session dan guard admin ada di [src/lib/session.ts](src/lib/session.ts) dan [src/lib/session-guards.ts](src/lib/session-guards.ts).
-- Server action CRUD master data ada di [src/actions/master-data.ts](src/actions/master-data.ts).
-- Server action diagnosa pasien ada di [src/actions/diagnosa.ts](src/actions/diagnosa.ts).
+## Mesin Naive Bayes
 
-### Mesin Naive Bayes
+Implementasi menggunakan **nilai likelihood tetap** dari tabel pakar (bukan training data):
 
-- Perhitungan utama ada di [src/lib/naive-bayes.ts](src/lib/naive-bayes.ts).
-- Fungsi matematika pembantu ada di [src/lib/naive-bayes-math.ts](src/lib/naive-bayes-math.ts).
-- Validasi input tanggal dan gejala diagnosa ada di [src/lib/diagnosa-validation.ts](src/lib/diagnosa-validation.ts).
-
-## Detail Perhitungan Naive Bayes
-
-Implementasi pada project ini memakai pendekatan berikut:
-
-- `prior = jumlah training penyakit / total seluruh data training`
-- `likelihood = (matchedCount + 1) / (totalKemunculanGejalaPadaPenyakit + totalGejalaMaster)`
-- `score = prior x seluruh likelihood gejala terpilih`
-- `posterior = score / total seluruh score`
-
-Catatan implementasi:
-
-- Smoothing yang dipakai adalah Laplace smoothing.
-- Denominator likelihood memakai total kemunculan gejala pada kelas penyakit, bukan jumlah baris training semata.
-- Sistem menyimpan ranking hasil per diagnosa ke tabel `DiagnosaRanking`, sehingga hasil historis tetap konsisten walaupun data training berubah di masa depan.
-- Jika tidak ada gejala valid atau total score tidak menghasilkan prediksi yang layak, hasil akan ditandai sebagai "Diagnosa penyakit tidak diketahui".
-
-## Struktur Folder Aktif
-
-```text
-.
-|-- prisma/
-|   |-- schema.prisma
-|   |-- seed.ts
-|   |-- seed-utils.ts
-|   `-- seed-utils.test.ts
-|-- scripts/
-|   `-- bootstrap-admin.ts
-|-- src/
-|   |-- actions/
-|   |   |-- diagnosa.ts
-|   |   `-- master-data.ts
-|   |-- app/
-|   |   |-- api/auth/[...all]/route.ts
-|   |   |-- dashboard/
-|   |   |   |-- data-training/page.tsx
-|   |   |   |-- diagnosa/page.tsx
-|   |   |   |-- gejala/page.tsx
-|   |   |   |-- layout.tsx
-|   |   |   |-- loading.tsx
-|   |   |   |-- page.tsx
-|   |   |   |-- penyakit/page.tsx
-|   |   |   |-- perhitungan/page.tsx
-|   |   |   |-- riwayat/page.tsx
-|   |   |   `-- template.tsx
-|   |   |-- favicon.ico
-|   |   |-- globals.css
-|   |   |-- layout.tsx
-|   |   |-- login/page.tsx
-|   |   `-- page.tsx
-|   |-- components/
-|   |   |-- auth/
-|   |   |   |-- login-form.tsx
-|   |   |   `-- logout-button.tsx
-|   |   `-- layout/
-|   |       `-- dashboard-shell.tsx
-|   `-- lib/
-|       |-- auth-client.ts
-|       |-- auth.ts
-|       |-- diagnosa-validation.ts
-|       |-- naive-bayes-math.ts
-|       |-- naive-bayes.ts
-|       |-- prisma-action-errors.ts
-|       |-- prisma.ts
-|       |-- session-guards.ts
-|       |-- session.ts
-|       `-- utils.ts
-|-- .env.example
-|-- eslint.config.mjs
-|-- next.config.ts
-|-- package.json
-|-- postcss.config.mjs
-`-- tsconfig.json
 ```
+Prior:      P(Ck) = 1 / jumlah_penyakit = 1/5 = 0.2
+Likelihood: P(Xi|Ck) = nilai tetap dari tabel pakar (0.0 - 1.0)
+Score:      P(Ck) × Π P(Xi|Ck) untuk semua gejala yang dipilih
+Posterior:  Score(Ck) / Σ Score(semua Ck) × 100%
+```
+
+**5 Penyakit (C1-C5):** Marasmus, Kwashiorkor, Marasmik-Kwashiorkor, Gizi Kurang, Stunting.
+
+**20 Gejala (G01-G20):** Berat badan sangat rendah, Tampak sangat kurus, Wajah tampak tua, dst.
 
 ## Database
 
-Schema database didefinisikan di [prisma/schema.prisma](prisma/schema.prisma).
+Schema didefinisikan di [prisma/schema.prisma](prisma/schema.prisma).
 
-### Ringkasan Relasi
+### Tabel Utama
 
-- `User` 1:N `Session`
-- `User` 1:N `Account`
-- `User` 1:N `DiagnosaPasien`
-- `Penyakit` 1:N `DataTraining`
-- `DataTraining` 1:N `TrainingGejala`
-- `Gejala` 1:N `TrainingGejala`
-- `DiagnosaPasien` 1:N `DiagnosaGejala`
-- `Gejala` 1:N `DiagnosaGejala`
-- `DiagnosaPasien` 1:N `DiagnosaRanking`
-- `Penyakit` 1:N `DiagnosaPasien`
-- `Penyakit` 1:N `DiagnosaRanking`
+| Tabel | Fungsi |
+| --- | --- |
+| `User` | Akun admin dan user (orangtua) |
+| `Penyakit` | Master 5 penyakit gizi buruk + deskripsi + saran penanganan |
+| `Gejala` | Master 20 gejala klinis |
+| `PenyakitGejala` | Nilai likelihood per pasangan penyakit-gejala (100 record) |
+| `StandarPertumbuhan` | Tabel standar WHO BB/TB per umur dan jenis kelamin (20 record) |
+| `DiagnosisBalita` | Hasil diagnosis per kunjungan balita |
+| `DiagnosisGejala` | Gejala yang dipilih saat diagnosis |
+| `DiagnosisRanking` | Snapshot ranking probabilitas per penyakit |
 
-### Detail Tabel dan Kolom
+### Relasi Utama
 
-#### 1. `user`
+- `User` 1:N `DiagnosisBalita`
+- `Penyakit` 1:N `PenyakitGejala`, 1:N `DiagnosisBalita`, 1:N `DiagnosisRanking`
+- `Gejala` 1:N `PenyakitGejala`, 1:N `DiagnosisGejala`
+- `DiagnosisBalita` 1:N `DiagnosisGejala`, 1:N `DiagnosisRanking`
 
-Dipakai untuk akun admin aplikasi.
-
-| Kolom | Tipe | Keterangan |
-| --- | --- | --- |
-| `id` | `String` | Primary key |
-| `name` | `String` | Nama admin |
-| `username` | `String` | Username unik untuk login |
-| `displayUsername` | `String?` | Nama tampilan username, opsional |
-| `email` | `String` | Email unik |
-| `emailVerified` | `Boolean` | Status verifikasi email |
-| `image` | `String?` | Foto profil opsional |
-| `role` | `Role` | Saat ini hanya `ADMIN` |
-| `createdAt` | `DateTime` | Waktu dibuat |
-| `updatedAt` | `DateTime` | Waktu diperbarui |
-
-#### 2. `session`
-
-Dipakai Better Auth untuk session login.
-
-| Kolom | Tipe | Keterangan |
-| --- | --- | --- |
-| `id` | `String` | Primary key |
-| `expiresAt` | `DateTime` | Masa berlaku session |
-| `token` | `String` | Token unik session |
-| `createdAt` | `DateTime` | Waktu dibuat |
-| `updatedAt` | `DateTime` | Waktu diperbarui |
-| `ipAddress` | `String?` | IP user saat login |
-| `userAgent` | `String?` | User agent browser |
-| `userId` | `String` | FK ke `user` |
-
-#### 3. `account`
-
-Dipakai Better Auth untuk akun/provider auth.
-
-| Kolom | Tipe | Keterangan |
-| --- | --- | --- |
-| `id` | `String` | Primary key |
-| `accountId` | `String` | ID akun provider |
-| `providerId` | `String` | Provider auth |
-| `userId` | `String` | FK ke `user` |
-| `accessToken` | `String?` | Token akses opsional |
-| `refreshToken` | `String?` | Token refresh opsional |
-| `idToken` | `String?` | ID token opsional |
-| `accessTokenExpiresAt` | `DateTime?` | Expired access token |
-| `refreshTokenExpiresAt` | `DateTime?` | Expired refresh token |
-| `scope` | `String?` | Scope provider |
-| `password` | `String?` | Hash password untuk login email/password |
-| `createdAt` | `DateTime` | Waktu dibuat |
-| `updatedAt` | `DateTime` | Waktu diperbarui |
-
-#### 4. `verification`
-
-Dipakai Better Auth untuk kebutuhan verifikasi/token.
-
-| Kolom | Tipe | Keterangan |
-| --- | --- | --- |
-| `id` | `String` | Primary key |
-| `identifier` | `String` | Identitas target verifikasi |
-| `value` | `String` | Nilai token/verifikasi |
-| `expiresAt` | `DateTime` | Masa berlaku |
-| `createdAt` | `DateTime?` | Waktu dibuat |
-| `updatedAt` | `DateTime?` | Waktu diperbarui |
-
-#### 5. `Gejala`
-
-Master gejala untuk diagnosa dan data training.
-
-| Kolom | Tipe | Keterangan |
-| --- | --- | --- |
-| `id` | `String` | Primary key |
-| `kode` | `String` | Kode gejala unik, mis. `G01` |
-| `nama` | `String` | Nama gejala |
-| `createdAt` | `DateTime` | Waktu dibuat |
-| `updatedAt` | `DateTime` | Waktu diperbarui |
-
-#### 6. `Penyakit`
-
-Master penyakit yang menjadi target klasifikasi.
-
-| Kolom | Tipe | Keterangan |
-| --- | --- | --- |
-| `id` | `String` | Primary key |
-| `kode` | `String` | Kode penyakit unik, mis. `P01` |
-| `nama` | `String` | Nama penyakit |
-| `deskripsi` | `String?` | Deskripsi singkat penyakit |
-| `createdAt` | `DateTime` | Waktu dibuat |
-| `updatedAt` | `DateTime` | Waktu diperbarui |
-
-#### 7. `DataTraining`
-
-Mewakili satu sampel training untuk sebuah penyakit.
-
-| Kolom | Tipe | Keterangan |
-| --- | --- | --- |
-| `id` | `String` | Primary key |
-| `penyakitId` | `String` | FK ke `Penyakit` |
-| `createdAt` | `DateTime` | Waktu dibuat |
-
-#### 8. `TrainingGejala`
-
-Pivot antara `DataTraining` dan `Gejala`.
-
-| Kolom | Tipe | Keterangan |
-| --- | --- | --- |
-| `id` | `String` | Primary key |
-| `trainingId` | `String` | FK ke `DataTraining` |
-| `gejalaId` | `String` | FK ke `Gejala` |
-
-Constraint penting:
-
-- `@@unique([trainingId, gejalaId])`
-
-#### 9. `DiagnosaPasien`
-
-Tabel inti untuk hasil diagnosa pasien.
-
-| Kolom | Tipe | Keterangan |
-| --- | --- | --- |
-| `id` | `String` | Primary key |
-| `tanggal` | `DateTime` | Tanggal pemeriksaan |
-| `namaPasien` | `String` | Nama pasien |
-| `noKartu` | `String?` | Nomor kartu pasien |
-| `umur` | `Int` | Umur pasien |
-| `alamat` | `String?` | Alamat pasien |
-| `penyakitId` | `String?` | FK ke `Penyakit` hasil tertinggi |
-| `hasilDiagnosa` | `String` | Nama hasil akhir diagnosa |
-| `keterangan` | `String?` | Catatan hasil/ringkasan |
-| `userId` | `String` | FK ke admin pembuat diagnosa |
-| `createdAt` | `DateTime` | Waktu data dibuat |
-
-#### 10. `DiagnosaGejala`
-
-Pivot gejala yang dipilih pada saat diagnosa pasien.
-
-| Kolom | Tipe | Keterangan |
-| --- | --- | --- |
-| `id` | `String` | Primary key |
-| `diagnosaId` | `String` | FK ke `DiagnosaPasien` |
-| `gejalaId` | `String` | FK ke `Gejala` |
-
-Constraint penting:
-
-- `@@unique([diagnosaId, gejalaId])`
-
-#### 11. `DiagnosaRanking`
-
-Snapshot ranking probabilitas seluruh penyakit pada satu diagnosa.
-
-| Kolom | Tipe | Keterangan |
-| --- | --- | --- |
-| `id` | `String` | Primary key |
-| `diagnosaId` | `String` | FK ke `DiagnosaPasien` |
-| `penyakitId` | `String?` | FK ke `Penyakit` |
-| `kodePenyakit` | `String` | Salinan kode penyakit saat diagnosa |
-| `namaPenyakit` | `String` | Salinan nama penyakit saat diagnosa |
-| `prior` | `Float` | Nilai prior |
-| `posterior` | `Float` | Nilai posterior |
-| `score` | `Float` | Score sebelum normalisasi |
-| `peringkat` | `Int` | Urutan ranking |
-| `createdAt` | `DateTime` | Waktu dibuat |
-
-Constraint penting:
-
-- `@@unique([diagnosaId, peringkat])`
-
-## Seed Data Bawaan
-
-Seed awal di [prisma/seed.ts](prisma/seed.ts) akan menambahkan:
-
-- 7 gejala awal (`G01` sampai `G07`)
-- 5 penyakit awal (`P01` sampai `P05`)
-- 18 sampel data training
-
-Contoh data:
-
-- `G01` Pilek
-- `G03` Demam
-- `P01` Influenza
-- `P02` ISPA
-- `P03` Gastritis
-- `P04` Hipertensi
-- `P05` Rematik
+---
 
 ## Instalasi Lokal
 
-Bagian ini ditujukan untuk client yang mendapatkan project melalui clone Git atau download ZIP.
-
 ### Prasyarat
 
-Sebelum menjalankan project, install hal berikut:
-
-- Git, jika ingin clone repository.
-- Node.js LTS modern. Disarankan Node.js 20.x atau lebih baru agar cocok dengan stack Next.js dan toolchain repo ini.
-- npm. Biasanya sudah ikut terpasang bersama Node.js.
-- PostgreSQL lokal atau server PostgreSQL yang bisa diakses dari `DATABASE_URL`.
-- Editor kode seperti VS Code, jika ingin mengubah source code.
+- **Node.js** 20.x atau lebih baru (disarankan LTS).
+- **npm** (sudah ikut terpasang bersama Node.js).
+- **PostgreSQL** lokal yang sudah berjalan, atau akses ke PostgreSQL cloud (Aiven, Supabase, dsb.).
+- **Git** (opsional, untuk clone repository).
 
 ### Opsi 1: Clone dari GitHub
 
@@ -422,17 +137,11 @@ cd sistem-poskesdes-naive-bayes
 
 ### Opsi 2: Download ZIP
 
-1. Download ZIP dari repository GitHub.
-2. Extract ZIP ke folder lokal.
+1. Download ZIP dari halaman repository GitHub.
+2. Extract ke folder lokal.
 3. Buka terminal di folder hasil extract.
 
-Contoh PowerShell:
-
-```powershell
-cd E:\path\ke\folder\hasil-extract\sistem-poskesdes-naive-bayes
-```
-
-### Langkah Setup Lengkap
+### Langkah Setup
 
 #### 1. Install dependency
 
@@ -454,23 +163,23 @@ macOS/Linux:
 cp .env.example .env
 ```
 
-#### 3. Buat database PostgreSQL
-
-Buat database kosong, misalnya:
+#### 3. Buat database PostgreSQL (jika pakai lokal)
 
 ```sql
 CREATE DATABASE poskesdes_db;
 ```
 
+Jika menggunakan cloud (Aiven/Supabase), bisa langsung pakai database default yang disediakan.
+
 #### 4. Isi file `.env`
 
-Contoh isi minimal:
+**Untuk database lokal:**
 
 ```env
 DATABASE_URL="postgresql://postgres:your_password@localhost:5432/poskesdes_db?schema=public"
 BETTER_AUTH_SECRET="ganti-dengan-secret-random-minimal-32-karakter"
 BETTER_AUTH_URL="http://localhost:3000"
-NEXT_PUBLIC_APP_NAME="Sistem Diagnosa POSKESDES"
+NEXT_PUBLIC_APP_NAME="Sistem Diagnosis POSKESDES"
 
 ADMIN_NAME="Admin Poskesdes"
 ADMIN_USERNAME="admin"
@@ -478,15 +187,15 @@ ADMIN_EMAIL="admin@poskesdes.local"
 ADMIN_PASSWORD="password123"
 ```
 
-Penjelasan:
+**Untuk database Aiven:**
 
-- `DATABASE_URL`: koneksi ke PostgreSQL.
-- `BETTER_AUTH_SECRET`: secret untuk session/auth, wajib panjang dan acak.
-- `BETTER_AUTH_URL`: URL aplikasi lokal.
-- `NEXT_PUBLIC_APP_NAME`: nama aplikasi.
-- `ADMIN_*`: akun admin awal yang akan dibuat oleh script bootstrap.
+```env
+DATABASE_URL="postgresql://avnadmin:PASSWORD@HOST.aivencloud.com:PORT/defaultdb?sslmode=require"
+```
 
-Jika Anda perlu membuat secret acak cepat di PowerShell:
+Ganti `PASSWORD`, `HOST`, dan `PORT` sesuai halaman Overview service PostgreSQL Aiven Anda.
+
+Tips membuat secret acak di PowerShell:
 
 ```powershell
 ([guid]::NewGuid().ToString("N") + [guid]::NewGuid().ToString("N"))
@@ -500,23 +209,19 @@ npm run db:generate
 
 #### 6. Sinkronkan schema ke database
 
-Karena repository ini belum menyertakan folder migration Prisma, cara paling aman untuk setup lokal baru adalah:
-
 ```bash
 npx prisma db push
 ```
 
-Jika Anda memang ingin membuat migration lokal pertama, gunakan:
+Perintah ini membuat semua tabel sesuai schema Prisma. Aman dijalankan baik untuk database lokal maupun cloud.
 
-```bash
-npx prisma migrate dev --name init
-```
-
-#### 7. Isi data awal
+#### 7. Isi data awal (seed)
 
 ```bash
 npm run db:seed
 ```
+
+Ini akan mengisi: 5 penyakit, 20 gejala, 100 nilai likelihood, dan 20 standar pertumbuhan WHO.
 
 #### 8. Buat akun admin pertama
 
@@ -524,10 +229,7 @@ npm run db:seed
 npm run auth:bootstrap
 ```
 
-Script ini akan:
-
-- membuat user admin baru jika belum ada,
-- atau menyinkronkan data admin jika email yang sama sudah ada.
+Script ini membuat akun admin dari nilai `ADMIN_*` di `.env`.
 
 #### 9. Jalankan aplikasi
 
@@ -535,18 +237,92 @@ Script ini akan:
 npm run dev
 ```
 
-Lalu buka:
+Buka `http://localhost:3000` di browser.
 
-```text
-http://localhost:3000
+#### 10. Login
+
+Gunakan username dan password dari `.env`:
+
+- **Username:** nilai `ADMIN_USERNAME` (default: `admin`)
+- **Password:** nilai `ADMIN_PASSWORD` (default: `password123`)
+
+---
+
+## Deploy ke Vercel
+
+### Prasyarat
+
+- Akun [Vercel](https://vercel.com).
+- Database PostgreSQL cloud yang dapat diakses dari internet (misal: [Aiven](https://aiven.io), [Supabase](https://supabase.com), [Neon](https://neon.tech), dsb.).
+- Repository sudah di-push ke GitHub.
+
+### Langkah Deploy
+
+#### 1. Siapkan database cloud
+
+Pastikan database cloud sudah disetup:
+
+- Schema sudah di-push (`npx prisma db push` dari lokal dengan `DATABASE_URL` mengarah ke cloud).
+- Seed data sudah dijalankan (`npm run db:seed`).
+- Admin sudah dibuat (`npm run auth:bootstrap`).
+
+Semua perintah di atas bisa dijalankan dari mesin lokal dengan mengganti `DATABASE_URL` di `.env` ke connection string cloud. Contoh:
+
+```env
+DATABASE_URL="postgresql://avnadmin:PASSWORD@HOST.aivencloud.com:PORT/defaultdb?sslmode=require"
 ```
 
-#### 10. Login ke sistem
+Lalu jalankan:
 
-Gunakan kredensial admin yang Anda isi pada `.env`:
+```bash
+npx prisma db push
+npm run db:seed
+npm run auth:bootstrap
+```
 
-- Username: nilai `ADMIN_USERNAME`
-- Password: nilai `ADMIN_PASSWORD`
+#### 2. Import project di Vercel
+
+1. Buka [vercel.com/new](https://vercel.com/new).
+2. Hubungkan akun GitHub dan pilih repository `sistem-poskesdes-naive-bayes`.
+3. Framework Preset: **Next.js** (otomatis terdeteksi).
+4. Build Command: biarkan default (`next build`).
+
+#### 3. Set environment variables di Vercel
+
+Di halaman konfigurasi project Vercel, tambahkan environment variables berikut:
+
+| Variable | Nilai | Keterangan |
+| --- | --- | --- |
+| `DATABASE_URL` | `postgresql://avnadmin:...@....aivencloud.com:17991/defaultdb?sslmode=require` | Connection string database cloud |
+| `BETTER_AUTH_SECRET` | *(secret acak min 32 karakter)* | Wajib sama dengan yang dipakai saat bootstrap admin |
+| `BETTER_AUTH_URL` | `https://nama-project.vercel.app` | URL production Vercel Anda |
+| `NEXT_PUBLIC_APP_NAME` | `Sistem Diagnosis POSKESDES` | Nama aplikasi |
+
+**Penting:**
+- `BETTER_AUTH_URL` harus diisi dengan URL production Vercel (bukan `localhost`).
+- `BETTER_AUTH_SECRET` harus **sama** dengan yang digunakan saat `auth:bootstrap` agar session dan password hash tetap valid.
+- Variable `ADMIN_*` tidak perlu di-set di Vercel (hanya dipakai saat bootstrap lokal).
+
+#### 4. Deploy
+
+Klik **Deploy**. Vercel akan build dan deploy otomatis. Setelah selesai, buka URL yang diberikan Vercel.
+
+#### 5. Verifikasi
+
+- Buka `https://nama-project.vercel.app/login`.
+- Login dengan username dan password admin yang sudah di-bootstrap.
+- Cek dashboard, data penyakit (5), gejala (20), dan coba lakukan diagnosis.
+
+### Troubleshooting Deploy
+
+| Masalah | Solusi |
+| --- | --- |
+| Build error Prisma | Pastikan `prisma generate` berjalan saat build. Ini sudah otomatis via `postinstall` di Vercel. Jika tidak, tambahkan `"postinstall": "prisma generate"` di `scripts` package.json. |
+| Database connection timeout | Pastikan `?sslmode=require` ada di `DATABASE_URL` untuk cloud database. |
+| Login gagal setelah deploy | Pastikan `BETTER_AUTH_SECRET` di Vercel **sama persis** dengan saat `auth:bootstrap`. |
+| `BETTER_AUTH_URL` salah | Harus berupa URL full production (https://...), bukan localhost. |
+
+---
 
 ## Cara Penggunaan
 
@@ -556,7 +332,7 @@ Gunakan kredensial admin yang Anda isi pada `.env`:
 npm run dev
 ```
 
-### Menjalankan untuk Production Lokal
+### Build untuk Production
 
 ```bash
 npm run build
@@ -575,7 +351,7 @@ npm run test
 npm run lint
 ```
 
-### Menjalankan Type Check
+### Type Check
 
 ```bash
 npm run typecheck
@@ -587,53 +363,89 @@ npm run typecheck
 npm run db:studio
 ```
 
-## Panduan Operasional Singkat
+### Panduan Operasional
 
-Urutan penggunaan yang disarankan untuk admin:
+**Sebagai ADMIN:**
 
 1. Login ke sistem.
-2. Cek dan lengkapi master data gejala.
-3. Cek dan lengkapi master data penyakit.
-4. Tambahkan data training yang menghubungkan penyakit dengan gejala.
-5. Lakukan diagnosa pasien dari halaman `/dashboard/diagnosa`.
-6. Gunakan halaman `/dashboard/perhitungan` untuk menjelaskan proses inferensi secara transparan.
-7. Gunakan `/dashboard/riwayat` untuk mencari arsip dan mencetak laporan.
+2. Cek dashboard untuk ringkasan statistik.
+3. Kelola master data penyakit dan gejala (lihat detail, edit likelihood).
+4. Lakukan diagnosis balita dari halaman Diagnosis Balita.
+5. Gunakan halaman Perhitungan untuk simulasi dan verifikasi perhitungan NB.
+6. Gunakan Rekam Medis untuk melihat riwayat, filter per dusun/status, dan pantau perkembangan anak.
+7. Kelola akun USER (orangtua) dari halaman Kelola Pengguna.
 
-## Catatan Penting
+**Sebagai USER (Orangtua):**
 
-- Role yang didukung saat ini hanya `ADMIN`.
-- Hasil diagnosa historis menyimpan snapshot ranking probabilitas pada saat diagnosa dilakukan.
-- Folder `src/app` adalah aplikasi aktif yang dijalankan Next.js.
-- Route auth ditangani oleh Better Auth melalui `src/app/api/auth/[...all]/route.ts`.
-- File seed dan bootstrap admin penting untuk demo lokal yang siap dipakai client.
+1. Login dengan akun yang dibuat oleh admin.
+2. Lakukan diagnosis balita.
+3. Lihat riwayat diagnosis anak sendiri dan pantau perkembangan.
 
-## Validasi yang Tersedia di Repo
+### Beralih Antara Database Lokal dan Cloud
 
-Project ini sudah memiliki test unit ringan untuk:
+Cukup ganti nilai `DATABASE_URL` di file `.env`:
 
-- validasi parsing tanggal diagnosa,
-- pemisahan gejala valid dan gejala yang hilang,
-- utilitas perhitungan Naive Bayes,
-- mapping pesan error Prisma,
-- guard role admin,
-- helper seed data training.
+```env
+# Lokal:
+DATABASE_URL="postgresql://postgres:password@localhost:5432/poskesdes_db?schema=public"
 
-Referensi file test:
+# Cloud (Aiven):
+DATABASE_URL="postgresql://avnadmin:PASSWORD@HOST.aivencloud.com:PORT/defaultdb?sslmode=require"
+```
 
-- [src/lib/diagnosa-validation.test.ts](src/lib/diagnosa-validation.test.ts)
-- [src/lib/naive-bayes-math.test.ts](src/lib/naive-bayes-math.test.ts)
-- [src/lib/prisma-action-errors.test.ts](src/lib/prisma-action-errors.test.ts)
-- [src/lib/session-guards.test.ts](src/lib/session-guards.test.ts)
-- [prisma/seed-utils.test.ts](prisma/seed-utils.test.ts)
+Setelah ganti, restart dev server (`npm run dev`). Tidak perlu ubah kode apapun.
 
-## Status Scan Repository
+## Struktur Folder
 
-README ini disusun berdasarkan file aplikasi yang saat ini benar-benar dilacak Git, terutama:
-
-- [package.json](package.json)
-- [prisma/schema.prisma](prisma/schema.prisma)
-- [prisma/seed.ts](prisma/seed.ts)
-- [scripts/bootstrap-admin.ts](scripts/bootstrap-admin.ts)
-- seluruh halaman aktif di [src/app](src/app)
-- seluruh server action di [src/actions](src/actions)
-- seluruh utilitas inti di [src/lib](src/lib)
+```text
+.
+|-- prisma/
+|   |-- schema.prisma          # Schema database Prisma
+|   `-- seed.ts                # Seed data (5 penyakit, 20 gejala, 100 likelihood, 20 WHO)
+|-- scripts/
+|   `-- bootstrap-admin.ts     # Script buat akun admin pertama
+|-- src/
+|   |-- actions/
+|   |   |-- diagnosis.ts       # Server action diagnosis balita
+|   |   |-- master-data.ts     # Server action CRUD penyakit, gejala, likelihood
+|   |   `-- user-management.ts # Server action CRUD akun user
+|   |-- app/
+|   |   |-- api/auth/[...all]/route.ts
+|   |   |-- dashboard/
+|   |   |   |-- diagnosis/page.tsx      # Form + hasil diagnosis balita
+|   |   |   |-- gejala/page.tsx         # CRUD gejala + detail
+|   |   |   |-- pengguna/page.tsx       # Kelola akun user (admin only)
+|   |   |   |-- penyakit/page.tsx       # CRUD penyakit + detail + edit likelihood
+|   |   |   |-- perhitungan/page.tsx    # Simulasi perhitungan NB
+|   |   |   |-- rekam-medis/page.tsx    # Rekam medis + pemantauan (admin only)
+|   |   |   |-- riwayat/page.tsx        # Riwayat diagnosis (user only)
+|   |   |   |-- layout.tsx
+|   |   |   |-- loading.tsx
+|   |   |   |-- page.tsx               # Dashboard
+|   |   |   `-- template.tsx
+|   |   |-- globals.css
+|   |   |-- layout.tsx
+|   |   |-- login/page.tsx
+|   |   `-- page.tsx                   # Redirect ke dashboard/login
+|   |-- components/
+|   |   |-- auth/
+|   |   |   |-- login-form.tsx
+|   |   |   `-- logout-button.tsx
+|   |   `-- layout/
+|   |       `-- dashboard-shell.tsx    # Sidebar + shell dashboard (role-aware)
+|   `-- lib/
+|       |-- auth.ts                    # Konfigurasi Better Auth
+|       |-- auth-client.ts            # Client-side auth
+|       |-- diagnosis-helpers.ts      # Helper status pemantauan, severity
+|       |-- diagnosis-validation.ts   # Validasi input diagnosis
+|       |-- naive-bayes.ts            # Mesin Naive Bayes (fixed likelihood)
+|       |-- prisma.ts                 # Prisma client singleton
+|       |-- prisma-action-errors.ts   # Error mapping Prisma
+|       |-- session.ts                # Session guards (requireSession, requireAdmin)
+|       |-- session-guards.ts         # Role check helpers
+|       |-- utils.ts                  # Utility functions
+|       `-- who-standards.ts          # Standar WHO + preprocessing auto-gejala
+|-- .env.example
+|-- package.json
+`-- tsconfig.json
+```

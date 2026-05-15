@@ -9,22 +9,30 @@ datasource db {
 
 enum Role {
   ADMIN
+  USER
 }
 
+enum JenisKelamin {
+  LAKI_LAKI
+  PEREMPUAN
+}
+
+// ──────────────────────────── Auth (Better Auth) ────────────────────────────
+
 model User {
-  id              String           @id @default(cuid())
+  id              String            @id @default(cuid())
   name            String
-  username        String           @unique
+  username        String            @unique
   displayUsername String?
-  email           String           @unique
-  emailVerified   Boolean          @default(true)
+  email           String            @unique
+  emailVerified   Boolean           @default(true)
   image           String?
-  role            Role             @default(ADMIN)
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  role            Role              @default(ADMIN)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
   sessions        Session[]
   accounts        Account[]
-  diagnosa        DiagnosaPasien[]
+  diagnosis       DiagnosisBalita[]
 
   @@map("user")
 }
@@ -73,97 +81,112 @@ model Verification {
   @@map("verification")
 }
 
-model Gejala {
-  id             String            @id @default(cuid())
-  kode           String            @unique
-  nama           String
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
-  trainingGejala TrainingGejala[]
-  diagnosaGejala DiagnosaGejala[]
-}
+// ──────────────────────────── Domain: Master Data ───────────────────────────
 
 model Penyakit {
-  id              String            @id @default(cuid())
-  kode            String            @unique
+  id              String              @id @default(cuid())
+  kode            String              @unique
   nama            String
-  deskripsi       String?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  dataTraining    DataTraining[]
-  diagnosa        DiagnosaPasien[]
-  diagnosaRanking DiagnosaRanking[]
+  deskripsi       String?             @db.Text
+  saranPenanganan String?             @db.Text
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  penyakitGejala  PenyakitGejala[]
+  diagnosis       DiagnosisBalita[]
+  diagnosisRanking DiagnosisRanking[]
 }
 
-model DataTraining {
-  id             String           @id @default(cuid())
-  penyakitId     String
-  createdAt      DateTime         @default(now())
-  penyakit       Penyakit         @relation(fields: [penyakitId], references: [id], onDelete: Restrict)
-  trainingGejala TrainingGejala[]
-
-  @@index([penyakitId])
+model Gejala {
+  id              String              @id @default(cuid())
+  kode            String              @unique
+  nama            String
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  penyakitGejala  PenyakitGejala[]
+  diagnosisGejala DiagnosisGejala[]
 }
 
-model TrainingGejala {
-  id         String       @id @default(cuid())
-  trainingId String
+model PenyakitGejala {
+  id         String   @id @default(cuid())
+  penyakitId String
   gejalaId   String
-  training   DataTraining @relation(fields: [trainingId], references: [id], onDelete: Cascade)
-  gejala     Gejala       @relation(fields: [gejalaId], references: [id], onDelete: Restrict)
+  likelihood Float
+  penyakit   Penyakit @relation(fields: [penyakitId], references: [id], onDelete: Cascade)
+  gejala     Gejala   @relation(fields: [gejalaId], references: [id], onDelete: Cascade)
 
-  @@unique([trainingId, gejalaId])
+  @@unique([penyakitId, gejalaId])
   @@index([gejalaId])
 }
 
-model DiagnosaPasien {
-  id              String            @id @default(cuid())
+model StandarPertumbuhan {
+  id           String       @id @default(cuid())
+  umurBulan    Int
+  jenisKelamin JenisKelamin
+  bbMin        Float
+  bbMax        Float
+  tbMin        Float
+  tbMax        Float
+
+  @@unique([umurBulan, jenisKelamin])
+}
+
+// ──────────────────────────── Domain: Diagnosis ─────────────────────────────
+
+model DiagnosisBalita {
+  id              String              @id @default(cuid())
   tanggal         DateTime
-  namaPasien      String
-  noKartu         String?
-  umur            Int
-  alamat          String?
+  namaBalita      String
+  nik             String
+  jenisKelamin    JenisKelamin
+  namaIbu         String
+  dusun           String
+  umurBulan       Int
+  beratBadan      Float
+  tinggiBadan     Float
+  lila            Float?
+  hasilDiagnosis  String
   penyakitId      String?
-  hasilDiagnosa   String
   keterangan      String?
   userId          String
-  createdAt       DateTime          @default(now())
-  penyakit        Penyakit?         @relation(fields: [penyakitId], references: [id], onDelete: SetNull)
-  user            User              @relation(fields: [userId], references: [id], onDelete: Restrict)
-  diagnosaGejala  DiagnosaGejala[]
-  diagnosaRanking DiagnosaRanking[]
+  createdAt       DateTime            @default(now())
+  penyakit        Penyakit?           @relation(fields: [penyakitId], references: [id], onDelete: SetNull)
+  user            User                @relation(fields: [userId], references: [id], onDelete: Restrict)
+  diagnosisGejala DiagnosisGejala[]
+  diagnosisRanking DiagnosisRanking[]
 
   @@index([tanggal])
   @@index([penyakitId])
   @@index([userId])
+  @@index([nik])
+  @@index([dusun])
 }
 
-model DiagnosaGejala {
-  id         String         @id @default(cuid())
-  diagnosaId String
-  gejalaId   String
-  diagnosa   DiagnosaPasien @relation(fields: [diagnosaId], references: [id], onDelete: Cascade)
-  gejala     Gejala         @relation(fields: [gejalaId], references: [id], onDelete: Restrict)
+model DiagnosisGejala {
+  id          String          @id @default(cuid())
+  diagnosisId String
+  gejalaId    String
+  diagnosis   DiagnosisBalita @relation(fields: [diagnosisId], references: [id], onDelete: Cascade)
+  gejala      Gejala          @relation(fields: [gejalaId], references: [id], onDelete: Restrict)
 
-  @@unique([diagnosaId, gejalaId])
+  @@unique([diagnosisId, gejalaId])
   @@index([gejalaId])
 }
 
-model DiagnosaRanking {
-  id           String         @id @default(cuid())
-  diagnosaId   String
+model DiagnosisRanking {
+  id           String          @id @default(cuid())
+  diagnosisId  String
   penyakitId   String?
   kodePenyakit String
   namaPenyakit String
   prior        Float
-  posterior    Float
+  posterior     Float
   score        Float
   peringkat    Int
-  createdAt    DateTime       @default(now())
-  diagnosa     DiagnosaPasien @relation(fields: [diagnosaId], references: [id], onDelete: Cascade)
-  penyakit     Penyakit?      @relation(fields: [penyakitId], references: [id], onDelete: SetNull)
+  createdAt    DateTime        @default(now())
+  diagnosis    DiagnosisBalita @relation(fields: [diagnosisId], references: [id], onDelete: Cascade)
+  penyakit     Penyakit?       @relation(fields: [penyakitId], references: [id], onDelete: SetNull)
 
-  @@index([diagnosaId])
+  @@index([diagnosisId])
   @@index([penyakitId])
-  @@unique([diagnosaId, peringkat])
+  @@unique([diagnosisId, peringkat])
 }

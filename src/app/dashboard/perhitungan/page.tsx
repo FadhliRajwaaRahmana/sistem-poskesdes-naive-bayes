@@ -1,9 +1,9 @@
 import { getNaiveBayesPageData } from "@/lib/naive-bayes";
+import { requireAdminSession } from "@/lib/session";
 import {
   Calculator,
-  Database,
-  Thermometer,
-  Bug,
+  ClipboardCheck,
+  HeartPulse,
   Play,
   RotateCcw,
   Award,
@@ -30,37 +30,15 @@ function getSelectedIds(value: string | string[] | undefined) {
   return [];
 }
 
-const statCards = [
-  {
-    label: "Total Data Training",
-    hint: "Dataset Naive Bayes aktif",
-    icon: Database,
-    colorClasses: "bg-blue-100 text-blue-600 border-blue-200 group-hover:bg-blue-200",
-  },
-  {
-    label: "Total Gejala",
-    hint: "Master gejala terdaftar",
-    icon: Thermometer,
-    colorClasses: "bg-emerald-100 text-emerald-600 border-emerald-200 group-hover:bg-emerald-200",
-  },
-  {
-    label: "Total Penyakit",
-    hint: "Target klasifikasi",
-    icon: Bug,
-    colorClasses: "bg-rose-100 text-rose-600 border-rose-200 group-hover:bg-rose-200",
-  },
-];
-
 export default async function PerhitunganPage({ searchParams }: PerhitunganPageProps) {
+  await requireAdminSession();
   const params = searchParams ? await searchParams : {};
   const selectedIds = getSelectedIds(params.gejalaId);
   const { overview, simulation } = await getNaiveBayesPageData(selectedIds);
 
-  const statValues = [overview.totalTraining, overview.totalGejala, overview.penyakitMaster.length];
-
   return (
     <section className="space-y-8 pb-12">
-      {/* ───── Page Header ───── */}
+      {/* Page Header */}
       <div className="animate-fade-in relative overflow-hidden rounded-[2rem] bg-slate-900 px-8 py-10 shadow-xl sm:px-12 sm:py-14">
         <div className="absolute right-0 top-0 w-80 h-80 bg-indigo-500/20 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/4 pointer-events-none"></div>
         <div className="absolute -left-10 -bottom-10 opacity-5 rotate-12 pointer-events-none">
@@ -73,38 +51,42 @@ export default async function PerhitunganPage({ searchParams }: PerhitunganPageP
           </div>
           <h2 className="text-3xl font-black tracking-tight text-white sm:text-5xl">Perhitungan Naive Bayes</h2>
           <p className="mt-4 text-base font-medium leading-relaxed text-slate-300">
-            Pelajari cara sistem mengambil keputusan. Jalankan simulasi perhitungan probabilitas secara transparan tanpa perlu menyimpannya ke riwayat diagnosa.
+            Pelajari cara sistem mengambil keputusan. Jalankan simulasi perhitungan probabilitas secara transparan
+            menggunakan nilai likelihood tetap yang ditetapkan oleh pakar.
           </p>
         </div>
       </div>
 
-      {/* ───── Summary Stat Cards ───── */}
-      <div className="grid gap-6 sm:grid-cols-3">
-        {statCards.map((card, index) => {
-          const Icon = card.icon;
-
-          return (
-            <div
-              key={card.label}
-              className={`stagger-${index + 1} group animate-slide-up card-container transition-all duration-300 hover:-translate-y-1 hover:shadow-lg`}
-            >
-              <div className="flex items-center justify-between">
-                <div className={`${card.colorClasses} border p-3 rounded-2xl transition-all duration-300 group-hover:scale-110 shadow-sm`}>
-                  <Icon className="size-6" />
-                </div>
-                <p className="text-4xl font-black tracking-tight text-slate-900 group-hover:text-primary transition-colors">{statValues[index]}</p>
-              </div>
-              <div className="mt-6">
-                <p className="font-bold text-slate-700">{card.label}</p>
-                <p className="mt-1 text-xs font-semibold text-slate-400">{card.hint}</p>
-              </div>
+      {/* Summary Stat Cards */}
+      <div className="grid gap-6 sm:grid-cols-2">
+        <div className="stagger-1 group animate-slide-up card-container transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+          <div className="flex items-center justify-between">
+            <div className="bg-emerald-100 text-emerald-600 border-emerald-200 border p-3 rounded-2xl transition-all duration-300 group-hover:scale-110 shadow-sm">
+              <ClipboardCheck className="size-6" />
             </div>
-          );
-        })}
+            <p className="text-4xl font-black tracking-tight text-slate-900 group-hover:text-primary transition-colors">{overview.totalGejala}</p>
+          </div>
+          <div className="mt-6">
+            <p className="font-bold text-slate-700">Total Gejala</p>
+            <p className="mt-1 text-xs font-semibold text-slate-400">Master gejala terdaftar</p>
+          </div>
+        </div>
+        <div className="stagger-2 group animate-slide-up card-container transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+          <div className="flex items-center justify-between">
+            <div className="bg-rose-100 text-rose-600 border-rose-200 border p-3 rounded-2xl transition-all duration-300 group-hover:scale-110 shadow-sm">
+              <HeartPulse className="size-6" />
+            </div>
+            <p className="text-4xl font-black tracking-tight text-slate-900 group-hover:text-primary transition-colors">{overview.totalPenyakit}</p>
+          </div>
+          <div className="mt-6">
+            <p className="font-bold text-slate-700">Total Penyakit</p>
+            <p className="mt-1 text-xs font-semibold text-slate-400">Target klasifikasi</p>
+          </div>
+        </div>
       </div>
 
-      {/* ───── Simulation Form ───── */}
-      <div className="animate-slide-up stagger-4 card-container border-2 border-indigo-100 bg-gradient-to-b from-white to-indigo-50/20">
+      {/* Simulation Form */}
+      <div className="animate-slide-up stagger-3 card-container border-2 border-indigo-100 bg-gradient-to-b from-white to-indigo-50/20">
         <div className="mb-6 flex items-center gap-4 border-b border-indigo-100 pb-5">
           <div className="bg-indigo-600 text-white p-3 rounded-xl shadow-md shadow-indigo-600/20">
             <Play className="size-6" />
@@ -112,14 +94,14 @@ export default async function PerhitunganPage({ searchParams }: PerhitunganPageP
           <div>
             <h3 className="text-2xl font-black text-slate-900 tracking-tight">Simulasi Perhitungan</h3>
             <p className="text-sm font-semibold text-slate-500 mt-1">
-              Pilih gejala untuk melihat hasil prior, likelihood (Laplace smoothing), dan score akhir.
+              Pilih gejala untuk melihat hasil prior, likelihood (pakar), dan posterior akhir.
             </p>
           </div>
         </div>
 
         <form className="space-y-6" method="get">
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 max-h-[400px] overflow-y-auto pr-2 clean-scroll p-1">
-            {overview.gejalaMaster.map((gejala) => (
+            {overview.gejalaList.map((gejala) => (
               <label
                 key={gejala.id}
                 className="group flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-300 hover:border-indigo-400 hover:shadow-md has-[:checked]:border-indigo-600 has-[:checked]:bg-indigo-50/50 has-[:checked]:shadow-md"
@@ -161,10 +143,10 @@ export default async function PerhitunganPage({ searchParams }: PerhitunganPageP
         </form>
       </div>
 
-      {/* ───── Simulation Results ───── */}
+      {/* Simulation Results */}
       {simulation ? (
         <div className="animate-fade-in space-y-8">
-          {/* Selected Symptoms + Note */}
+          {/* Selected Symptoms */}
           <div className="card-container">
             <div className="flex items-center gap-4 mb-6">
               <div className="bg-emerald-100 text-emerald-600 border border-emerald-200 p-3 rounded-xl shadow-sm">
@@ -172,16 +154,18 @@ export default async function PerhitunganPage({ searchParams }: PerhitunganPageP
               </div>
               <div>
                 <h3 className="text-xl font-black text-slate-900 tracking-tight">Hasil Analisis Simulasi</h3>
-                <p className="text-sm font-bold text-emerald-600 mt-1 bg-emerald-50 px-3 py-1 rounded-md border border-emerald-100 w-fit">{simulation.note}</p>
+                <p className="text-sm font-bold text-emerald-600 mt-1 bg-emerald-50 px-3 py-1 rounded-md border border-emerald-100 w-fit">
+                  {simulation.status === "known" ? simulation.resultText : "Tidak dapat menentukan diagnosis"}
+                </p>
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
-              {simulation.selectedGejala.map((item) => (
+              {simulation.breakdown.length > 0 && simulation.breakdown[0].steps.map((step) => (
                 <span
-                  key={item.id}
+                  key={step.kodeGejala}
                   className="inline-flex items-center rounded-lg bg-slate-50 border border-slate-200 px-3.5 py-2 text-xs font-bold text-slate-700 shadow-sm"
                 >
-                  <span className="text-indigo-600 mr-2 font-black">{item.kode}</span> {item.nama}
+                  <span className="text-indigo-600 mr-2 font-black">{step.kodeGejala}</span> {step.namaGejala}
                 </span>
               ))}
             </div>
@@ -229,7 +213,7 @@ export default async function PerhitunganPage({ searchParams }: PerhitunganPageP
                         </div>
                         <div>
                           <h4 className={`text-lg font-black ${isTop ? "text-amber-900" : "text-slate-900"}`}>
-                            <span className="text-slate-400 mr-1.5 font-bold">{item.kode}</span> {item.nama}
+                            <span className="text-slate-400 mr-1.5 font-bold">{item.kodePenyakit}</span> {item.namaPenyakit}
                           </h4>
                           {isTop && (
                             <p className="mt-1 text-[10px] font-black uppercase tracking-widest text-amber-600 bg-amber-100/50 w-fit px-2 py-0.5 rounded border border-amber-200">Rekomendasi Utama</p>
@@ -251,7 +235,7 @@ export default async function PerhitunganPage({ searchParams }: PerhitunganPageP
                                 : "bg-slate-50 border-slate-200"
                         }`}>
                           <span className={`text-[10px] font-black uppercase tracking-widest ${isTop ? "text-amber-700" : "text-slate-500"}`}>Posterior</span>
-                          <span className={`font-black text-lg ${isTop ? "text-amber-700" : "text-slate-700"}`}>{(item.posterior * 100).toFixed(2)}%</span>
+                          <span className={`font-black text-lg ${isTop ? "text-amber-700" : "text-slate-700"}`}>{item.posterior.toFixed(2)}%</span>
                         </div>
                       </div>
                     </div>
@@ -269,7 +253,9 @@ export default async function PerhitunganPage({ searchParams }: PerhitunganPageP
               </div>
               <div>
                 <h3 className="text-xl font-black text-slate-900 tracking-tight">Detail Kalkulasi per Penyakit</h3>
-                <p className="text-sm font-semibold text-slate-500 mt-1">Transparansi perhitungan Prior dan Likelihood.</p>
+                <p className="text-sm font-semibold text-slate-500 mt-1">
+                  Prior × Π Likelihood = Score, lalu normalisasi ke Posterior.
+                </p>
               </div>
             </div>
 
@@ -280,16 +266,16 @@ export default async function PerhitunganPage({ searchParams }: PerhitunganPageP
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div>
                       <h4 className="text-lg font-black text-slate-900">
-                        <span className="text-slate-400 mr-1.5">{item.kode}</span> {item.nama}
+                        <span className="text-slate-400 mr-1.5">{item.kodePenyakit}</span> {item.namaPenyakit}
                       </h4>
                       <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-600 font-semibold">
                         <span className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
-                          Prior = {item.priorNumerator}/{item.priorDenominator} ={" "}
+                          Prior = 1/{overview.totalPenyakit} ={" "}
                           <span className="font-black text-slate-900">{item.prior}</span>
                         </span>
                         <span className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
-                          Total Kemunculan Gejala:{" "}
-                          <span className="font-black text-slate-900">{item.totalGejalaOccurrences}</span>
+                          Likelihood Product:{" "}
+                          <span className="font-black text-slate-900">{item.likelihoodProduct}</span>
                         </span>
                       </div>
                     </div>
@@ -300,7 +286,7 @@ export default async function PerhitunganPage({ searchParams }: PerhitunganPageP
                       </div>
                       <div className="rounded-xl bg-indigo-50 border border-indigo-200 px-4 py-3 shadow-sm flex flex-col items-center min-w-[100px]">
                         <p className="text-[10px] font-black uppercase tracking-widest text-indigo-600 mb-1">Posterior</p>
-                        <p className="text-base font-black text-indigo-700">{(item.posterior * 100).toFixed(2)}%</p>
+                        <p className="text-base font-black text-indigo-700">{item.posterior.toFixed(2)}%</p>
                       </div>
                     </div>
                   </div>
@@ -311,40 +297,31 @@ export default async function PerhitunganPage({ searchParams }: PerhitunganPageP
                     <thead className="bg-slate-50 text-slate-700 font-black text-xs uppercase tracking-wider">
                       <tr className="border-b border-slate-200">
                         <th className="h-14 px-6 text-left align-middle">Gejala</th>
-                        <th className="h-14 px-6 text-center align-middle">Match</th>
-                        <th className="h-14 px-6 text-left align-middle">Rumus Smoothing</th>
-                        <th className="h-14 px-6 text-right align-middle">Likelihood</th>
+                        <th className="h-14 px-6 text-right align-middle">Likelihood (Pakar)</th>
                       </tr>
                     </thead>
                     <tbody>
                       {item.steps.map((step) => (
                         <tr
-                          key={step.gejalaId}
+                          key={step.kodeGejala}
                           className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors"
                         >
                           <td className="p-4 px-6 align-middle font-semibold text-slate-700">
-                            <span className="font-black text-indigo-600 mr-2">{step.kode}</span>
-                            {step.nama}
-                          </td>
-                          <td className="p-4 px-6 align-middle text-center">
-                            <span
-                              className={`inline-flex size-8 items-center justify-center rounded-lg text-sm font-black shadow-sm border ${
-                                step.matchedCount > 0
-                                  ? "bg-emerald-100 text-emerald-700 border-emerald-200"
-                                  : "bg-slate-100 text-slate-500 border-slate-200"
-                              }`}
-                            >
-                              {step.matchedCount}
-                            </span>
-                          </td>
-                          <td className="p-4 px-6 align-middle font-mono text-xs font-bold text-slate-500">
-                            ({step.matchedCount} + 1) / ({item.totalGejalaOccurrences} + {overview.totalGejala}) ={" "}
-                            <span className="text-slate-800 bg-slate-100 px-1.5 py-0.5 rounded">{step.numerator}/{step.denominator}</span>
+                            <span className="font-black text-indigo-600 mr-2">{step.kodeGejala}</span>
+                            {step.namaGejala}
                           </td>
                           <td className="p-4 px-6 align-middle font-black text-slate-900 text-base text-right">{step.likelihood}</td>
                         </tr>
                       ))}
                     </tbody>
+                    <tfoot>
+                      <tr className="bg-slate-50 border-t border-slate-200">
+                        <td className="p-4 px-6 font-black text-slate-700 text-sm">
+                          Score = {item.prior} × {item.steps.map((s) => s.likelihood).join(" × ")}
+                        </td>
+                        <td className="p-4 px-6 font-black text-indigo-700 text-base text-right">{item.score}</td>
+                      </tr>
+                    </tfoot>
                   </table>
                 </div>
               </article>
@@ -354,7 +331,7 @@ export default async function PerhitunganPage({ searchParams }: PerhitunganPageP
         </div>
       ) : null}
 
-      {/* ───── Prior Table ───── */}
+      {/* Prior Table */}
       <div className="animate-fade-in card-container">
         <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-5">
           <div className="flex items-center gap-4">
@@ -363,11 +340,11 @@ export default async function PerhitunganPage({ searchParams }: PerhitunganPageP
             </div>
             <div>
               <h3 className="text-xl font-black text-slate-900 tracking-tight">Probabilitas Prior P(Ck)</h3>
-              <p className="text-sm font-semibold text-slate-500 mt-1">Probabilitas dasar setiap penyakit</p>
+              <p className="text-sm font-semibold text-slate-500 mt-1">Probabilitas dasar setiap penyakit (uniform)</p>
             </div>
           </div>
           <span className="rounded-xl bg-slate-100 border border-slate-200 px-4 py-2 text-xs font-bold text-slate-700 shadow-sm uppercase tracking-widest">
-            Berdasarkan {overview.totalTraining} sampel
+            P(Ck) = 1 / {overview.totalPenyakit}
           </span>
         </div>
         <div className="w-full overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
@@ -375,28 +352,22 @@ export default async function PerhitunganPage({ searchParams }: PerhitunganPageP
             <thead className="bg-slate-50 text-slate-700 font-black text-xs uppercase tracking-wider">
               <tr className="border-b border-slate-200">
                 <th className="h-14 px-6 text-left align-middle">Penyakit</th>
-                <th className="h-14 px-6 text-center align-middle">Jumlah Training</th>
                 <th className="h-14 px-6 text-left align-middle">Rumus</th>
                 <th className="h-14 px-6 text-right align-middle">Nilai Prior</th>
               </tr>
             </thead>
             <tbody>
-              {overview.priorRows.map((item) => (
+              {overview.priorTable.map((item) => (
                 <tr
-                  key={item.penyakitId}
+                  key={item.kodePenyakit}
                   className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors bg-white"
                 >
                   <td className="p-5 px-6 align-middle font-bold text-slate-700">
-                    <span className="text-rose-600 mr-2">{item.kode}</span>
-                    {item.nama}
-                  </td>
-                  <td className="p-5 px-6 align-middle text-center">
-                    <span className="inline-flex h-8 min-w-[2rem] px-2 items-center justify-center rounded-lg bg-rose-50 border border-rose-200 text-sm font-black text-rose-700 shadow-sm">
-                      {item.trainingCount}
-                    </span>
+                    <span className="text-rose-600 mr-2">{item.kodePenyakit}</span>
+                    {item.namaPenyakit}
                   </td>
                   <td className="p-5 px-6 align-middle font-mono text-xs font-bold text-slate-500">
-                    {item.trainingCount} / {item.totalTraining || 0}
+                    1 / {overview.totalPenyakit}
                   </td>
                   <td className="p-5 px-6 align-middle font-black text-slate-900 text-base text-right">{item.prior}</td>
                 </tr>
@@ -406,19 +377,16 @@ export default async function PerhitunganPage({ searchParams }: PerhitunganPageP
         </div>
       </div>
 
-      {/* ───── Likelihood Table ───── */}
+      {/* Likelihood Matrix */}
       <div className="animate-fade-in card-container">
         <div className="flex items-center gap-4 mb-6 border-b border-slate-100 pb-5">
           <div className="bg-purple-100 text-purple-600 border border-purple-200 p-3 rounded-xl shadow-sm">
             <Table className="size-6" />
           </div>
           <div>
-            <h3 className="text-xl font-black text-slate-900 tracking-tight">Likelihood P(Xi|Ck)</h3>
+            <h3 className="text-xl font-black text-slate-900 tracking-tight">Tabel Likelihood P(Xi|Ck)</h3>
             <p className="mt-1 text-sm font-semibold text-slate-500">
-              Disertai Laplace smoothing:{" "}
-              <span className="font-mono text-xs font-bold text-slate-700 bg-slate-100 px-2 py-1 rounded-md border border-slate-200 ml-1">
-                (match + 1) / (total gejala penyakit + total master gejala)
-              </span>
+              Nilai likelihood tetap yang ditetapkan oleh pakar (0.0 – 1.0)
             </p>
           </div>
         </div>
@@ -427,39 +395,36 @@ export default async function PerhitunganPage({ searchParams }: PerhitunganPageP
             <thead className="bg-slate-50 text-slate-700 font-black text-xs uppercase tracking-wider">
               <tr className="border-b border-slate-200">
                 <th className="h-16 px-6 text-left align-middle border-r border-slate-200 bg-slate-100 sticky left-0 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">Gejala</th>
-                {overview.penyakitMaster.map((penyakit) => (
-                  <th key={penyakit.id} className="h-16 px-6 text-center align-middle">
+                {overview.likelihoodMatrix.map((row) => (
+                  <th key={row.kodePenyakit} className="h-16 px-6 text-center align-middle">
                     <span className="rounded-lg bg-white border border-slate-200 px-3 py-2 text-xs font-black text-rose-600 shadow-sm">
-                      {penyakit.kode}
+                      {row.kodePenyakit}
                     </span>
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {overview.likelihoodRows.map((row) => (
+              {overview.gejalaList.map((gejala) => (
                 <tr
-                  key={row.gejalaId}
+                  key={gejala.id}
                   className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors bg-white group"
                 >
                   <td className="p-4 px-6 align-middle font-bold text-slate-700 border-r border-slate-200 bg-slate-50 sticky left-0 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] group-hover:bg-indigo-50/50 transition-colors">
-                    <span className="text-indigo-600 mr-2">{row.kode}</span>
-                    <span className="text-xs">{row.nama}</span>
+                    <span className="text-indigo-600 mr-2">{gejala.kode}</span>
+                    <span className="text-xs">{gejala.nama}</span>
                   </td>
-                  {row.cells.map((cell) => (
-                    <td key={cell.penyakitId} className="p-4 px-6 align-middle text-center">
-                      {cell.likelihood === null ? (
-                        <span className="text-slate-300 font-black">—</span>
-                      ) : (
-                        <div className="space-y-1">
-                          <p className="font-black text-slate-900">{cell.likelihood}</p>
-                          <p className="font-mono text-[10px] font-bold text-slate-400 bg-slate-50 rounded px-1 w-fit mx-auto">
-                            ({cell.matchedCount}+1)/({cell.trainingCount}+{overview.totalGejala})
-                          </p>
-                        </div>
-                      )}
-                    </td>
-                  ))}
+                  {overview.likelihoodMatrix.map((row) => {
+                    const cell = row.cells.find((c) => c.kodeGejala === gejala.kode);
+                    const value = cell?.value ?? 0;
+                    return (
+                      <td key={row.kodePenyakit} className="p-4 px-6 align-middle text-center">
+                        <span className={`font-black ${value > 0.5 ? "text-rose-600" : value > 0 ? "text-slate-900" : "text-slate-300"}`}>
+                          {value > 0 ? value.toFixed(2) : "—"}
+                        </span>
+                      </td>
+                    );
+                  })}
                 </tr>
               ))}
             </tbody>

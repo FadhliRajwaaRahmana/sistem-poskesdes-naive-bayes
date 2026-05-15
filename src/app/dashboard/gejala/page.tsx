@@ -1,7 +1,7 @@
 import { createGejala, deleteGejala, updateGejala } from "@/actions/master-data";
 import { prisma } from "@/lib/prisma";
+import { requireAdminSession } from "@/lib/session";
 import {
-  Thermometer,
   Plus,
   Search,
   Pencil,
@@ -10,6 +10,10 @@ import {
   ChevronRight,
   CheckCircle2,
   XCircle,
+  ClipboardCheck,
+  ArrowLeft,
+  Eye,
+  HeartPulse,
 } from "lucide-react";
 
 type PageSearchParams = Record<string, string | string[] | undefined>;
@@ -52,8 +56,168 @@ function buildPageHref(q: string, page: number) {
   return queryString ? `/dashboard/gejala?${queryString}` : "/dashboard/gejala";
 }
 
+async function renderGejalaDetail(detailId: string, params: PageSearchParams) {
+  const gejala = await prisma.gejala.findUnique({
+    where: { id: detailId },
+    include: {
+      penyakitGejala: {
+        include: { penyakit: true },
+        orderBy: { penyakit: { kode: "asc" } },
+      },
+    },
+  });
+
+  if (!gejala) {
+    return (
+      <section className="animate-fade-in space-y-8 pb-10">
+        <div className="card-container text-center py-16">
+          <p className="text-lg font-black text-slate-800">Gejala Tidak Ditemukan</p>
+          <p className="mt-2 text-sm text-slate-500">Data gejala dengan ID tersebut tidak ditemukan.</p>
+          <a href="/dashboard/gejala" className="mt-6 inline-flex h-11 items-center justify-center rounded-xl bg-slate-900 px-6 text-sm font-bold text-white shadow-sm transition-all hover:bg-slate-800 active:scale-95">
+            <ArrowLeft className="mr-2 h-4 w-4" /> Kembali ke Daftar
+          </a>
+        </div>
+      </section>
+    );
+  }
+
+  const successMessage = getFlashMessage(params.success);
+  const errorMessage = getFlashMessage(params.error);
+
+  return (
+    <section className="animate-fade-in space-y-8 pb-10">
+      {/* Header */}
+      <div className="flex flex-col gap-4 rounded-[2rem] bg-slate-900 p-8 sm:p-10 text-white shadow-xl relative overflow-hidden">
+        <div className="absolute right-0 top-0 w-64 h-64 bg-secondary/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/4 pointer-events-none" />
+        <div className="relative z-10 flex items-center gap-5">
+          <div className="rounded-2xl bg-white/10 border border-white/20 p-4 text-white backdrop-blur-md shadow-lg">
+            <ClipboardCheck className="h-8 w-8" />
+          </div>
+          <div>
+            <h2 className="text-3xl font-black tracking-tight text-white sm:text-4xl">Detail Gejala</h2>
+            <p className="text-slate-300 mt-2 font-medium leading-relaxed">
+              <span className="text-white font-bold">{gejala.kode}</span> — {gejala.nama}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <a
+        href="/dashboard/gejala"
+        className="inline-flex h-11 items-center justify-center rounded-xl bg-white border border-slate-200 px-5 text-sm font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:border-slate-300 active:scale-95"
+      >
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        Kembali ke Daftar Gejala
+      </a>
+
+      {/* Flash Messages */}
+      {successMessage ? (
+        <div className="animate-slide-down flex items-center gap-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 shadow-sm">
+          <div className="rounded-xl bg-emerald-100 p-2 border border-emerald-200">
+            <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+          </div>
+          <span className="text-sm font-bold text-emerald-800">{successMessage}</span>
+        </div>
+      ) : null}
+
+      {errorMessage ? (
+        <div className="animate-slide-down flex items-center gap-4 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 shadow-sm">
+          <div className="rounded-xl bg-rose-100 p-2 border border-rose-200">
+            <XCircle className="h-5 w-5 text-rose-600" />
+          </div>
+          <span className="text-sm font-bold text-rose-800">{errorMessage}</span>
+        </div>
+      ) : null}
+
+      {/* Info Card */}
+      <div className="animate-slide-up stagger-1 card-container">
+        <div className="mb-6 flex items-center gap-4">
+          <div className="bg-primary/10 text-primary p-3 rounded-xl border border-primary/20">
+            <ClipboardCheck className="h-5 w-5 stroke-[2.5]" />
+          </div>
+          <h3 className="text-xl font-black text-slate-800 tracking-tight">Informasi Gejala</h3>
+        </div>
+
+        <div className="grid gap-5 border-t border-slate-100 pt-6 md:grid-cols-2">
+          <div className="space-y-1">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Kode</p>
+            <p className="text-lg font-black text-primary">{gejala.kode}</p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Nama Gejala</p>
+            <p className="text-lg font-black text-slate-800">{gejala.nama}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Penyakit Terkait */}
+      <div className="animate-slide-up stagger-2 card-container !p-0 overflow-hidden">
+        <div className="border-b border-slate-200 p-6 lg:p-8 bg-slate-50/50">
+          <div className="flex items-center gap-4">
+            <div className="bg-rose-100 text-rose-600 p-3 rounded-xl border border-rose-200">
+              <HeartPulse className="h-5 w-5 stroke-[2.5]" />
+            </div>
+            <div>
+              <h3 className="text-xl font-black text-slate-800 tracking-tight">
+                Penyakit Terkait
+              </h3>
+              <p className="text-sm font-semibold text-slate-500 mt-0.5">
+                Nilai likelihood P({gejala.kode} | Penyakit) pada setiap penyakit.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-4 lg:p-6 bg-slate-50/30">
+          {gejala.penyakitGejala.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center border-2 border-dashed border-slate-200 rounded-2xl bg-white">
+              <p className="text-lg font-black text-slate-800">Belum Ada Data</p>
+              <p className="mt-2 text-sm font-medium text-slate-500">
+                Gejala ini belum terhubung dengan penyakit manapun.
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {gejala.penyakitGejala.map((pg, idx) => (
+                <div
+                  key={pg.id}
+                  className={`animate-slide-up stagger-${Math.min(idx + 1, 8)} bg-white p-4 border border-slate-200 rounded-xl shadow-sm transition-all hover:shadow-md hover:border-slate-300`}
+                >
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                    <span className="text-xs font-black text-rose-600 bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-lg sm:w-16 text-center shrink-0">
+                      {pg.penyakit.kode}
+                    </span>
+                    <p className="text-sm font-bold text-slate-700 sm:flex-1">
+                      {pg.penyakit.nama}
+                    </p>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                        Likelihood
+                      </span>
+                      <span className="text-sm font-black text-sky-700 bg-sky-50 border border-sky-200 px-3 py-1.5 rounded-lg min-w-[60px] text-center">
+                        {pg.likelihood}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default async function GejalaPage({ searchParams }: GejalaPageProps) {
+  await requireAdminSession();
   const params = searchParams ? await searchParams : {};
+  const detailId = typeof params.detail === "string" ? params.detail : null;
+
+  if (detailId) {
+    return renderGejalaDetail(detailId, params);
+  }
+
   const q = getSearchValue(params.q).trim();
   const requestedPage = getPageValue(params.page);
 
@@ -96,12 +260,12 @@ export default async function GejalaPage({ searchParams }: GejalaPageProps) {
         <div className="absolute right-0 top-0 w-64 h-64 bg-secondary/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/4 pointer-events-none"></div>
         <div className="relative z-10 flex items-center gap-5">
           <div className="rounded-2xl bg-white/10 border border-white/20 p-4 text-white backdrop-blur-md shadow-lg">
-            <Thermometer className="h-8 w-8" />
+            <ClipboardCheck className="h-8 w-8" />
           </div>
           <div>
             <h2 className="text-3xl font-black tracking-tight text-white sm:text-4xl">Data Gejala</h2>
             <p className="text-slate-300 mt-2 font-medium max-w-lg leading-relaxed">
-              Kelola daftar gejala master. Data ini akan digunakan sebagai parameter utama dalam proses diagnosa pasien.
+              Kelola daftar gejala master. Data ini akan digunakan sebagai parameter utama dalam proses diagnosis balita.
             </p>
           </div>
         </div>
@@ -218,7 +382,7 @@ export default async function GejalaPage({ searchParams }: GejalaPageProps) {
           {gejalaList.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center border-2 border-dashed border-slate-200 rounded-2xl bg-white">
               <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-slate-100 border border-slate-200 mb-5 shadow-sm">
-                <Thermometer className="h-10 w-10 text-slate-400" />
+                <ClipboardCheck className="h-10 w-10 text-slate-400" />
               </div>
               <h3 className="text-lg font-black text-slate-800">
                 {q ? "Pencarian Tidak Ditemukan" : "Belum Ada Data Gejala"}
@@ -262,6 +426,13 @@ export default async function GejalaPage({ searchParams }: GejalaPageProps) {
                       />
                     </div>
                     <div className="flex gap-2 sm:shrink-0 mt-2 sm:mt-0 sm:pl-4 sm:border-l border-slate-100">
+                      <a
+                        href={`/dashboard/gejala?detail=${gejala.id}`}
+                        className="inline-flex h-11 items-center justify-center rounded-xl bg-sky-50 px-4 text-sm font-bold text-sky-700 border border-sky-200 shadow-sm transition-all hover:bg-sky-100 active:scale-95"
+                      >
+                        <Eye className="mr-2 h-4 w-4" />
+                        Detail
+                      </a>
                       <button
                         type="submit"
                         className="inline-flex h-11 items-center justify-center rounded-xl bg-emerald-50 px-4 text-sm font-bold text-emerald-700 border border-emerald-200 shadow-sm transition-all hover:bg-emerald-100 active:scale-95"

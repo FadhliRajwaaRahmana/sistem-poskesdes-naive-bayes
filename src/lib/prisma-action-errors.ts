@@ -28,8 +28,8 @@ export function getEntityActionErrorMessage({ code, entityName, action }: Entity
 
 export function getDiagnosisActionErrorMessage(code: string) {
   if (code === "P2003") {
-    return "Gejala yang dipilih sudah berubah. Silakan pilih ulang gejala lalu proses diagnosa lagi.";
+    return "Gejala yang dipilih sudah berubah. Silakan pilih ulang gejala lalu proses diagnosis lagi.";
   }
 
-  return "Gagal memproses diagnosa pasien.";
+  return "Gagal memproses diagnosis balita.";
 }

@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { requireSession } from "@/lib/session";
+import { hasAdminRole } from "@/lib/session-guards";
 import {
-  Thermometer,
-  Bug,
-  Database,
-  ClipboardList,
+  ClipboardCheck,
+  HeartPulse,
+  Baby,
+  FileText,
   ArrowRight,
   Stethoscope,
   Calculator,
@@ -29,36 +31,48 @@ function formatPercentage(value: number) {
 }
 
 export default async function DashboardPage() {
+  const session = await requireSession();
+  const isAdmin = hasAdminRole(session.user.role);
+
+  const userFilter = isAdmin ? {} : { userId: session.user.id };
+
   const [
     totalGejala,
     totalPenyakit,
-    totalTraining,
-    totalDiagnosa,
-    latestDiagnosa,
-    diagnosaByResult,
-    recentDiagnosa,
+    totalDiagnosis,
+    totalBalita,
+    latestDiagnosis,
+    diagnosisByResult,
+    recentDiagnosis,
   ] = await Promise.all([
     prisma.gejala.count(),
     prisma.penyakit.count(),
-    prisma.dataTraining.count(),
-    prisma.diagnosaPasien.count(),
-    prisma.diagnosaPasien.findFirst({
+    prisma.diagnosisBalita.count({ where: userFilter }),
+    prisma.diagnosisBalita.findMany({
+      where: userFilter,
+      select: { nik: true },
+      distinct: ["nik"],
+    }).then((r) => r.length),
+    prisma.diagnosisBalita.findFirst({
+      where: userFilter,
       orderBy: { createdAt: "desc" },
       include: { penyakit: true },
     }),
-    prisma.diagnosaPasien.groupBy({
-      by: ["hasilDiagnosa"],
-      _count: { hasilDiagnosa: true },
-      orderBy: { _count: { hasilDiagnosa: "desc" } },
+    prisma.diagnosisBalita.groupBy({
+      by: ["hasilDiagnosis"],
+      where: userFilter,
+      _count: { hasilDiagnosis: true },
+      orderBy: { _count: { hasilDiagnosis: "desc" } },
       take: 5,
     }),
-    prisma.diagnosaPasien.findMany({
+    prisma.diagnosisBalita.findMany({
+      where: userFilter,
       take: 5,
       orderBy: { tanggal: "desc" },
       include: {
         penyakit: true,
         user: true,
-        diagnosaGejala: {
+        diagnosisGejala: {
           include: { gejala: true },
           orderBy: { gejala: { kode: "asc" } },
         },
@@ -81,14 +95,15 @@ export default async function DashboardPage() {
 
   const sevenDayMap = new Map(sevenDayBuckets.map((item) => [item.key, item]));
 
-  const recentWeekDiagnosa = await prisma.diagnosaPasien.findMany({
+  const recentWeekDiagnosis = await prisma.diagnosisBalita.findMany({
     where: {
+      ...userFilter,
       tanggal: { gte: new Date(`${sevenDayBuckets[0]?.key}T00:00:00.000Z`) },
     },
     select: { tanggal: true },
   });
 
-  for (const item of recentWeekDiagnosa) {
+  for (const item of recentWeekDiagnosis) {
     const key = item.tanggal.toISOString().slice(0, 10);
     const bucket = sevenDayMap.get(key);
     if (bucket) {
@@ -96,55 +111,61 @@ export default async function DashboardPage() {
     }
   }
 
-  const maxWeeklyDiagnosa = Math.max(...sevenDayBuckets.map((item) => item.value), 1);
-  const topResultCount = diagnosaByResult[0]?._count.hasilDiagnosa ?? 0;
+  const maxWeeklyDiagnosis = Math.max(...sevenDayBuckets.map((item) => item.value), 1);
+  const topResultCount = diagnosisByResult[0]?._count.hasilDiagnosis ?? 0;
 
   const stats = [
-    { label: "Total Gejala", value: totalGejala, hint: "Master data gejala", icon: Thermometer, href: "/dashboard/gejala", color: "text-secondary bg-secondary/10 border-secondary/20" },
-    { label: "Total Penyakit", value: totalPenyakit, hint: "Klasifikasi penyakit", icon: Bug, href: "/dashboard/penyakit", color: "text-rose-600 bg-rose-100 border-rose-200" },
-    { label: "Data Training", value: totalTraining, hint: "Dataset sistem", icon: Database, href: "/dashboard/data-training", color: "text-amber-600 bg-amber-100 border-amber-200" },
-    { label: "Riwayat Diagnosa", value: totalDiagnosa, hint: "Total pasien", icon: ClipboardList, href: "/dashboard/riwayat", color: "text-emerald-600 bg-emerald-100 border-emerald-200" },
+    { label: "Total Gejala", value: totalGejala, hint: "Gejala klinis terdaftar", icon: ClipboardCheck, href: isAdmin ? "/dashboard/gejala" : "/dashboard/diagnosis", color: "text-secondary bg-secondary/10 border-secondary/20" },
+    { label: "Total Penyakit", value: totalPenyakit, hint: "Klasifikasi gizi buruk", icon: HeartPulse, href: isAdmin ? "/dashboard/penyakit" : "/dashboard/diagnosis", color: "text-rose-600 bg-rose-100 border-rose-200" },
+    { label: "Total Balita", value: totalBalita, hint: "Balita unik (NIK)", icon: Baby, href: isAdmin ? "/dashboard/rekam-medis" : "/dashboard/riwayat", color: "text-amber-600 bg-amber-100 border-amber-200" },
+    { label: "Total Diagnosis", value: totalDiagnosis, hint: "Riwayat pemeriksaan", icon: FileText, href: isAdmin ? "/dashboard/rekam-medis" : "/dashboard/riwayat", color: "text-emerald-600 bg-emerald-100 border-emerald-200" },
   ];
+
+  const riwayatHref = isAdmin ? "/dashboard/rekam-medis" : "/dashboard/riwayat";
 
   return (
     <section className="space-y-6 pb-10">
-      {/* High-Contrast Hero Banner */}
+      {/* Hero Banner */}
       <div className="animate-fade-in relative flex flex-col gap-8 overflow-hidden rounded-[2rem] bg-slate-900 p-8 shadow-xl sm:p-10 lg:flex-row lg:items-center lg:justify-between">
         <div className="absolute right-0 top-0 w-80 h-80 bg-primary/30 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/4 pointer-events-none"></div>
         <div className="absolute left-0 bottom-0 w-64 h-64 bg-secondary/20 rounded-full blur-[80px] translate-y-1/2 -translate-x-1/4 pointer-events-none"></div>
-        
+
         <div className="relative z-10 max-w-2xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-white text-xs font-bold mb-4 backdrop-blur-md">
             <ActivitySquare className="size-4" />
-            <span>Dashboard Admin</span>
+            <span>{isAdmin ? "Dashboard Admin" : "Dashboard"}</span>
           </div>
           <h2 className="text-3xl font-black tracking-tight text-white sm:text-4xl">
-            Ringkasan Sistem Diagnosa
+            Sistem Diagnosis Gizi Buruk
           </h2>
           <p className="mt-3 text-base font-medium text-slate-300 max-w-lg leading-relaxed">
-            Pantau seluruh data statistik POSKESDES secara real-time. Kelola penyakit, gejala, dan evaluasi hasil klasifikasi Naive Bayes dengan mudah.
+            {isAdmin
+              ? "Pantau data statistik POSKESDES secara real-time. Kelola penyakit, gejala, dan evaluasi diagnosis gizi buruk balita dengan metode Naive Bayes."
+              : "Lakukan diagnosis gizi balita dan pantau riwayat pemeriksaan anak Anda."}
           </p>
         </div>
 
         <div className="relative z-10 flex w-full flex-col gap-3 sm:max-w-sm lg:w-auto lg:min-w-[250px] shrink-0">
           <Link
-            href="/dashboard/diagnosa"
+            href="/dashboard/diagnosis"
             className="inline-flex h-14 w-full items-center justify-center gap-3 rounded-2xl bg-gradient-to-br from-primary to-teal-500 px-6 py-3 text-sm font-bold text-white shadow-[var(--shadow-button)] transition-all hover:-translate-y-0.5 hover:shadow-lg active:scale-95"
           >
             <Stethoscope className="size-5 shrink-0 text-white" />
-            <span className="text-white">Mulai Diagnosa Baru</span>
+            <span className="text-white">Mulai Diagnosis Baru</span>
           </Link>
-          <Link
-            href="/dashboard/perhitungan"
-            className="inline-flex h-14 w-full items-center justify-center gap-3 rounded-2xl border border-white/20 bg-white/10 px-6 py-3 text-sm font-bold text-white backdrop-blur-md transition-all hover:-translate-y-0.5 hover:bg-white/20 active:scale-95"
-          >
-            <Calculator className="size-5 shrink-0 text-white" />
-            <span className="text-white">Detail Perhitungan</span>
-          </Link>
+          {isAdmin && (
+            <Link
+              href="/dashboard/perhitungan"
+              className="inline-flex h-14 w-full items-center justify-center gap-3 rounded-2xl border border-white/20 bg-white/10 px-6 py-3 text-sm font-bold text-white backdrop-blur-md transition-all hover:-translate-y-0.5 hover:bg-white/20 active:scale-95"
+            >
+              <Calculator className="size-5 shrink-0 text-white" />
+              <span className="text-white">Detail Perhitungan</span>
+            </Link>
+          )}
         </div>
       </div>
 
-      {/* Solid Stat Cards */}
+      {/* Stat Cards */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((item, index) => {
           const Icon = item.icon;
@@ -181,7 +202,7 @@ export default async function DashboardPage() {
             </div>
             <div>
               <h3 className="text-xl font-extrabold tracking-tight text-slate-900">Aktivitas 7 Hari</h3>
-              <p className="text-sm font-semibold text-slate-500 mt-0.5">Intensitas diagnosa pasien per hari</p>
+              <p className="text-sm font-semibold text-slate-500 mt-0.5">Intensitas diagnosis balita per hari</p>
             </div>
           </div>
 
@@ -193,7 +214,7 @@ export default async function DashboardPage() {
                 </div>
                 <div className="w-full rounded-t-xl rounded-b-sm bg-slate-100 transition-all duration-500 ease-out group-hover:bg-primary group-hover:shadow-[0_0_20px_rgba(13,148,136,0.3)] relative overflow-hidden"
                   style={{
-                    height: `${Math.max((item.value / maxWeeklyDiagnosa) * 100, item.value > 0 ? 12 : 4)}%`,
+                    height: `${Math.max((item.value / maxWeeklyDiagnosis) * 100, item.value > 0 ? 12 : 4)}%`,
                     backgroundColor: item.value > 0 ? 'var(--primary)' : undefined,
                   }}
                 >
@@ -215,26 +236,26 @@ export default async function DashboardPage() {
                 <TrendingUp className="size-6" />
               </div>
               <div>
-                <h3 className="text-xl font-extrabold tracking-tight text-slate-900">Top Penyakit</h3>
+                <h3 className="text-xl font-extrabold tracking-tight text-slate-900">Top Hasil</h3>
                 <p className="text-sm font-semibold text-slate-500 mt-0.5">Hasil diagnosis terbanyak</p>
               </div>
             </div>
 
-            {diagnosaByResult.length === 0 ? (
+            {diagnosisByResult.length === 0 ? (
               <div className="flex h-32 items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 text-sm font-bold text-slate-400">
                 Data belum tersedia.
               </div>
             ) : (
               <div className="space-y-6">
-                {diagnosaByResult.map((item) => {
-                  const count = item._count.hasilDiagnosa;
+                {diagnosisByResult.map((item) => {
+                  const count = item._count.hasilDiagnosis;
                   const width = topResultCount > 0 ? (count / topResultCount) * 100 : 0;
 
                   return (
-                    <div key={item.hasilDiagnosa} className="space-y-3 group">
+                    <div key={item.hasilDiagnosis} className="space-y-3 group">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="font-bold text-slate-800">{item.hasilDiagnosa}</span>
-                        <span className="font-bold text-secondary bg-secondary/10 px-2.5 py-1 rounded-lg border border-secondary/20 shadow-sm">{count} kasus ({totalDiagnosa > 0 ? formatPercentage((count / totalDiagnosa) * 100) : "0%"})</span>
+                        <span className="font-bold text-slate-800">{item.hasilDiagnosis}</span>
+                        <span className="font-bold text-secondary bg-secondary/10 px-2.5 py-1 rounded-lg border border-secondary/20 shadow-sm">{count} kasus ({totalDiagnosis > 0 ? formatPercentage((count / totalDiagnosis) * 100) : "0%"})</span>
                       </div>
                       <div className="h-3 w-full overflow-hidden rounded-full bg-slate-100 shadow-inner">
                         <div
@@ -249,7 +270,7 @@ export default async function DashboardPage() {
             )}
           </div>
 
-          {/* System Spotlight */}
+          {/* System Info */}
           <div className="animate-slide-up stagger-7 card-container">
             <div className="flex items-center gap-4 mb-6">
               <div className="flex size-10 items-center justify-center rounded-xl bg-amber-100 text-amber-600 border border-amber-200 shadow-sm">
@@ -260,24 +281,24 @@ export default async function DashboardPage() {
 
             <div className="space-y-3">
               <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 transition-colors hover:bg-slate-50 hover:border-slate-300">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Diagnosa Terakhir</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Diagnosis Terakhir</p>
                 <div className="font-bold text-slate-900 text-sm">
-                  {latestDiagnosa ? (
+                  {latestDiagnosis ? (
                     <div className="flex items-center gap-2">
-                      <span className="block max-w-[120px] truncate">{latestDiagnosa.namaPasien}</span>
+                      <span className="block max-w-[120px] truncate">{latestDiagnosis.namaBalita}</span>
                       <ArrowRight className="size-3 shrink-0 text-slate-400" />
-                      <span className="block truncate text-primary">{latestDiagnosa.hasilDiagnosa}</span>
+                      <span className="block truncate text-primary">{latestDiagnosis.hasilDiagnosis}</span>
                     </div>
                   ) : (
-                    "Belum ada diagnosa."
+                    "Belum ada diagnosis."
                   )}
                 </div>
               </div>
               <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 transition-colors hover:bg-slate-50 hover:border-slate-300">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Status Dataset</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Basis Pengetahuan</p>
                 <p className="font-bold text-slate-900 text-sm">
-                  {totalTraining > 0
-                    ? <><span className="text-emerald-600">{totalTraining} Baris</span> untuk {totalPenyakit} Penyakit</>
+                  {totalPenyakit > 0
+                    ? <><span className="text-emerald-600">{totalPenyakit} Penyakit</span> dengan {totalGejala} Gejala</>
                     : "Data Kosong."}
                 </p>
               </div>
@@ -291,52 +312,56 @@ export default async function DashboardPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 p-6 sm:p-8 bg-slate-50/80 backdrop-blur-sm">
           <div className="flex items-center gap-4">
              <div className="flex size-12 items-center justify-center rounded-2xl bg-white border border-slate-200 text-slate-700 shadow-sm">
-              <ClipboardList className="size-6" />
+              <FileText className="size-6" />
             </div>
             <div>
               <h3 className="text-xl font-extrabold tracking-tight text-slate-900">Riwayat Terkini</h3>
-              <p className="text-sm font-semibold text-slate-500 mt-0.5">5 aktivitas diagnosa pasien terakhir</p>
+              <p className="text-sm font-semibold text-slate-500 mt-0.5">5 diagnosis balita terakhir</p>
             </div>
           </div>
           <Link
-            href="/dashboard/riwayat"
+            href={riwayatHref}
             className="mt-4 sm:mt-0 inline-flex items-center justify-center h-11 px-5 rounded-xl bg-white text-sm font-bold text-slate-700 shadow-sm border border-slate-200 hover:border-primary hover:text-primary hover:shadow-md transition-all active:scale-95"
           >
-            Lihat Semua Riwayat
+            Lihat Semua
             <ArrowRight className="ml-2 size-4" />
           </Link>
         </div>
 
         <div className="p-6 sm:p-8">
-          {recentDiagnosa.length === 0 ? (
+          {recentDiagnosis.length === 0 ? (
             <div className="flex h-32 items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 text-sm font-bold text-slate-400">
-              Belum ada riwayat aktivitas.
+              Belum ada riwayat diagnosis.
             </div>
           ) : (
             <div className="space-y-4">
-              {recentDiagnosa.map((item) => (
+              {recentDiagnosis.map((item) => (
                 <article
                   key={item.id}
                   className="group flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 transition-all duration-300 hover:border-primary/40 hover:shadow-lg sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div>
-                    <h4 className="text-lg font-black text-slate-900 group-hover:text-primary transition-colors">{item.namaPasien}</h4>
+                    <h4 className="text-lg font-black text-slate-900 group-hover:text-primary transition-colors">{item.namaBalita}</h4>
                     <p className="text-sm font-semibold text-slate-500 mt-1">
-                      {dateFormatter.format(item.tanggal)} <span className="mx-2 text-slate-300">•</span> Admin: {item.user.name}
+                      {dateFormatter.format(item.tanggal)} <span className="mx-2 text-slate-300">•</span> {item.dusun}
                     </p>
                     <div className="mt-3">
-                       <span className="inline-flex items-center rounded-lg bg-primary/10 border border-primary/20 px-3 py-1.5 text-sm font-bold text-slate-700">
-                          Hasil: <span className="ml-1.5 text-primary">{item.hasilDiagnosa}</span>
+                       <span className={`inline-flex items-center rounded-lg px-3 py-1.5 text-sm font-bold border ${
+                         item.hasilDiagnosis === "Gizi Baik"
+                           ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                           : "bg-primary/10 border-primary/20 text-slate-700"
+                       }`}>
+                          Hasil: <span className={`ml-1.5 ${item.hasilDiagnosis === "Gizi Baik" ? "text-emerald-600" : "text-primary"}`}>{item.hasilDiagnosis}</span>
                        </span>
                     </div>
                   </div>
                   <div className="flex max-w-sm flex-wrap gap-2">
-                    {item.diagnosaGejala.map((gejala) => (
+                    {item.diagnosisGejala.map((dg) => (
                       <span
-                        key={gejala.id}
+                        key={dg.id}
                         className="inline-flex items-center rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-bold text-slate-600 shadow-sm"
                       >
-                        {gejala.gejala.kode}
+                        {dg.gejala.kode}
                       </span>
                     ))}
                   </div>

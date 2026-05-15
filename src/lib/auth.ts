@@ -16,7 +16,7 @@ if (!secret) {
 }
 
 export const auth = betterAuth({
-  appName: process.env.NEXT_PUBLIC_APP_NAME ?? "Sistem Diagnosa POSKESDES",
+  appName: process.env.NEXT_PUBLIC_APP_NAME ?? "Sistem Diagnosis Gizi Buruk Anak",
   baseURL,
   secret,
   database: prismaAdapter(prisma, {
@@ -30,9 +30,9 @@ export const auth = betterAuth({
   user: {
     additionalFields: {
       role: {
-        type: ["ADMIN"],
+        type: ["ADMIN", "USER"],
         required: false,
-        defaultValue: "ADMIN",
+        defaultValue: "USER",
         input: false,
       },
     },

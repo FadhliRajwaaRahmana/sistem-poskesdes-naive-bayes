@@ -35,6 +35,6 @@ test("getDiagnosisActionErrorMessage memberi pesan input relasi yang jelas", asy
   assert.ok(loadedModule, "Module prisma-action-errors.ts harus tersedia.");
   assert.equal(
     loadedModule.getDiagnosisActionErrorMessage("P2003"),
-    "Gejala yang dipilih sudah berubah. Silakan pilih ulang gejala lalu proses diagnosa lagi.",
+    "Gejala yang dipilih sudah berubah. Silakan pilih ulang gejala lalu proses diagnosis lagi.",
   );
 });

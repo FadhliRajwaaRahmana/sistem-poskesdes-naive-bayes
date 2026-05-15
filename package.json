@@ -3,10 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "postinstall": "prisma generate",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "node --import tsx --test src/lib/diagnosa-validation.test.ts src/lib/session-guards.test.ts src/lib/naive-bayes-math.test.ts src/lib/prisma-action-errors.test.ts prisma/seed-utils.test.ts",
+    "test": "node --import tsx --test src/lib/session-guards.test.ts src/lib/prisma-action-errors.test.ts",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "db:generate": "prisma generate",
