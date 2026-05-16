@@ -133,7 +133,7 @@ Pastikan semua software berikut sudah terinstall di komputer Anda **sebelum** me
 | 3 | **PostgreSQL** | v14 atau lebih baru | Database server | [postgresql.org/download](https://www.postgresql.org/download/) |
 | 4 | **Git** | Versi terbaru | Untuk clone/download source code | [git-scm.com/downloads](https://git-scm.com/downloads) |
 
-> **Cara install Node.js:** Buka link di atas → download installer sesuai OS (Windows/macOS) → jalankan installer → ikuti wizard sampai selesai. Pilih versi **LTS** (bukan Current).
+> **Cara install Node.js:** Buka link di atas → download installer sesuai OS (Windows/macOS) → jalankan installer → ikuti wizard sampai selesai. Pilih versi **LTS** (bukan Current). **Jangan install versi 23 atau 24 ke atas** — banyak library native yang belum kompatibel.
 
 > **Cara install PostgreSQL di Windows:** Download installer dari link di atas → jalankan installer → **catat password** yang Anda buat untuk user `postgres` (akan dipakai nanti) → centang semua komponen (PostgreSQL Server, pgAdmin, Command Line Tools) → selesaikan instalasi. Pastikan service PostgreSQL **sudah berjalan** (cek di Windows Services atau Task Manager → Services).
 
@@ -142,7 +142,7 @@ Pastikan semua software berikut sudah terinstall di komputer Anda **sebelum** me
 **Cara cek apakah sudah terinstall** — buka terminal (Command Prompt / PowerShell / Terminal), ketik perintah berikut satu per satu:
 
 ```bash
-node -v        # Harus muncul v20.x.x atau lebih baru
+node -v        # Harus muncul v20.x.x atau v22.x.x (JANGAN v23/v24 ke atas)
 npm -v         # Harus muncul 10.x.x atau lebih baru
 psql --version # Harus muncul psql (PostgreSQL) 14.x atau lebih baru
 git --version  # Harus muncul git version 2.x.x
@@ -371,6 +371,7 @@ npm run dev
 | Masalah | Penyebab | Solusi |
 | --- | --- | --- |
 | `npm install` error | Node.js belum terinstall atau versi terlalu lama | Install Node.js v20 LTS dari [nodejs.org](https://nodejs.org) |
+| `Cannot find module 'lightningcss...'` saat `npm run dev` | Node.js versi terlalu baru (v23/v24) | Uninstall Node.js → install ulang **v20 LTS** → `rm -rf node_modules .next` → `npm install` |
 | `psql: command not found` | PostgreSQL belum terinstall atau belum masuk PATH | Install PostgreSQL, atau buat database via pgAdmin (GUI) |
 | `Can't reach database server` saat `prisma db push` | Service PostgreSQL tidak berjalan atau password salah | Cek service PostgreSQL sudah running, cek password di `.env` |
 | `database "poskesdes_db" does not exist` | Database belum dibuat | Jalankan Langkah 3 (buat database) |
