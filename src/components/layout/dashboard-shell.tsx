@@ -11,7 +11,6 @@ import {
   Stethoscope,
   ClipboardCheck,
   HeartPulse,
-  Calculator,
   FileText,
   Users,
   History,
@@ -32,7 +31,6 @@ const adminMenu: MenuItem[] = [
   { href: "/dashboard/diagnosis", label: "Diagnosis Balita", icon: Stethoscope },
   { href: "/dashboard/gejala", label: "Data Gejala", icon: ClipboardCheck },
   { href: "/dashboard/penyakit", label: "Data Penyakit", icon: HeartPulse },
-  { href: "/dashboard/perhitungan", label: "Perhitungan", icon: Calculator },
   { href: "/dashboard/rekam-medis", label: "Rekam Medis", icon: FileText },
   { href: "/dashboard/pengguna", label: "Kelola Pengguna", icon: Users },
 ];

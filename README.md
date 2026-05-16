@@ -30,7 +30,6 @@ Branch utama repository ini adalah `master`.
 - **Rekam medis** dengan filter status (Gizi Baik/Gizi Buruk) dan filter dusun.
 - **Pemantauan per anak**: tracking status antar kunjungan (Kondisi Awal, Tetap, Menurun, Meningkat, Membaik, Memburuk).
 - Kelola akun pengguna (ADMIN membuat akun USER/orangtua).
-- Simulasi perhitungan Naive Bayes (prior, likelihood matrix, posterior).
 - Mode cetak untuk semua laporan.
 - Seed data lengkap: 5 penyakit, 20 gejala, 100 likelihood, 20 standar WHO.
 
@@ -54,7 +53,6 @@ Branch utama repository ini adalah `master`.
 | `/dashboard/diagnosis` | Input data balita + pengukuran, preprocessing WHO, proses diagnosis |
 | `/dashboard/penyakit` | CRUD penyakit + detail (deskripsi, saran, edit likelihood) |
 | `/dashboard/gejala` | CRUD gejala + detail (penyakit terkait, nilai likelihood) |
-| `/dashboard/perhitungan` | Simulasi perhitungan Naive Bayes (prior, likelihood matrix, posterior) |
 | `/dashboard/rekam-medis` | Riwayat diagnosis semua balita, filter dusun/status, pemantauan per anak |
 | `/dashboard/pengguna` | Kelola akun USER (orangtua) |
 
@@ -496,9 +494,8 @@ Klik **Deploy**. Vercel akan build dan deploy otomatis. Setelah selesai, buka UR
 2. Cek dashboard untuk ringkasan statistik.
 3. Kelola master data penyakit dan gejala (lihat detail, edit likelihood).
 4. Lakukan diagnosis balita dari halaman Diagnosis Balita.
-5. Gunakan halaman Perhitungan untuk simulasi dan verifikasi perhitungan NB.
-6. Gunakan Rekam Medis untuk melihat riwayat, filter per dusun/status, dan pantau perkembangan anak.
-7. Kelola akun USER (orangtua) dari halaman Kelola Pengguna.
+5. Gunakan Rekam Medis untuk melihat riwayat, filter per dusun/status, dan pantau perkembangan anak.
+6. Kelola akun USER (orangtua) dari halaman Kelola Pengguna.
 
 **Sebagai USER (Orangtua):**
 
@@ -543,7 +540,6 @@ Setelah ganti, restart dev server (tutup terminal lama, jalankan `npm run dev` l
 |   |   |   |-- gejala/page.tsx         # CRUD gejala + detail
 |   |   |   |-- pengguna/page.tsx       # Kelola akun user (admin only)
 |   |   |   |-- penyakit/page.tsx       # CRUD penyakit + detail + edit likelihood
-|   |   |   |-- perhitungan/page.tsx    # Simulasi perhitungan NB
 |   |   |   |-- rekam-medis/page.tsx    # Rekam medis + pemantauan (admin only)
 |   |   |   |-- riwayat/page.tsx        # Riwayat diagnosis (user only)
 |   |   |   |-- layout.tsx

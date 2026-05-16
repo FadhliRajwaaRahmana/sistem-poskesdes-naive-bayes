@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     locale: "id_ID",
     url: appUrl,
     title: appName,
-    description: "Platform admin POSYANDU untuk diagnosis gizi balita, pengelolaan dataset, dan simulasi perhitungan Naive Bayes.",
+    description: "Platform admin POSYANDU untuk diagnosis gizi balita dan pengelolaan data kesehatan.",
     siteName: appName,
   },
   twitter: {

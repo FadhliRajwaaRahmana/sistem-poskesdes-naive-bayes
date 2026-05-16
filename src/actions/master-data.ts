@@ -11,7 +11,6 @@ import { requireAdminSession } from "@/lib/session";
 const gejalaPath = "/dashboard/gejala";
 const penyakitPath = "/dashboard/penyakit";
 const diagnosisPath = "/dashboard/diagnosis";
-const perhitunganPath = "/dashboard/perhitungan";
 
 const gejalaSchema = z.object({
   kode: z.string().trim().min(1, "Kode gejala wajib diisi.").max(10, "Kode gejala maksimal 10 karakter."),
@@ -88,7 +87,7 @@ export async function createGejala(formData: FormData) {
     redirectWithMessage(gejalaPath, "error", getActionErrorMessage(error, "Gejala", "create"));
   }
 
-  revalidateMasterData([gejalaPath, diagnosisPath, perhitunganPath]);
+  revalidateMasterData([gejalaPath, diagnosisPath]);
   redirectWithMessage(gejalaPath, "success", "Data gejala berhasil ditambahkan.");
 }
 
@@ -126,7 +125,7 @@ export async function updateGejala(formData: FormData) {
     redirectWithMessage(gejalaPath, "error", getActionErrorMessage(error, "Gejala", "update"));
   }
 
-  revalidateMasterData([gejalaPath, diagnosisPath, perhitunganPath]);
+  revalidateMasterData([gejalaPath, diagnosisPath]);
   redirectWithMessage(gejalaPath, "success", "Data gejala berhasil diperbarui.");
 }
 
@@ -151,7 +150,7 @@ export async function deleteGejala(formData: FormData) {
     redirectWithMessage(gejalaPath, "error", getActionErrorMessage(error, "Gejala", "delete"));
   }
 
-  revalidateMasterData([gejalaPath, diagnosisPath, perhitunganPath]);
+  revalidateMasterData([gejalaPath, diagnosisPath]);
   redirectWithMessage(gejalaPath, "success", "Data gejala berhasil dihapus.");
 }
 
@@ -179,7 +178,7 @@ export async function createPenyakit(formData: FormData) {
     redirectWithMessage(penyakitPath, "error", getActionErrorMessage(error, "Penyakit", "create"));
   }
 
-  revalidateMasterData([penyakitPath, diagnosisPath, perhitunganPath]);
+  revalidateMasterData([penyakitPath, diagnosisPath]);
   redirectWithMessage(penyakitPath, "success", "Data penyakit berhasil ditambahkan.");
 }
 
@@ -219,7 +218,7 @@ export async function updatePenyakit(formData: FormData) {
     redirectWithMessage(penyakitPath, "error", getActionErrorMessage(error, "Penyakit", "update"));
   }
 
-  revalidateMasterData([penyakitPath, diagnosisPath, perhitunganPath]);
+  revalidateMasterData([penyakitPath, diagnosisPath]);
   redirectWithMessage(penyakitPath, "success", "Data penyakit berhasil diperbarui.");
 }
 
@@ -244,7 +243,7 @@ export async function deletePenyakit(formData: FormData) {
     redirectWithMessage(penyakitPath, "error", getActionErrorMessage(error, "Penyakit", "delete"));
   }
 
-  revalidateMasterData([penyakitPath, diagnosisPath, perhitunganPath]);
+  revalidateMasterData([penyakitPath, diagnosisPath]);
   redirectWithMessage(penyakitPath, "success", "Data penyakit berhasil dihapus.");
 }
 
@@ -275,6 +274,6 @@ export async function updateLikelihood(formData: FormData) {
     redirectWithMessage(`${penyakitPath}?detail=${penyakitId}`, "error", getActionErrorMessage(error, "Likelihood", "update"));
   }
 
-  revalidateMasterData([penyakitPath, gejalaPath, diagnosisPath, perhitunganPath]);
+  revalidateMasterData([penyakitPath, gejalaPath, diagnosisPath]);
   redirectWithMessage(`${penyakitPath}?detail=${penyakitId}`, "success", "Nilai likelihood berhasil diperbarui.");
 }

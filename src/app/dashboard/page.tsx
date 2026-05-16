@@ -9,7 +9,6 @@ import {
   FileText,
   ArrowRight,
   Stethoscope,
-  Calculator,
   Zap,
   ActivitySquare,
 } from "lucide-react";
@@ -100,15 +99,6 @@ export default async function DashboardPage() {
             <Stethoscope className="size-5 shrink-0 text-white" />
             <span className="text-white">Mulai Diagnosis Baru</span>
           </Link>
-          {isAdmin && (
-            <Link
-              href="/dashboard/perhitungan"
-              className="inline-flex h-14 w-full items-center justify-center gap-3 rounded-2xl border border-white/20 bg-white/10 px-6 py-3 text-sm font-bold text-white backdrop-blur-md transition-all hover:-translate-y-0.5 hover:bg-white/20 active:scale-95"
-            >
-              <Calculator className="size-5 shrink-0 text-white" />
-              <span className="text-white">Detail Perhitungan</span>
-            </Link>
-          )}
         </div>
       </div>
 
