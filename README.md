@@ -39,7 +39,7 @@ Branch utama repository ini adalah `master`.
 | --- | --- |
 | Frontend | Next.js 16 App Router, React 19, Tailwind CSS 4, Framer Motion, Lucide React |
 | Backend | Next.js Server Components, Server Actions, Better Auth |
-| Database | PostgreSQL (lokal atau cloud via Aiven/Supabase/dsb.), Prisma ORM |
+| Database | MySQL (XAMPP), Prisma ORM |
 | Validasi | Zod |
 | Tooling | TypeScript, ESLint, tsx |
 
@@ -130,12 +130,12 @@ Pastikan semua software berikut sudah terinstall di komputer Anda **sebelum** me
 | --- | --- | --- | --- | --- |
 | 1 | **Node.js** | v20.x LTS | Runtime JavaScript untuk menjalankan aplikasi | [nodejs.org/en/download](https://nodejs.org/en/download) |
 | 2 | **npm** | v10.x | Package manager (otomatis ikut saat install Node.js) | *(sudah termasuk di Node.js)* |
-| 3 | **PostgreSQL** | v14 atau lebih baru | Database server | [postgresql.org/download](https://www.postgresql.org/download/) |
+| 3 | **XAMPP** | v8.0 atau lebih baru | MySQL database server + phpMyAdmin | [apachefriends.org/download](https://www.apachefriends.org/download.html) |
 | 4 | **Git** | Versi terbaru | Untuk clone/download source code | [git-scm.com/downloads](https://git-scm.com/downloads) |
 
 > **Cara install Node.js:** Buka link di atas → download installer sesuai OS (Windows/macOS) → jalankan installer → ikuti wizard sampai selesai. Pilih versi **LTS** (bukan Current). **Jangan install versi 23 atau 24 ke atas** — banyak library native yang belum kompatibel.
 
-> **Cara install PostgreSQL di Windows:** Download installer dari link di atas → jalankan installer → **catat password** yang Anda buat untuk user `postgres` (akan dipakai nanti) → centang semua komponen (PostgreSQL Server, pgAdmin, Command Line Tools) → selesaikan instalasi. Pastikan service PostgreSQL **sudah berjalan** (cek di Windows Services atau Task Manager → Services).
+> **Cara install XAMPP di Windows:** Download installer dari link di atas → jalankan installer → pilih komponen minimal: **MySQL** dan **phpMyAdmin** (Apache juga perlu dicentang agar phpMyAdmin bisa diakses) → selesaikan instalasi. Setelah install, buka **XAMPP Control Panel** → klik **Start** pada **Apache** dan **MySQL**. Pastikan keduanya berstatus hijau (running).
 
 > **Cara install Git:** Download dari link di atas → jalankan installer → ikuti wizard dengan setting default → selesai.
 
@@ -144,9 +144,10 @@ Pastikan semua software berikut sudah terinstall di komputer Anda **sebelum** me
 ```bash
 node -v        # Harus muncul v20.x.x atau v22.x.x (JANGAN v23/v24 ke atas)
 npm -v         # Harus muncul 10.x.x atau lebih baru
-psql --version # Harus muncul psql (PostgreSQL) 14.x atau lebih baru
 git --version  # Harus muncul git version 2.x.x
 ```
+
+Untuk MySQL, cek melalui XAMPP Control Panel — pastikan MySQL berstatus **running** (hijau).
 
 Jika salah satu belum muncul atau error, install ulang software tersebut dari link di atas.
 
@@ -180,30 +181,28 @@ Perintah ini mengunduh semua library yang dibutuhkan aplikasi. Tunggu sampai sel
 
 ---
 
-### Langkah 3 — Buat Database di PostgreSQL
+### Langkah 3 — Buat Database di MySQL (XAMPP)
 
-Anda perlu membuat database kosong bernama `poskesdes_db`. Ada 2 cara:
+Pastikan XAMPP sudah berjalan (Apache dan MySQL sudah **Start**). Kemudian buat database kosong bernama `poskesdes_db`. Ada 2 cara:
 
-**Cara A — Via terminal (psql):**
+**Cara A — Via phpMyAdmin (Direkomendasikan):**
+
+1. Buka browser → akses **http://localhost/phpmyadmin**
+2. Klik tab **Databases** (atau **Basis Data**) di bagian atas.
+3. Di kolom **Create database**, ketik: `poskesdes_db`
+4. Pilih **Collation**: `utf8mb4_general_ci`
+5. Klik **Create**.
+
+**Cara B — Via terminal (MySQL CLI):**
 
 ```bash
-psql -U postgres
+mysql -u root -e "CREATE DATABASE poskesdes_db CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;"
 ```
 
-Masukkan password PostgreSQL Anda (yang dibuat saat instalasi), lalu ketik:
-
-```sql
-CREATE DATABASE poskesdes_db;
-```
-
-Jika berhasil muncul `CREATE DATABASE`, ketik `\q` lalu tekan Enter untuk keluar.
-
-**Cara B — Via pgAdmin (aplikasi GUI):**
-
-1. Buka aplikasi **pgAdmin 4** (ikut terinstall bersama PostgreSQL).
-2. Di panel kiri, klik kanan **Databases** → **Create** → **Database...**
-3. Isi **Database name**: `poskesdes_db`
-4. Klik **Save**.
+> Jika MySQL XAMPP Anda punya password root, tambahkan flag `-p` lalu masukkan password saat diminta:
+> ```bash
+> mysql -u root -p -e "CREATE DATABASE poskesdes_db CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;"
+> ```
 
 ---
 
@@ -229,11 +228,11 @@ copy .env.example .env
 cp .env.example .env
 ```
 
-Lalu buka file `.env` dengan text editor (Notepad, VS Code, Notepad++, dsb.) dan **ganti `your_password`** dengan password PostgreSQL Anda:
+Lalu buka file `.env` dengan text editor (Notepad, VS Code, Notepad++, dsb.) dan pastikan isinya sudah benar:
 
 ```env
-# WAJIB DIGANTI: ganti "your_password" dengan password PostgreSQL Anda
-DATABASE_URL="postgresql://postgres:your_password@localhost:5432/poskesdes_db?schema=public"
+# Database MySQL via XAMPP (default: user root, tanpa password)
+DATABASE_URL="mysql://root:@localhost:3306/poskesdes_db"
 
 # Bisa dibiarkan default atau diganti sesuka hati
 BETTER_AUTH_SECRET="ganti-dengan-secret-random-minimal-32-karakter"
@@ -247,12 +246,12 @@ ADMIN_EMAIL="admin@posyandu.local"
 ADMIN_PASSWORD="password123"
 ```
 
-> **Yang WAJIB diganti:** Hanya `your_password` di baris `DATABASE_URL`. Ganti dengan password PostgreSQL yang Anda buat saat instalasi. Sisanya bisa dibiarkan default.
+> **Catatan:** Secara default XAMPP menggunakan user `root` **tanpa password**. Jika MySQL XAMPP Anda menggunakan password, ubah `DATABASE_URL` menjadi:
+> ```
+> DATABASE_URL="mysql://root:password_anda@localhost:3306/poskesdes_db"
+> ```
 
-> **Contoh:** Jika password PostgreSQL Anda adalah `rahasia123`, maka baris `DATABASE_URL` menjadi:
-> ```
-> DATABASE_URL="postgresql://postgres:rahasia123@localhost:5432/poskesdes_db?schema=public"
-> ```
+> **Port default MySQL XAMPP adalah `3306`.** Jika Anda mengubah port di XAMPP, sesuaikan juga di `DATABASE_URL`.
 
 ---
 
@@ -266,7 +265,7 @@ npx prisma db push
 
 Jika berhasil, akan muncul pesan `Your database is now in sync with your Prisma schema`.
 
-> **Jika error "Can't reach database server":** Pastikan (1) service PostgreSQL sudah berjalan, (2) password di `DATABASE_URL` benar, (3) nama database `poskesdes_db` sudah dibuat di Langkah 3.
+> **Jika error "Can't reach database server":** Pastikan (1) Apache dan MySQL di XAMPP sudah Start (hijau), (2) user dan password di `DATABASE_URL` benar, (3) nama database `poskesdes_db` sudah dibuat di Langkah 3.
 
 ---
 
@@ -343,10 +342,12 @@ cd sistem-poskesdes-naive-bayes
 # 2. Install dependency
 npm install
 
-# 3. Buat database PostgreSQL (via psql)
-psql -U postgres -c "CREATE DATABASE poskesdes_db;"
+# 3. Buat database MySQL via phpMyAdmin:
+#    Buka http://localhost/phpmyadmin → tab Databases → buat "poskesdes_db" (utf8mb4_general_ci)
+#    Atau via terminal:
+mysql -u root -e "CREATE DATABASE poskesdes_db CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;"
 
-# 4. Salin file konfigurasi lalu edit DATABASE_URL
+# 4. Salin file konfigurasi (biasanya tidak perlu edit apa-apa jika pakai XAMPP default)
 copy .env.example .env          # Windows CMD
 # atau: Copy-Item .env.example .env   # Windows PowerShell
 # atau: cp .env.example .env          # macOS/Linux
@@ -371,18 +372,22 @@ npm run dev
 | Masalah | Penyebab | Solusi |
 | --- | --- | --- |
 | `npm install` error | Node.js belum terinstall atau versi terlalu lama | Install Node.js v20 LTS dari [nodejs.org](https://nodejs.org) |
-| `Cannot find module 'lightningcss...'` saat `npm run dev` | Node.js versi terlalu baru (v23/v24) | Uninstall Node.js → install ulang **v20 LTS** → `rm -rf node_modules .next` → `npm install` |
-| `psql: command not found` | PostgreSQL belum terinstall atau belum masuk PATH | Install PostgreSQL, atau buat database via pgAdmin (GUI) |
-| `Can't reach database server` saat `prisma db push` | Service PostgreSQL tidak berjalan atau password salah | Cek service PostgreSQL sudah running, cek password di `.env` |
-| `database "poskesdes_db" does not exist` | Database belum dibuat | Jalankan Langkah 3 (buat database) |
+| `Cannot find module 'lightningcss...'` saat `npm run dev` | Node.js versi terlalu baru (v23/v24) | Uninstall Node.js → install ulang **v20 LTS** → hapus folder `node_modules` dan `.next` → `npm install` |
+| `Can't reach database server` saat `prisma db push` | MySQL XAMPP tidak berjalan atau konfigurasi salah | Buka XAMPP Control Panel → klik **Start** pada Apache dan MySQL → cek `DATABASE_URL` di `.env` |
+| `Unknown database 'poskesdes_db'` | Database belum dibuat | Jalankan Langkah 3 (buat database via phpMyAdmin atau terminal) |
+| `Access denied for user 'root'@'localhost'` | MySQL XAMPP Anda punya password | Ubah `DATABASE_URL` di `.env` menjadi `mysql://root:password_anda@localhost:3306/poskesdes_db` |
 | `npm run db:seed` error "unique constraint" | Seed sudah pernah dijalankan sebelumnya | Data sudah ada, lanjut ke langkah berikutnya |
 | `npm run auth:bootstrap` error "user already exists" | Akun admin sudah pernah dibuat | Abaikan, langsung jalankan `npm run dev` |
 | Halaman blank / error 500 setelah login | Seed data belum dijalankan | Jalankan `npm run db:seed` lalu refresh browser |
 | Port 3000 sudah dipakai | Aplikasi lain menggunakan port 3000 | Tutup aplikasi lain tersebut, atau jalankan `npm run dev -- -p 3001` lalu buka `localhost:3001` |
+| Port 3306 konflik / MySQL tidak start | Port MySQL XAMPP bentrok dengan MySQL lain | Buka XAMPP → Config MySQL → ubah port, atau uninstall MySQL versi lain |
 
 ### Menjalankan Ulang Aplikasi (Setelah Restart PC)
 
 Setelah setup pertama kali selesai, untuk menjalankan aplikasi lagi cukup:
+
+1. **Buka XAMPP Control Panel** → klik **Start** pada **Apache** dan **MySQL** (pastikan keduanya hijau).
+2. Buka terminal, masuk ke folder project:
 
 ```bash
 cd sistem-poskesdes-naive-bayes
@@ -390,6 +395,8 @@ npm run dev
 ```
 
 Tidak perlu mengulangi langkah install, seed, atau bootstrap — data sudah tersimpan di database.
+
+> **Penting:** MySQL XAMPP harus selalu di-Start terlebih dahulu **sebelum** menjalankan `npm run dev`, karena aplikasi butuh koneksi ke database.
 
 ---
 
@@ -400,10 +407,10 @@ Jika ingin aplikasi bisa diakses online (bukan hanya di lokal), Anda bisa deploy
 ### Prasyarat
 
 - Akun [Vercel](https://vercel.com) (gratis).
-- Database PostgreSQL cloud yang bisa diakses dari internet, misalnya:
-  - [Aiven](https://aiven.io) (gratis trial 30 hari)
-  - [Supabase](https://supabase.com) (gratis tier tersedia)
-  - [Neon](https://neon.tech) (gratis tier tersedia)
+- Database MySQL cloud yang bisa diakses dari internet, misalnya:
+  - [PlanetScale](https://planetscale.com) (gratis tier tersedia)
+  - [Aiven for MySQL](https://aiven.io) (gratis trial 30 hari)
+  - [TiDB Cloud](https://tidbcloud.com) (gratis tier tersedia)
 - Repository sudah di-push ke GitHub.
 
 ### Langkah Deploy
@@ -418,10 +425,10 @@ npm run db:seed          # Isi data awal (5 penyakit, 20 gejala, dll.)
 npm run auth:bootstrap   # Buat akun admin
 ```
 
-Contoh `DATABASE_URL` untuk Aiven:
+Contoh `DATABASE_URL` untuk MySQL cloud:
 
 ```env
-DATABASE_URL="postgresql://avnadmin:PASSWORD@HOST.aivencloud.com:PORT/poskesdes_db?sslmode=require"
+DATABASE_URL="mysql://username:password@host:port/poskesdes_db?sslaccept=strict"
 ```
 
 > Setelah selesai, Anda bisa kembalikan `DATABASE_URL` ke database lokal jika mau tetap develop di lokal.
@@ -439,7 +446,7 @@ Di halaman konfigurasi project Vercel (Settings → Environment Variables), tamb
 
 | Variable | Nilai | Keterangan |
 | --- | --- | --- |
-| `DATABASE_URL` | `postgresql://avnadmin:...@....aivencloud.com:PORT/poskesdes_db?sslmode=require` | Connection string database cloud |
+| `DATABASE_URL` | `mysql://username:password@host:port/poskesdes_db?sslaccept=strict` | Connection string database MySQL cloud |
 | `BETTER_AUTH_SECRET` | *(secret yang sama dengan saat bootstrap)* | **Wajib sama** dengan yang dipakai saat `auth:bootstrap` |
 | `BETTER_AUTH_URL` | `https://nama-project.vercel.app` | URL production Vercel Anda |
 | `NEXT_PUBLIC_APP_NAME` | `Sistem Diagnosis POSYANDU` | Nama aplikasi |
@@ -464,7 +471,7 @@ Klik **Deploy**. Vercel akan build dan deploy otomatis. Setelah selesai, buka UR
 | Masalah | Solusi |
 | --- | --- |
 | Build error Prisma | Pastikan `"postinstall": "prisma generate"` ada di `scripts` di `package.json` (sudah ada). |
-| Database connection timeout | Pastikan `?sslmode=require` ada di akhir `DATABASE_URL`. |
+| Database connection timeout | Pastikan connection string MySQL cloud benar dan database mengizinkan koneksi dari IP Vercel. |
 | Login gagal setelah deploy | Pastikan `BETTER_AUTH_SECRET` di Vercel **sama persis** dengan saat `auth:bootstrap`. |
 | Halaman kosong / error 500 | Pastikan seed data sudah dijalankan ke database cloud (`npm run db:seed`). |
 
@@ -509,11 +516,11 @@ Klik **Deploy**. Vercel akan build dan deploy otomatis. Setelah selesai, buka UR
 Cukup ganti nilai `DATABASE_URL` di file `.env`:
 
 ```env
-# Lokal:
-DATABASE_URL="postgresql://postgres:password@localhost:5432/poskesdes_db?schema=public"
+# Lokal (XAMPP):
+DATABASE_URL="mysql://root:@localhost:3306/poskesdes_db"
 
-# Cloud (contoh Aiven):
-DATABASE_URL="postgresql://avnadmin:PASSWORD@HOST.aivencloud.com:PORT/poskesdes_db?sslmode=require"
+# Cloud (contoh):
+DATABASE_URL="mysql://username:password@host:port/poskesdes_db?sslaccept=strict"
 ```
 
 Setelah ganti, restart dev server (tutup terminal lama, jalankan `npm run dev` lagi). Tidak perlu ubah kode apapun.
@@ -525,7 +532,7 @@ Setelah ganti, restart dev server (tutup terminal lama, jalankan `npm run dev` l
 ```text
 .
 |-- prisma/
-|   |-- schema.prisma          # Schema database Prisma
+|   |-- schema.prisma          # Schema database Prisma (MySQL)
 |   `-- seed.ts                # Seed data (5 penyakit, 20 gejala, 100 likelihood, 20 WHO)
 |-- scripts/
 |   `-- bootstrap-admin.ts     # Script buat akun admin pertama
@@ -558,7 +565,7 @@ Setelah ganti, restart dev server (tutup terminal lama, jalankan `npm run dev` l
 |   |   `-- layout/
 |   |       `-- dashboard-shell.tsx    # Sidebar + shell dashboard (role-aware)
 |   `-- lib/
-|       |-- auth.ts                    # Konfigurasi Better Auth
+|       |-- auth.ts                    # Konfigurasi Better Auth (MySQL)
 |       |-- auth-client.ts            # Client-side auth
 |       |-- diagnosis-helpers.ts      # Helper status pemantauan, severity
 |       |-- diagnosis-validation.ts   # Validasi input diagnosis
