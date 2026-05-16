@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import { useFormStatus } from "react-dom";
 import { submitDiagnosis } from "@/actions/diagnosis";
 import { evaluateAutoSymptoms } from "@/lib/who-standards";
 import type { AutoSymptomResult } from "@/lib/who-standards";
@@ -410,14 +411,22 @@ export function DiagnosisForm({ gejalaList }: DiagnosisFormProps) {
 
       {/* Submit */}
       <div className="flex pt-8 mt-4 border-t border-slate-100">
-        <button
-          type="submit"
-          className="inline-flex h-14 w-full sm:w-auto items-center justify-center rounded-xl bg-gradient-to-br from-primary to-teal-600 px-8 text-sm font-bold text-white shadow-[var(--shadow-button)] transition-all hover:-translate-y-0.5 hover:shadow-lg active:scale-95"
-        >
-          <Stethoscope className="mr-3 size-5 stroke-[2.5]" />
-          Proses Diagnosis Naive Bayes
-        </button>
+        <SubmitButton />
       </div>
     </form>
+  );
+}
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="inline-flex h-14 w-full sm:w-auto items-center justify-center rounded-xl bg-gradient-to-br from-primary to-teal-600 px-8 text-sm font-bold text-white shadow-[var(--shadow-button)] transition-all hover:-translate-y-0.5 hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
+    >
+      <Stethoscope className="mr-3 size-5 stroke-[2.5]" />
+      {pending ? "Memproses..." : "Proses Diagnosis Naive Bayes"}
+    </button>
   );
 }
