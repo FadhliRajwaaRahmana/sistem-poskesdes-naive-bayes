@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-const appName = process.env.NEXT_PUBLIC_APP_NAME ?? "Sistem Diagnosis POSKESDES";
+const appName = process.env.NEXT_PUBLIC_APP_NAME ?? "Sistem Diagnosis POSYANDU";
 
 export const size = {
   width: 1200,
@@ -120,7 +120,7 @@ export default function OpenGraphImage() {
                   letterSpacing: -1.2,
                 }}
               >
-                POSKESDES
+                POSYANDU
               </div>
               <div
                 style={{

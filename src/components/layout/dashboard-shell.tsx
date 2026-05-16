@@ -179,7 +179,7 @@ export function DashboardShell({
             <ActivitySquare className="size-5" />
           </div>
           <span className="text-base font-extrabold tracking-tight text-slate-900">
-            POSKESDES
+            POSYANDU
           </span>
         </div>
         <button
@@ -216,7 +216,7 @@ export function DashboardShell({
                   </div>
                   <div>
                     <h1 className="text-base font-extrabold tracking-tight text-slate-900">
-                      POSKESDES
+                      POSYANDU
                     </h1>
                     <p className="text-[11px] text-slate-500 font-bold uppercase tracking-wider">Naive Bayes</p>
                   </div>
@@ -274,7 +274,7 @@ export function DashboardShell({
             isCollapsed ? "opacity-0 w-0 hidden" : "opacity-100 w-auto block"
           )}>
             <h1 className="text-xl font-extrabold tracking-tight text-slate-900">
-              POSKESDES
+              POSYANDU
             </h1>
             <p className="text-[10px] text-teal-600 font-bold tracking-widest uppercase mt-0.5">
               Naive Bayes

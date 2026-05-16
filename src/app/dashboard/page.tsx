@@ -140,7 +140,7 @@ export default async function DashboardPage() {
           </h2>
           <p className="mt-3 text-base font-medium text-slate-300 max-w-lg leading-relaxed">
             {isAdmin
-              ? "Pantau data statistik POSKESDES secara real-time. Kelola penyakit, gejala, dan evaluasi diagnosis gizi buruk balita dengan metode Naive Bayes."
+              ? "Pantau data statistik POSYANDU secara real-time. Kelola penyakit, gejala, dan evaluasi diagnosis gizi buruk balita dengan metode Naive Bayes."
               : "Lakukan diagnosis gizi balita dan pantau riwayat pemeriksaan anak Anda."}
           </p>
         </div>

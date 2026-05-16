@@ -37,7 +37,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           <div className="flex size-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-teal-500 text-white shadow-xl shadow-teal-900/50">
             <ActivitySquare className="size-6" />
           </div>
-          <span className="text-2xl font-extrabold tracking-tight text-white">POSKESDES</span>
+          <span className="text-2xl font-extrabold tracking-tight text-white">POSYANDU</span>
         </div>
 
         <div className="relative z-10 space-y-8 max-w-lg">
@@ -54,7 +54,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         </div>
 
         <div className="relative z-10 text-slate-400 text-sm font-medium">
-          &copy; {new Date().getFullYear()} POSKESDES Admin System. All rights reserved.
+          &copy; {new Date().getFullYear()} POSYANDU Admin System. All rights reserved.
         </div>
       </div>
 
@@ -68,7 +68,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                 <ActivitySquare className="size-8" />
               </div>
               <div className="text-center">
-                <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">POSKESDES</h1>
+                <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">POSYANDU</h1>
                 <p className="text-sm font-bold text-teal-600 uppercase tracking-widest mt-1">Sistem Diagnosis</p>
               </div>
             </div>
@@ -93,7 +93,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </div>
 
           <div className="lg:hidden mt-10 text-center text-sm font-medium text-slate-400">
-            &copy; {new Date().getFullYear()} POSKESDES System
+            &copy; {new Date().getFullYear()} POSYANDU System
           </div>
         </div>
       </div>

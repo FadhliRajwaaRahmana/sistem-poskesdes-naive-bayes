@@ -339,12 +339,12 @@ export default async function PerhitunganPage({ searchParams }: PerhitunganPageP
               <BarChart3 className="size-6" />
             </div>
             <div>
-              <h3 className="text-xl font-black text-slate-900 tracking-tight">Probabilitas Prior P(Ck)</h3>
+              <h3 className="text-xl font-black text-slate-900 tracking-tight">Probabilitas Prior P(Ci)</h3>
               <p className="text-sm font-semibold text-slate-500 mt-1">Probabilitas dasar setiap penyakit (uniform)</p>
             </div>
           </div>
           <span className="rounded-xl bg-slate-100 border border-slate-200 px-4 py-2 text-xs font-bold text-slate-700 shadow-sm uppercase tracking-widest">
-            P(Ck) = 1 / {overview.totalPenyakit}
+            P(Ci) = 1 / {overview.totalPenyakit}
           </span>
         </div>
         <div className="w-full overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
@@ -384,7 +384,7 @@ export default async function PerhitunganPage({ searchParams }: PerhitunganPageP
             <Table className="size-6" />
           </div>
           <div>
-            <h3 className="text-xl font-black text-slate-900 tracking-tight">Tabel Likelihood P(Xi|Ck)</h3>
+            <h3 className="text-xl font-black text-slate-900 tracking-tight">Tabel Likelihood P(Xi|Ci)</h3>
             <p className="mt-1 text-sm font-semibold text-slate-500">
               Nilai likelihood tetap yang ditetapkan oleh pakar (0.0 – 1.0)
             </p>

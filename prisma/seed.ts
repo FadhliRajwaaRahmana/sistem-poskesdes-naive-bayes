@@ -33,7 +33,7 @@ const penyakitSeed = [
     deskripsi:
       "Pola makan tidak teratur, berat badan di bawah standar usia (garis kuning KMS), anak tampak lemas.",
     saranPenanganan:
-      "Pemberian makanan tambahan dan edukasi gizi seimbang bagi orang tua, vitamin dan pemantauan berat badan rutin di Poskesdes.",
+      "Pemberian makanan tambahan dan edukasi gizi seimbang bagi orang tua, vitamin dan pemantauan berat badan rutin di Posyandu.",
   },
   {
     kode: "C5",

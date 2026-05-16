@@ -265,7 +265,7 @@ export default async function RekamMedisPage({ searchParams }: RekamMedisPagePro
           {`window.addEventListener("load",function(){setTimeout(function(){window.print()},300)});`}
         </Script>
         <div className="border-b-2 border-slate-900 pb-5">
-          <h1 className="text-3xl font-black tracking-tight">Laporan Diagnosis Balita POSKESDES</h1>
+          <h1 className="text-3xl font-black tracking-tight">Laporan Diagnosis Balita POSYANDU</h1>
           <p className="mt-2 text-sm font-bold text-slate-500">Tanggal Cetak: {dateFormatter.format(new Date())}</p>
         </div>
 
@@ -370,7 +370,7 @@ export default async function RekamMedisPage({ searchParams }: RekamMedisPagePro
           {`window.addEventListener("load",function(){setTimeout(function(){window.print()},300)});`}
         </Script>
         <div className="border-b-2 border-slate-900 pb-5">
-          <h1 className="text-3xl font-black tracking-tight">Laporan Rekam Medis POSKESDES</h1>
+          <h1 className="text-3xl font-black tracking-tight">Laporan Rekam Medis POSYANDU</h1>
           <p className="mt-2 text-sm font-bold text-slate-500">Tanggal Cetak: {dateFormatter.format(new Date())}</p>
         </div>
         <div className="rounded-lg border-2 border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold">

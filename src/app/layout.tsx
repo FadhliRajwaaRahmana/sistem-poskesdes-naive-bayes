@@ -9,7 +9,7 @@ const fontSans = Plus_Jakarta_Sans({
   display: "swap",
 });
 
-const appName = process.env.NEXT_PUBLIC_APP_NAME ?? "Sistem Diagnosis POSKESDES";
+const appName = process.env.NEXT_PUBLIC_APP_NAME ?? "Sistem Diagnosis POSYANDU";
 const appUrl = process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
 
 export const metadata: Metadata = {
@@ -19,9 +19,9 @@ export const metadata: Metadata = {
     default: appName,
     template: `%s | ${appName}`,
   },
-  description: "Sistem pakar diagnosis penyakit gizi buruk pada balita POSKESDES berbasis Naive Bayes.",
+  description: "Sistem pakar diagnosis penyakit gizi buruk pada balita POSYANDU berbasis Naive Bayes.",
   keywords: [
-    "POSKESDES",
+    "POSYANDU",
     "Naive Bayes",
     "diagnosis balita",
     "sistem pakar",
@@ -32,13 +32,13 @@ export const metadata: Metadata = {
     locale: "id_ID",
     url: appUrl,
     title: appName,
-    description: "Platform admin POSKESDES untuk diagnosis gizi balita, pengelolaan dataset, dan simulasi perhitungan Naive Bayes.",
+    description: "Platform admin POSYANDU untuk diagnosis gizi balita, pengelolaan dataset, dan simulasi perhitungan Naive Bayes.",
     siteName: appName,
   },
   twitter: {
     card: "summary_large_image",
     title: appName,
-    description: "Platform admin POSKESDES untuk diagnosis gizi balita berbasis Naive Bayes.",
+    description: "Platform admin POSYANDU untuk diagnosis gizi balita berbasis Naive Bayes.",
   },
 };
 

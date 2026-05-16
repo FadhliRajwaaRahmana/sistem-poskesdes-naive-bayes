@@ -5,7 +5,6 @@ import { requireSession } from "@/lib/session";
 import { computePemantauanStatus, type PemantauanStatus } from "@/lib/diagnosis-helpers";
 import {
   History,
-  Search,
   Printer,
   RotateCcw,
   ChevronLeft,
@@ -67,7 +66,6 @@ export default async function RiwayatPage({ searchParams }: RiwayatPageProps) {
   const userId = session.user.id;
   const params = searchParams ? await searchParams : {};
 
-  const q = sv(params.q).trim();
   const pemantauanNik = sv(params.nik);
   const isPrint = sv(params.print) === "1";
   const requestedPage = pv(params.page);
@@ -232,13 +230,6 @@ export default async function RiwayatPage({ searchParams }: RiwayatPageProps) {
   // ── LIST VIEW ──
   const where: Record<string, unknown> = { userId };
 
-  if (q) {
-    where.OR = [
-      { namaBalita: { contains: q, mode: "insensitive" } },
-      { nik: { contains: q, mode: "insensitive" } },
-    ];
-  }
-
   const totalRecords = await prisma.diagnosisBalita.count({ where });
   const totalPages = Math.max(1, Math.ceil(totalRecords / PAGE_SIZE));
   const currentPage = Math.min(requestedPage, totalPages);
@@ -270,42 +261,12 @@ export default async function RiwayatPage({ searchParams }: RiwayatPageProps) {
       </div>
 
       <div className="card-container !p-0 overflow-hidden">
-        {/* Search */}
-        <div className="border-b border-slate-200 bg-slate-50/50 p-6 lg:p-8 flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <h3 className="text-xl font-black text-slate-800 tracking-tight">Daftar Riwayat</h3>
-            <p className="mt-1.5 text-sm font-medium text-slate-500">
-              Total <span className="font-bold text-primary px-1.5 py-0.5 rounded-md bg-primary/10">{totalRecords}</span> data
-            </p>
-          </div>
-          <form method="get" className="flex flex-col gap-3 sm:flex-row w-full lg:w-auto">
-            <div className="relative w-full sm:w-72">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
-              <input
-                type="text"
-                name="q"
-                defaultValue={q}
-                placeholder="Cari nama atau NIK..."
-                className="input-field pl-11 h-11"
-              />
-            </div>
-            <div className="flex gap-2">
-              <button
-                type="submit"
-                className="inline-flex h-11 items-center justify-center rounded-xl bg-slate-900 px-6 text-sm font-bold text-white shadow-sm transition-all hover:bg-slate-800 active:scale-95"
-              >
-                Cari
-              </button>
-              {q && (
-                <a
-                  href={basePath}
-                  className="inline-flex h-11 items-center justify-center rounded-xl bg-white border border-slate-200 px-6 text-sm font-bold text-slate-700 transition-all hover:bg-slate-50 active:scale-95 shadow-sm"
-                >
-                  Reset
-                </a>
-              )}
-            </div>
-          </form>
+        {/* Header */}
+        <div className="border-b border-slate-200 bg-slate-50/50 p-6 lg:p-8">
+          <h3 className="text-xl font-black text-slate-800 tracking-tight">Daftar Riwayat</h3>
+          <p className="mt-1.5 text-sm font-medium text-slate-500">
+            Total <span className="font-bold text-primary px-1.5 py-0.5 rounded-md bg-primary/10">{totalRecords}</span> data
+          </p>
         </div>
 
         {/* Records */}
@@ -316,12 +277,10 @@ export default async function RiwayatPage({ searchParams }: RiwayatPageProps) {
                 <History className="h-10 w-10 text-slate-400" />
               </div>
               <h3 className="text-lg font-black text-slate-800">
-                {q ? "Pencarian Tidak Ditemukan" : "Belum Ada Riwayat"}
+                Belum Ada Riwayat
               </h3>
               <p className="mt-2 text-sm font-medium text-slate-500 max-w-md leading-relaxed">
-                {q
-                  ? "Coba gunakan kata kunci lain."
-                  : "Anda belum melakukan diagnosis. Silakan mulai dari menu Diagnosis Balita."}
+                Anda belum melakukan diagnosis. Silakan mulai dari menu Diagnosis Balita.
               </p>
             </div>
           ) : (
@@ -376,7 +335,7 @@ export default async function RiwayatPage({ searchParams }: RiwayatPageProps) {
             </p>
             <div className="flex items-center gap-2">
               <a
-                href={buildHref(basePath, { q, page: currentPage - 1 })}
+                href={buildHref(basePath, { page: currentPage - 1 })}
                 aria-disabled={currentPage <= 1}
                 className={`inline-flex h-10 items-center rounded-xl bg-white border border-slate-200 px-4 text-sm font-bold shadow-sm transition-all active:scale-95 ${
                   currentPage <= 1 ? "pointer-events-none opacity-50 text-slate-400" : "text-slate-700 hover:bg-slate-50"
@@ -388,7 +347,7 @@ export default async function RiwayatPage({ searchParams }: RiwayatPageProps) {
                 {currentPage}
               </span>
               <a
-                href={buildHref(basePath, { q, page: currentPage + 1 })}
+                href={buildHref(basePath, { page: currentPage + 1 })}
                 aria-disabled={currentPage >= totalPages}
                 className={`inline-flex h-10 items-center rounded-xl bg-white border border-slate-200 px-4 text-sm font-bold shadow-sm transition-all active:scale-95 ${
                   currentPage >= totalPages ? "pointer-events-none opacity-50 text-slate-400" : "text-slate-700 hover:bg-slate-50"
