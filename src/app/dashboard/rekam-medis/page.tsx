@@ -11,7 +11,6 @@ import {
   RotateCcw,
   ChevronLeft,
   ChevronRight,
-  User,
   Calendar,
   Hash,
   MapPin,

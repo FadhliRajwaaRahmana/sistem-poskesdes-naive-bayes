@@ -384,7 +384,7 @@ export default async function PerhitunganPage({ searchParams }: PerhitunganPageP
             <Table className="size-6" />
           </div>
           <div>
-            <h3 className="text-xl font-black text-slate-900 tracking-tight">Tabel Likelihood P(Xi|Ci)</h3>
+            <h3 className="text-xl font-black text-slate-900 tracking-tight">Tabel Likelihood P(X|Ci)</h3>
             <p className="mt-1 text-sm font-semibold text-slate-500">
               Nilai likelihood tetap yang ditetapkan oleh pakar (0.0 – 1.0)
             </p>

@@ -6,11 +6,9 @@ import { computePemantauanStatus, type PemantauanStatus } from "@/lib/diagnosis-
 import {
   History,
   Printer,
-  RotateCcw,
   ChevronLeft,
   ChevronRight,
   Calendar,
-  Hash,
   Activity,
   ArrowLeft,
   CheckCircle2,

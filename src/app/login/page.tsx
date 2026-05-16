@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/auth/login-form";
 import { isAuthenticated } from "@/lib/session-guards";
 import { getSession } from "@/lib/session";
-import { ActivitySquare, ShieldCheck, Stethoscope } from "lucide-react";
+import { ActivitySquare, ShieldAlert, Stethoscope } from "lucide-react";
 
 type PageSearchParams = Record<string, string | string[] | undefined>;
 
@@ -82,7 +82,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
             {errorMessage ? (
               <div className="mt-6 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3.5 text-sm font-bold text-rose-700 flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
-                <ShieldCheck className="size-5 shrink-0 text-rose-500" />
+                <ShieldAlert className="size-5 shrink-0 text-rose-500" />
                 <p>{errorMessage}</p>
               </div>
             ) : null}
