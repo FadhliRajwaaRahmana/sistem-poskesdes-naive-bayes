@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { submitDiagnosis } from "@/actions/diagnosis";
 import { evaluateAutoSymptoms } from "@/lib/who-standards";
@@ -73,8 +73,21 @@ export function DiagnosisForm({ gejalaList }: DiagnosisFormProps) {
     return v === "" || Number.isNaN(n) ? ("" as const) : n;
   }, []);
 
+  const waktuRef = useRef<HTMLInputElement>(null);
+
+  const handleSubmit = useCallback(() => {
+    if (waktuRef.current) {
+      const now = new Date();
+      const h = String(now.getHours()).padStart(2, "0");
+      const m = String(now.getMinutes()).padStart(2, "0");
+      const s = String(now.getSeconds()).padStart(2, "0");
+      waktuRef.current.value = `${h}:${m}:${s}`;
+    }
+  }, []);
+
   return (
-    <form action={submitDiagnosis} className="mt-8 space-y-10">
+    <form action={submitDiagnosis} onSubmit={handleSubmit} className="mt-8 space-y-10">
+      <input ref={waktuRef} type="hidden" name="waktuLokal" value="" />
       {/* Section 1: Data Balita */}
       <div>
         <div className="flex items-center gap-3 mb-6">

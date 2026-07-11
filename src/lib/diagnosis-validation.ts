@@ -4,19 +4,33 @@ export type GejalaLookupItem = {
   nama: string;
 };
 
-export function parseDiagnosisDate(value: string): Date | null {
+export function parseDiagnosisDate(value: string, localTime?: string): Date | null {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     return null;
   }
 
   const [year, month, day] = value.split("-").map((item) => Number.parseInt(item, 10));
-  const parsed = new Date(Date.UTC(year, month - 1, day));
+
+  let hours = 0;
+  let minutes = 0;
+  let seconds = 0;
+
+  if (localTime && /^\d{2}:\d{2}:\d{2}$/.test(localTime)) {
+    const [h, m, s] = localTime.split(":").map(Number);
+    if (h >= 0 && h <= 23 && m >= 0 && m <= 59 && s >= 0 && s <= 59) {
+      hours = h;
+      minutes = m;
+      seconds = s;
+    }
+  }
+
+  const parsed = new Date(year, month - 1, day, hours, minutes, seconds);
 
   if (
     Number.isNaN(parsed.getTime()) ||
-    parsed.getUTCFullYear() !== year ||
-    parsed.getUTCMonth() !== month - 1 ||
-    parsed.getUTCDate() !== day
+    parsed.getFullYear() !== year ||
+    parsed.getMonth() !== month - 1 ||
+    parsed.getDate() !== day
   ) {
     return null;
   }

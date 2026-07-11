@@ -72,7 +72,8 @@ export async function submitDiagnosis(formData: FormData) {
   }
 
   const data = parsed.data;
-  const diagnosisDate = parseDiagnosisDate(data.tanggal);
+  const waktuLokal = getStringValue(formData.get("waktuLokal"));
+  const diagnosisDate = parseDiagnosisDate(data.tanggal, waktuLokal || undefined);
 
   if (!diagnosisDate) {
     redirectWithMessage(diagnosisPath, "error", "Tanggal diagnosis tidak valid.");
