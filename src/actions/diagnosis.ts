@@ -8,7 +8,7 @@ import { calculateDiagnosis } from "@/lib/naive-bayes";
 import { parseDiagnosisDate, resolveSelectedGejala } from "@/lib/diagnosis-validation";
 import { getDiagnosisActionErrorMessage } from "@/lib/prisma-action-errors";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/session";
+import { getSession, requireAdminSession } from "@/lib/session";
 import { evaluateAutoSymptoms } from "@/lib/who-standards";
 
 const diagnosisPath = "/diagnosis";
@@ -207,6 +207,7 @@ export async function submitDiagnosis(formData: FormData) {
 }
 
 export async function deleteDiagnosis(id: string) {
+  await requireAdminSession();
   await prisma.diagnosisBalita.delete({ where: { id } });
   revalidatePath("/dashboard/riwayat-diagnosis");
   revalidatePath("/dashboard");

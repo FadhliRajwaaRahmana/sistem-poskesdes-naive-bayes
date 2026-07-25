@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { requireSession } from "@/lib/session";
+import { requireAdminSession } from "@/lib/session";
 import {
   ClipboardCheck,
   HeartPulse,
@@ -18,7 +18,7 @@ const dateFormatter = new Intl.DateTimeFormat("id-ID", {
 });
 
 export default async function DashboardPage() {
-  await requireSession();
+  await requireAdminSession();
 
   const [
     totalGejala,
