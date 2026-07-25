@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/session";
 import { DeleteDiagnosisButton } from "./delete-button";
+import { ExportButtons } from "@/app/diagnosis/export-buttons";
 import {
   FileText,
   Search,
@@ -348,15 +349,10 @@ export default async function RiwayatDiagnosisPage({ searchParams }: RiwayatDiag
               <p className="mt-1 text-sm font-semibold text-slate-500">Temukan riwayat diagnosis balita dengan cepat.</p>
             </div>
             <div className="flex flex-wrap gap-3">
-              <a
-                href={buildHref(basePath, { ...filterParams, print: "1" })}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex h-11 items-center gap-2 rounded-xl border-2 border-slate-300 bg-white px-5 text-sm font-extrabold text-slate-800 shadow-sm transition-all hover:bg-slate-100 hover:border-slate-400 hover:text-slate-900 active:scale-95"
-              >
-                <Printer className="size-4 text-slate-700 stroke-[2.5]" />
-                <span>Cetak Print</span>
-              </a>
+              <ExportButtons
+                printUrl={buildHref(basePath, { ...filterParams, print: "1" })}
+                fileName={`Riwayat-Diagnosis-Balita-${new Date().toISOString().slice(0, 10)}`}
+              />
             </div>
           </div>
 
@@ -477,13 +473,11 @@ export default async function RiwayatDiagnosisPage({ searchParams }: RiwayatDiag
                         </td>
                         <td className="p-4 px-5 text-center">
                           <div className="flex items-center justify-center gap-2">
-                            <Link
-                              href={buildHref(basePath, { diagnosisId: rec.id, print: "1" })}
-                              target="_blank"
-                              className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-xs font-bold text-slate-600 shadow-sm hover:bg-slate-50 hover:text-primary active:scale-95 transition-all"
-                            >
-                              <Printer className="size-3.5" /> Cetak
-                            </Link>
+                            <ExportButtons
+                              printUrl={buildHref(basePath, { diagnosisId: rec.id, print: "1" })}
+                              fileName={`Diagnosis-${rec.namaBalita.replace(/\s+/g, "-")}`}
+                              compact
+                            />
                             <DeleteDiagnosisButton id={rec.id} namaBalita={rec.namaBalita} />
                           </div>
                         </td>

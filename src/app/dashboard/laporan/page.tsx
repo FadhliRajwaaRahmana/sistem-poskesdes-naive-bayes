@@ -1,12 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/session";
+import { ExportButtons } from "@/app/diagnosis/export-buttons";
 import {
   BarChart3,
-  Printer,
   Calendar,
   CheckCircle2,
   ShieldAlert,
-  FileDown,
 } from "lucide-react";
 
 type PageSearchParams = Record<string, string | string[] | undefined>;
@@ -303,15 +302,10 @@ export default async function LaporanPage({ searchParams }: LaporanPageProps) {
             </button>
           </form>
           <div className="flex flex-wrap gap-3">
-            <a
-              href={`/dashboard/laporan?${printUrl.toString()}`}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex h-11 items-center gap-2 rounded-xl border-2 border-slate-300 bg-white px-5 text-sm font-extrabold text-slate-800 shadow-sm transition-all hover:bg-slate-100 hover:border-slate-400 hover:text-slate-900 active:scale-95"
-            >
-              <Printer className="size-4 text-slate-700 stroke-[2.5]" />
-              <span>Cetak Print</span>
-            </a>
+            <ExportButtons
+              printUrl={`/dashboard/laporan?${printUrl.toString()}`}
+              fileName={`Laporan-Rekap-Diagnosis-${selectedYear}${selectedMonth ? `-${selectedMonth}` : ""}`}
+            />
           </div>
         </div>
       </div>

@@ -67,143 +67,124 @@ export default async function PublicDiagnosisPage({ searchParams }: DiagnosisPag
       <section className="min-h-screen bg-white text-slate-900 font-sans print:p-0">
         <style>{`
           @media print {
-            @page { margin: 15mm 12mm; size: A4; }
-            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            @page { margin: 8mm 10mm; size: A4 portrait; }
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; font-size: 11px; }
+            section { max-width: 100% !important; margin: 0 !important; padding: 0 !important; }
           }
           @media screen {
-            section { max-width: 800px; margin: 0 auto; padding: 40px 32px; }
+            section { max-width: 800px; margin: 0 auto; padding: 24px 20px; }
           }
         `}</style>
         <script dangerouslySetInnerHTML={{ __html: `window.addEventListener("load",function(){setTimeout(function(){window.print()},400)});` }} />
 
         {/* Header */}
-        <div className="border-b-[3px] border-slate-900 pb-6 mb-8">
+        <div className="border-b-2 border-slate-900 pb-3 mb-4">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Sistem Diagnosis Gizi — POSYANDU</p>
-              <h1 className="text-[28px] font-black tracking-tight leading-tight">Laporan Hasil Diagnosis Balita</h1>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-1">Sistem Diagnosis Gizi — POSYANDU</p>
+              <h1 className="text-xl font-black tracking-tight leading-tight">Laporan Hasil Diagnosis Balita</h1>
             </div>
             <div className="text-right shrink-0">
-              <p className="text-xs font-bold text-slate-500">Tanggal Cetak</p>
-              <p className="text-sm font-black">{dateFormatter.format(new Date())}</p>
+              <p className="text-[10px] font-bold text-slate-500">Tanggal Cetak</p>
+              <p className="text-xs font-black">{dateFormatter.format(new Date())}</p>
             </div>
           </div>
         </div>
 
         {/* Hasil Diagnosis — Highlight Box */}
-        <div className={`rounded-xl p-6 mb-8 border-2 ${
+        <div className={`rounded-lg p-4 mb-4 border-2 ${
           isGiziBaik
             ? "bg-emerald-50 border-emerald-300"
             : "bg-rose-50 border-rose-300"
         }`}>
-          <p className="text-xs font-black uppercase tracking-[0.15em] mb-2" style={{ color: isGiziBaik ? "#047857" : "#be123c" }}>
+          <p className="text-[10px] font-black uppercase tracking-[0.15em] mb-1" style={{ color: isGiziBaik ? "#047857" : "#be123c" }}>
             Hasil Diagnosis
           </p>
-          <p className="text-3xl font-black tracking-tight" style={{ color: isGiziBaik ? "#065f46" : "#9f1239" }}>
+          <p className="text-xl font-black tracking-tight" style={{ color: isGiziBaik ? "#065f46" : "#9f1239" }}>
             {savedDiagnosis.hasilDiagnosis}
           </p>
           {savedDiagnosis.keterangan && (
-            <p className="mt-3 text-sm font-semibold leading-relaxed" style={{ color: isGiziBaik ? "#065f46" : "#9f1239" }}>
+            <p className="mt-1.5 text-xs font-semibold leading-normal" style={{ color: isGiziBaik ? "#065f46" : "#9f1239" }}>
               {savedDiagnosis.keterangan}
             </p>
           )}
         </div>
 
         {/* Data Balita */}
-        <div className="mb-8">
-          <h2 className="text-xs font-black uppercase tracking-[0.15em] text-slate-500 mb-4 pb-2 border-b border-slate-200">
+        <div className="mb-4">
+          <h2 className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500 mb-2 pb-1 border-b border-slate-200">
             Data Balita
           </h2>
-          <div className="grid grid-cols-2 gap-x-8 gap-y-4 text-sm">
+          <div className="grid grid-cols-4 gap-x-4 gap-y-2 text-xs">
             <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Nama Balita</p>
+              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Nama Balita</p>
               <p className="font-bold text-slate-900">{savedDiagnosis.namaBalita}</p>
             </div>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-0.5">NIK</p>
+              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">NIK</p>
               <p className="font-bold text-slate-900">{savedDiagnosis.nik}</p>
             </div>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Jenis Kelamin</p>
+              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Jenis Kelamin</p>
               <p className="font-bold text-slate-900">{savedDiagnosis.jenisKelamin === "LAKI_LAKI" ? "Laki-laki" : "Perempuan"}</p>
             </div>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Nama Ibu</p>
+              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Nama Ibu</p>
               <p className="font-bold text-slate-900">{savedDiagnosis.namaIbu}</p>
             </div>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Dusun</p>
+              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Dusun</p>
               <p className="font-bold text-slate-900">{savedDiagnosis.dusun}</p>
             </div>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Tanggal Periksa</p>
+              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Umur</p>
+              <p className="font-bold text-slate-900">{savedDiagnosis.umurBulan} bulan</p>
+            </div>
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Tanggal Periksa</p>
               <p className="font-bold text-slate-900">{dateFormatter.format(savedDiagnosis.tanggal)}</p>
             </div>
             {savedDiagnosis.tanggalLahir && (
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Tanggal Lahir</p>
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Tanggal Lahir</p>
                 <p className="font-bold text-slate-900">{dateFormatter.format(savedDiagnosis.tanggalLahir)}</p>
               </div>
             )}
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Umur</p>
-              <p className="font-bold text-slate-900">{savedDiagnosis.umurBulan} bulan</p>
-            </div>
           </div>
         </div>
 
         {/* Pengukuran Antropometri */}
-        <div className="mb-8">
-          <h2 className="text-xs font-black uppercase tracking-[0.15em] text-slate-500 mb-4 pb-2 border-b border-slate-200">
+        <div className="mb-4">
+          <h2 className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500 mb-2 pb-1 border-b border-slate-200">
             Pengukuran Antropometri
           </h2>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="rounded-lg border border-slate-200 p-4 text-center">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Berat Badan</p>
-              <p className="text-2xl font-black text-slate-900">{savedDiagnosis.beratBadan} <span className="text-sm font-bold text-slate-500">kg</span></p>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="rounded-md border border-slate-200 p-2 text-center">
+              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Berat Badan</p>
+              <p className="text-base font-black text-slate-900">{savedDiagnosis.beratBadan} <span className="text-xs font-bold text-slate-500">kg</span></p>
             </div>
-            <div className="rounded-lg border border-slate-200 p-4 text-center">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Tinggi Badan</p>
-              <p className="text-2xl font-black text-slate-900">{savedDiagnosis.tinggiBadan} <span className="text-sm font-bold text-slate-500">cm</span></p>
+            <div className="rounded-md border border-slate-200 p-2 text-center">
+              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Tinggi Badan</p>
+              <p className="text-base font-black text-slate-900">{savedDiagnosis.tinggiBadan} <span className="text-xs font-bold text-slate-500">cm</span></p>
             </div>
             {savedDiagnosis.lila !== null && (
-              <div className="rounded-lg border border-slate-200 p-4 text-center">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">LiLA</p>
-                <p className="text-2xl font-black text-slate-900">{savedDiagnosis.lila} <span className="text-sm font-bold text-slate-500">cm</span></p>
+              <div className="rounded-md border border-slate-200 p-2 text-center">
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">LiLA</p>
+                <p className="text-base font-black text-slate-900">{savedDiagnosis.lila} <span className="text-xs font-bold text-slate-500">cm</span></p>
               </div>
             )}
           </div>
         </div>
 
-        {/* Deskripsi Penyakit */}
-        {savedDiagnosis.penyakit?.deskripsi && (
-          <div className="mb-8">
-            <h2 className="text-xs font-black uppercase tracking-[0.15em] text-slate-500 mb-4 pb-2 border-b border-slate-200">
-              Deskripsi Penyakit
-            </h2>
-            <p className="text-sm font-medium text-slate-700 leading-relaxed">{savedDiagnosis.penyakit.deskripsi}</p>
-          </div>
-        )}
-
-        {/* Saran Penanganan */}
-        {savedDiagnosis.penyakit?.saranPenanganan && (
-          <div className="mb-8">
-            <h2 className="text-xs font-black uppercase tracking-[0.15em] text-slate-500 mb-4 pb-2 border-b border-slate-200">
-              Saran Penanganan
-            </h2>
-            <p className="text-sm font-medium text-slate-700 leading-relaxed">{savedDiagnosis.penyakit.saranPenanganan}</p>
-          </div>
-        )}
-
         {/* Gejala Klinis */}
         {savedDiagnosis.diagnosisGejala.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-xs font-black uppercase tracking-[0.15em] text-slate-500 mb-4 pb-2 border-b border-slate-200">
+          <div className="mb-4">
+            <h2 className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500 mb-2 pb-1 border-b border-slate-200">
               Gejala Klinis ({savedDiagnosis.diagnosisGejala.length} gejala)
             </h2>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-1.5">
               {savedDiagnosis.diagnosisGejala.map((g) => (
-                <div key={g.id} className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs">
+                <div key={g.id} className="flex items-center gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px]">
                   <span className="font-black text-primary">{g.gejala.kode}</span>
                   <span className="font-semibold text-slate-700">{g.gejala.nama}</span>
                 </div>
@@ -212,9 +193,19 @@ export default async function PublicDiagnosisPage({ searchParams }: DiagnosisPag
           </div>
         )}
 
+        {/* Saran Penanganan */}
+        {savedDiagnosis.penyakit?.saranPenanganan && (
+          <div className="mb-4">
+            <h2 className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500 mb-2 pb-1 border-b border-slate-200">
+              Saran Penanganan
+            </h2>
+            <p className="text-xs font-medium text-slate-700 leading-normal">{savedDiagnosis.penyakit.saranPenanganan}</p>
+          </div>
+        )}
+
         {/* Footer */}
-        <div className="border-t-2 border-slate-900 pt-6 mt-12">
-          <div className="flex items-center justify-between text-xs text-slate-500 font-semibold">
+        <div className="border-t border-slate-900 pt-3 mt-4">
+          <div className="flex items-center justify-between text-[10px] text-slate-500 font-semibold">
             <p>Sistem Diagnosis Gizi Balita — Metode Naive Bayes</p>
             <p>Dicetak: {dateTimeFormatter.format(new Date())}</p>
           </div>
