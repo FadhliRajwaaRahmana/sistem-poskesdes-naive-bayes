@@ -304,6 +304,7 @@ export default async function LaporanPage({ searchParams }: LaporanPageProps) {
           <div className="flex flex-wrap gap-3">
             <ExportButtons
               printUrl={`/dashboard/laporan?${printUrl.toString()}`}
+              resultElementId="laporan-print-container"
               fileName={`Laporan-Rekap-Diagnosis-${selectedYear}${selectedMonth ? `-${selectedMonth}` : ""}`}
             />
           </div>

@@ -8,6 +8,7 @@ type ExportButtonsProps = {
   resultElementId?: string;
   fileName?: string;
   compact?: boolean;
+  orientation?: "portrait" | "landscape";
 };
 
 export function ExportButtons({
@@ -15,82 +16,75 @@ export function ExportButtons({
   resultElementId = "diagnosis-result",
   fileName = "Laporan-Diagnosis-Balita",
   compact = false,
+  orientation = "portrait",
 }: ExportButtonsProps) {
   const [downloading, setDownloading] = useState(false);
 
   const handleDownloadPdf = useCallback(async () => {
     setDownloading(true);
+    let cleanupFn: (() => void) | null = null;
+
     try {
       const html2canvas = (await import("html2canvas")).default;
       const { jsPDF } = await import("jspdf");
 
-      let targetNode: HTMLElement | null = null;
-      let cleanupIframe: (() => void) | null = null;
+      let targetNode = document.getElementById(resultElementId);
 
-      // 1. Try to find element on current page
-      const onPageNode = document.getElementById(resultElementId);
+      // If element is not present on current page (e.g. from table row or report),
+      // fetch printUrl HTML in background with cookies/credentials and render in hidden container
+      if (!targetNode) {
+        const res = await fetch(printUrl, { credentials: "same-origin" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const htmlText = await res.text();
 
-      if (onPageNode) {
-        targetNode = onPageNode;
-      } else {
-        // 2. Otherwise load printUrl in an off-screen hidden iframe
-        const iframe = document.createElement("iframe");
-        iframe.style.position = "fixed";
-        iframe.style.left = "-9999px";
-        iframe.style.top = "-9999px";
-        iframe.style.width = "800px";
-        iframe.style.height = "1100px";
-        iframe.style.border = "none";
-        iframe.style.visibility = "hidden";
-        document.body.appendChild(iframe);
+        const container = document.createElement("div");
+        container.style.position = "fixed";
+        container.style.left = "-9999px";
+        container.style.top = "-9999px";
+        container.style.width = orientation === "landscape" ? "1100px" : "800px";
+        container.style.backgroundColor = "#ffffff";
+        container.style.zIndex = "-9999";
+        container.innerHTML = htmlText;
 
-        cleanupIframe = () => {
-          if (iframe.parentNode) {
-            iframe.parentNode.removeChild(iframe);
-          }
+        // Ensure section content inside container is visible
+        const section = container.querySelector("section");
+        if (section) {
+          section.style.minHeight = "auto";
+          section.style.padding = "20px";
+        }
+
+        document.body.appendChild(container);
+        cleanupFn = () => {
+          if (container.parentNode) container.parentNode.removeChild(container);
         };
 
-        // Fetch page HTML and inject into iframe
-        const response = await fetch(printUrl);
-        const htmlText = await response.text();
-
-        await new Promise<void>((resolve) => {
-          iframe.onload = () => resolve();
-          const doc = iframe.contentDocument || iframe.contentWindow?.document;
-          if (doc) {
-            doc.open();
-            doc.write(htmlText);
-            doc.close();
-            // Allow dynamic scripts/styles to resolve
-            setTimeout(resolve, 600);
-          } else {
-            resolve();
-          }
-        });
-
-        const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
-        targetNode = (iframeDoc?.querySelector("section") || iframeDoc?.body) as HTMLElement | null;
+        targetNode = (section || container) as HTMLElement;
       }
 
       if (!targetNode) {
-        throw new Error("Element tidak ditemukan untuk PDF.");
+        throw new Error("Target elemen tidak ditemukan.");
       }
+
+      const isLandscape = orientation === "landscape";
+      const imgWidth = isLandscape ? 297 : 210;
+      const pageHeight = isLandscape ? 210 : 297;
 
       const canvas = await html2canvas(targetNode, {
         scale: 2,
         useCORS: true,
         backgroundColor: "#ffffff",
         logging: false,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: targetNode.scrollWidth || (isLandscape ? 1100 : 800),
       });
 
-      if (cleanupIframe) cleanupIframe();
+      if (cleanupFn) cleanupFn();
 
-      const imgWidth = 210; // A4 width mm
-      const pageHeight = 297; // A4 height mm
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       let heightLeft = imgHeight;
 
-      const doc = new jsPDF("p", "mm", "a4");
+      const doc = new jsPDF(isLandscape ? "l" : "p", "mm", "a4");
       let position = 0;
 
       doc.addImage(canvas.toDataURL("image/png"), "PNG", 0, position, imgWidth, imgHeight);
@@ -104,13 +98,15 @@ export function ExportButtons({
       }
 
       doc.save(`${fileName}.pdf`);
-    } catch {
-      alert("Gagal mengunduh PDF secara langsung. Membuka mode cetak...");
+    } catch (err) {
+      if (cleanupFn) cleanupFn();
+      console.error("Gagal mengunduh PDF secara langsung:", err);
+      // Quiet fallback without annoying alert popups
       window.open(printUrl, "_blank");
     } finally {
       setDownloading(false);
     }
-  }, [resultElementId, fileName, printUrl]);
+  }, [resultElementId, fileName, printUrl, orientation]);
 
   if (compact) {
     return (
