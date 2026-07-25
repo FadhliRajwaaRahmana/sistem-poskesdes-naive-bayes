@@ -1,4 +1,3 @@
-import Script from "next/script";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/session";
 import {
@@ -7,6 +6,7 @@ import {
   Calendar,
   CheckCircle2,
   ShieldAlert,
+  FileDown,
 } from "lucide-react";
 
 type PageSearchParams = Record<string, string | string[] | undefined>;
@@ -97,39 +97,67 @@ export default async function LaporanPage({ searchParams }: LaporanPageProps) {
 
   if (isPrint) {
     return (
-      <section className="space-y-6 bg-white text-black print:p-0 font-sans">
-        <Script id="print-trigger" strategy="afterInteractive">
-          {`window.addEventListener("load",function(){setTimeout(function(){window.print()},300)});`}
-        </Script>
-        <div className="border-b-2 border-slate-900 pb-5">
-          <h1 className="text-3xl font-black tracking-tight">Laporan Diagnosis POSYANDU</h1>
-          <p className="mt-1 text-lg font-bold text-slate-700">Periode: {periodLabel}</p>
-          <p className="mt-2 text-sm font-bold text-slate-500">Tanggal Cetak: {dateFormatter.format(new Date())}</p>
+      <section className="min-h-screen bg-white text-slate-900 font-sans print:p-0">
+        <style>{`
+          @media print {
+            @page { margin: 15mm 12mm; size: A4; }
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          }
+          @media screen {
+            section { max-width: 800px; margin: 0 auto; padding: 40px 32px; }
+          }
+        `}</style>
+        <script dangerouslySetInnerHTML={{ __html: `window.addEventListener("load",function(){setTimeout(function(){window.print()},400)});` }} />
+
+        {/* Header */}
+        <div className="border-b-[3px] border-slate-900 pb-6 mb-8">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Sistem Diagnosis Gizi — POSYANDU</p>
+              <h1 className="text-[28px] font-black tracking-tight leading-tight">Laporan Rekap Diagnosis</h1>
+              <p className="mt-2 text-base font-bold text-slate-700">Periode: {periodLabel}</p>
+            </div>
+            <div className="text-right shrink-0">
+              <p className="text-xs font-bold text-slate-500">Tanggal Cetak</p>
+              <p className="text-sm font-black">{dateFormatter.format(new Date())}</p>
+            </div>
+          </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-4 text-sm">
-          <div className="border border-slate-200 rounded-lg p-4 text-center">
-            <p className="font-black text-slate-500 text-xs uppercase mb-1">Total Diagnosis</p>
-            <p className="font-black text-2xl">{totalDiagnosis}</p>
+        {/* Summary Cards */}
+        <div className="grid grid-cols-3 gap-4 mb-8">
+          <div className="rounded-xl border-2 border-slate-200 p-5 text-center">
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Total Diagnosis</p>
+            <p className="text-3xl font-black text-slate-900">{totalDiagnosis}</p>
           </div>
-          <div className="border border-emerald-200 rounded-lg p-4 text-center">
-            <p className="font-black text-emerald-600 text-xs uppercase mb-1">Gizi Baik</p>
-            <p className="font-black text-2xl text-emerald-700">{giziBaikCount}</p>
+          <div className="rounded-xl border-2 border-emerald-200 bg-emerald-50 p-5 text-center">
+            <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500 mb-2">Gizi Baik</p>
+            <p className="text-3xl font-black text-emerald-700">{giziBaikCount}</p>
+            <p className="text-xs font-bold text-emerald-500 mt-1">
+              {totalDiagnosis > 0 ? `${((giziBaikCount / totalDiagnosis) * 100).toFixed(1)}%` : "0%"}
+            </p>
           </div>
-          <div className="border border-rose-200 rounded-lg p-4 text-center">
-            <p className="font-black text-rose-600 text-xs uppercase mb-1">Gizi Buruk</p>
-            <p className="font-black text-2xl text-rose-700">{giziBurukCount}</p>
+          <div className="rounded-xl border-2 border-rose-200 bg-rose-50 p-5 text-center">
+            <p className="text-[10px] font-black uppercase tracking-widest text-rose-500 mb-2">Gizi Buruk</p>
+            <p className="text-3xl font-black text-rose-700">{giziBurukCount}</p>
+            <p className="text-xs font-bold text-rose-500 mt-1">
+              {totalDiagnosis > 0 ? `${((giziBurukCount / totalDiagnosis) * 100).toFixed(1)}%` : "0%"}
+            </p>
           </div>
         </div>
 
+        {/* Distribusi Hasil */}
         {sortedResults.length > 0 && (
-          <div>
-            <p className="font-black text-slate-500 text-xs uppercase mb-2">Distribusi Hasil</p>
+          <div className="mb-8">
+            <h2 className="text-xs font-black uppercase tracking-[0.15em] text-slate-500 mb-4 pb-2 border-b border-slate-200">
+              Distribusi Hasil Diagnosis
+            </h2>
             <table className="w-full text-sm border-collapse">
               <thead>
-                <tr className="border-b-2 border-slate-900 text-left font-black text-xs uppercase tracking-wider">
-                  <th className="p-3">Hasil Diagnosis</th>
-                  <th className="p-3 text-right">Jumlah</th>
+                <tr className="border-b-2 border-slate-900 text-left">
+                  <th className="p-3 font-black text-xs uppercase tracking-wider">Hasil Diagnosis</th>
+                  <th className="p-3 font-black text-xs uppercase tracking-wider text-right">Jumlah</th>
+                  <th className="p-3 font-black text-xs uppercase tracking-wider text-right">Persentase</th>
                 </tr>
               </thead>
               <tbody>
@@ -137,6 +165,9 @@ export default async function LaporanPage({ searchParams }: LaporanPageProps) {
                   <tr key={result} className="border-b border-slate-200">
                     <td className="p-3 font-bold">{result}</td>
                     <td className="p-3 text-right font-black">{count}</td>
+                    <td className="p-3 text-right font-bold text-slate-600">
+                      {totalDiagnosis > 0 ? `${((count / totalDiagnosis) * 100).toFixed(1)}%` : "0%"}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -144,16 +175,19 @@ export default async function LaporanPage({ searchParams }: LaporanPageProps) {
           </div>
         )}
 
+        {/* Distribusi Dusun */}
         {sortedDusun.length > 0 && (
-          <div>
-            <p className="font-black text-slate-500 text-xs uppercase mb-2">Distribusi per Dusun</p>
+          <div className="mb-8">
+            <h2 className="text-xs font-black uppercase tracking-[0.15em] text-slate-500 mb-4 pb-2 border-b border-slate-200">
+              Distribusi per Dusun
+            </h2>
             <table className="w-full text-sm border-collapse">
               <thead>
-                <tr className="border-b-2 border-slate-900 text-left font-black text-xs uppercase tracking-wider">
-                  <th className="p-3">Dusun</th>
-                  <th className="p-3 text-right">Total</th>
-                  <th className="p-3 text-right">Baik</th>
-                  <th className="p-3 text-right">Buruk</th>
+                <tr className="border-b-2 border-slate-900 text-left">
+                  <th className="p-3 font-black text-xs uppercase tracking-wider">Dusun</th>
+                  <th className="p-3 font-black text-xs uppercase tracking-wider text-right">Total</th>
+                  <th className="p-3 font-black text-xs uppercase tracking-wider text-right">Gizi Baik</th>
+                  <th className="p-3 font-black text-xs uppercase tracking-wider text-right">Gizi Buruk</th>
                 </tr>
               </thead>
               <tbody>
@@ -169,6 +203,51 @@ export default async function LaporanPage({ searchParams }: LaporanPageProps) {
             </table>
           </div>
         )}
+
+        {/* Daftar Detail */}
+        {records.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-xs font-black uppercase tracking-[0.15em] text-slate-500 mb-4 pb-2 border-b border-slate-200">
+              Daftar Detail Diagnosis ({records.length} data)
+            </h2>
+            <table className="w-full text-[11px] border-collapse">
+              <thead>
+                <tr className="border-b-2 border-slate-900 text-left">
+                  <th className="p-2 font-black text-[10px] uppercase tracking-wider">No</th>
+                  <th className="p-2 font-black text-[10px] uppercase tracking-wider">Tanggal</th>
+                  <th className="p-2 font-black text-[10px] uppercase tracking-wider">Nama</th>
+                  <th className="p-2 font-black text-[10px] uppercase tracking-wider">JK</th>
+                  <th className="p-2 font-black text-[10px] uppercase tracking-wider">Dusun</th>
+                  <th className="p-2 font-black text-[10px] uppercase tracking-wider">Umur</th>
+                  <th className="p-2 font-black text-[10px] uppercase tracking-wider">BB/TB</th>
+                  <th className="p-2 font-black text-[10px] uppercase tracking-wider">Hasil</th>
+                </tr>
+              </thead>
+              <tbody>
+                {records.map((r, i) => (
+                  <tr key={r.id} className="border-b border-slate-100">
+                    <td className="p-2">{i + 1}</td>
+                    <td className="p-2">{dateFormatter.format(r.tanggal)}</td>
+                    <td className="p-2 font-bold">{r.namaBalita}</td>
+                    <td className="p-2">{r.jenisKelamin === "LAKI_LAKI" ? "L" : "P"}</td>
+                    <td className="p-2">{r.dusun}</td>
+                    <td className="p-2">{r.umurBulan} bln</td>
+                    <td className="p-2">{r.beratBadan}/{r.tinggiBadan}</td>
+                    <td className="p-2 font-bold">{r.hasilDiagnosis}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Footer */}
+        <div className="border-t-2 border-slate-900 pt-6 mt-12">
+          <div className="flex items-center justify-between text-xs text-slate-500 font-semibold">
+            <p>Sistem Diagnosis Gizi Balita — Metode Naive Bayes</p>
+            <p>Dicetak: {dateFormatter.format(new Date())}</p>
+          </div>
+        </div>
       </section>
     );
   }
@@ -223,14 +302,16 @@ export default async function LaporanPage({ searchParams }: LaporanPageProps) {
               Tampilkan
             </button>
           </form>
-          <a
-            href={`/dashboard/laporan?${printUrl.toString()}`}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50 active:scale-95 transition-all"
-          >
-            <Printer className="h-4 w-4" /> Cetak Laporan
-          </a>
+          <div className="flex flex-wrap gap-3">
+            <a
+              href={`/dashboard/laporan?${printUrl.toString()}`}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex h-12 items-center gap-2.5 rounded-xl bg-slate-900 px-6 text-sm font-bold text-white shadow-lg hover:bg-slate-800 active:scale-95 transition-all"
+            >
+              <Printer className="h-4.5 w-4.5" /> Cetak / PDF
+            </a>
+          </div>
         </div>
       </div>
 

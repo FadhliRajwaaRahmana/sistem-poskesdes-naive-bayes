@@ -1,15 +1,33 @@
 "use server";
 
 import { Prisma } from "@prisma/client";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { calculateDiagnosis } from "@/lib/naive-bayes";
 import { parseDiagnosisDate, resolveSelectedGejala } from "@/lib/diagnosis-validation";
-import { getDiagnosisActionErrorMessage } from "@/lib/prisma-action-errors";
 import { prisma } from "@/lib/prisma";
 import { getSession, requireAdminSession } from "@/lib/session";
 import { evaluateAutoSymptoms } from "@/lib/who-standards";
+
+async function withRetry<T>(fn: () => Promise<T>, attempts = 3): Promise<T> {
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (isRedirectError(error)) throw error;
+      if (i === attempts - 1) throw error;
+      const isRetryable =
+        error instanceof Prisma.PrismaClientKnownRequestError
+          ? ["P1001", "P1002", "P1008", "P1017", "P2024", "P2028"].includes(error.code)
+          : error instanceof Prisma.PrismaClientInitializationError;
+      if (!isRetryable) throw error;
+      await new Promise((r) => setTimeout(r, 1000 * (i + 1)));
+    }
+  }
+  throw new Error("Unreachable");
+}
 
 const diagnosisPath = "/diagnosis";
 
@@ -99,10 +117,12 @@ export async function submitDiagnosis(formData: FormData) {
   const autoGejalaCodes = autoResult.autoGejalaKodes;
   let autoGejalaIds: string[] = [];
   if (autoGejalaCodes.length > 0) {
-    const autoGejalaRecords = await prisma.gejala.findMany({
-      where: { kode: { in: autoGejalaCodes } },
-      select: { id: true },
-    });
+    const autoGejalaRecords = await withRetry(() =>
+      prisma.gejala.findMany({
+        where: { kode: { in: autoGejalaCodes } },
+        select: { id: true },
+      }),
+    );
     autoGejalaIds = autoGejalaRecords.map((g) => g.id);
   }
 
@@ -127,10 +147,12 @@ export async function submitDiagnosis(formData: FormData) {
     hasilDiagnosis = "Gizi Baik";
     keterangan = "Semua pengukuran dalam batas normal, tidak ada gejala klinis.";
   } else {
-    const availableGejala = await prisma.gejala.findMany({
-      where: { id: { in: allGejalaIds } },
-      select: { id: true, kode: true, nama: true },
-    });
+    const availableGejala = await withRetry(() =>
+      prisma.gejala.findMany({
+        where: { id: { in: allGejalaIds } },
+        select: { id: true, kode: true, nama: true },
+      }),
+    );
 
     const { selectedIds } = resolveSelectedGejala(allGejalaIds, availableGejala);
 
@@ -140,12 +162,14 @@ export async function submitDiagnosis(formData: FormData) {
 
     let diagnosis;
     try {
-      diagnosis = await calculateDiagnosis(selectedIds);
+      diagnosis = await withRetry(() => calculateDiagnosis(selectedIds));
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        redirectWithMessage(diagnosisPath, "error", getDiagnosisActionErrorMessage(error.code));
-      }
-      redirectWithMessage(diagnosisPath, "error", "Gagal memproses diagnosis.");
+      if (isRedirectError(error)) throw error;
+      const msg =
+        error instanceof Prisma.PrismaClientKnownRequestError
+          ? `Koneksi database gagal (${error.code}). Silakan coba lagi.`
+          : "Gagal memproses diagnosis. Silakan coba lagi.";
+      redirectWithMessage(diagnosisPath, "error", msg);
     }
 
     hasilDiagnosis = diagnosis.resultText;
@@ -167,36 +191,42 @@ export async function submitDiagnosis(formData: FormData) {
   let savedDiagnosis;
 
   try {
-    savedDiagnosis = await prisma.diagnosisBalita.create({
-      data: {
-        tanggal: diagnosisDate,
-        namaBalita: data.namaBalita,
-        nik: data.nik,
-        jenisKelamin: data.jenisKelamin,
-        namaIbu: data.namaIbu,
-        dusun: data.dusun,
-        tanggalLahir: tanggalLahirDate,
-        umurBulan: data.umurBulan,
-        beratBadan: data.beratBadan,
-        tinggiBadan: data.tinggiBadan,
-        lila: data.lila ?? null,
-        hasilDiagnosis,
-        penyakitId,
-        keterangan,
-        userId: session?.user?.id ?? null,
-        diagnosisGejala: {
-          create: diagnosisGejalaCreate,
+    savedDiagnosis = await withRetry(() =>
+      prisma.diagnosisBalita.create({
+        data: {
+          tanggal: diagnosisDate,
+          namaBalita: data.namaBalita,
+          nik: data.nik,
+          jenisKelamin: data.jenisKelamin,
+          namaIbu: data.namaIbu,
+          dusun: data.dusun,
+          tanggalLahir: tanggalLahirDate,
+          umurBulan: data.umurBulan,
+          beratBadan: data.beratBadan,
+          tinggiBadan: data.tinggiBadan,
+          lila: data.lila ?? null,
+          hasilDiagnosis,
+          penyakitId,
+          keterangan,
+          userId: session?.user?.id ?? null,
+          diagnosisGejala: {
+            create: diagnosisGejalaCreate,
+          },
+          diagnosisRanking: {
+            create: diagnosisRankingCreate,
+          },
         },
-        diagnosisRanking: {
-          create: diagnosisRankingCreate,
-        },
-      },
-    });
+      }),
+    );
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      redirectWithMessage(diagnosisPath, "error", getDiagnosisActionErrorMessage(error.code));
-    }
-    redirectWithMessage(diagnosisPath, "error", "Gagal menyimpan hasil diagnosis.");
+    if (isRedirectError(error)) throw error;
+    const msg =
+      error instanceof Prisma.PrismaClientKnownRequestError
+        ? error.code === "P2003"
+          ? "Data gejala/penyakit tidak valid. Pastikan data master sudah di-seed."
+          : `Koneksi database gagal (${error.code}). Silakan coba lagi.`
+        : "Gagal menyimpan hasil diagnosis. Silakan coba lagi.";
+    redirectWithMessage(diagnosisPath, "error", msg);
   }
 
   revalidatePath(diagnosisPath);
