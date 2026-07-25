@@ -147,7 +147,7 @@ model DiagnosisBalita {
   lila            Float?
   hasilDiagnosis  String
   penyakitId      String?
-  keterangan      String?
+  keterangan      String?             @db.Text
   userId          String?
   createdAt       DateTime            @default(now())
   penyakit        Penyakit?           @relation(fields: [penyakitId], references: [id], onDelete: SetNull)

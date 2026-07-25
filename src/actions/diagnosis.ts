@@ -172,15 +172,15 @@ export async function submitDiagnosis(formData: FormData) {
       redirectWithMessage(diagnosisPath, "error", msg);
     }
 
-    hasilDiagnosis = diagnosis.resultText;
+    hasilDiagnosis = diagnosis.resultText.slice(0, 190);
     penyakitId = diagnosis.topResult?.penyakitId ?? null;
-    keterangan = diagnosis.saranPenanganan || null;
+    keterangan = diagnosis.saranPenanganan ? diagnosis.saranPenanganan.slice(0, 190) : null;
 
     diagnosisGejalaCreate = selectedIds.map((gejalaId) => ({ gejalaId }));
     diagnosisRankingCreate = diagnosis.ranked.map((item) => ({
       penyakitId: item.penyakitId,
-      kodePenyakit: item.kodePenyakit,
-      namaPenyakit: item.namaPenyakit,
+      kodePenyakit: item.kodePenyakit.slice(0, 50),
+      namaPenyakit: item.namaPenyakit.slice(0, 190),
       prior: item.prior,
       posterior: item.posterior,
       score: item.score,
@@ -195,11 +195,11 @@ export async function submitDiagnosis(formData: FormData) {
       prisma.diagnosisBalita.create({
         data: {
           tanggal: diagnosisDate,
-          namaBalita: data.namaBalita,
-          nik: data.nik,
+          namaBalita: data.namaBalita.slice(0, 190),
+          nik: data.nik.slice(0, 50),
           jenisKelamin: data.jenisKelamin,
-          namaIbu: data.namaIbu,
-          dusun: data.dusun,
+          namaIbu: data.namaIbu.slice(0, 190),
+          dusun: data.dusun.slice(0, 190),
           tanggalLahir: tanggalLahirDate,
           umurBulan: data.umurBulan,
           beratBadan: data.beratBadan,
@@ -224,7 +224,9 @@ export async function submitDiagnosis(formData: FormData) {
       error instanceof Prisma.PrismaClientKnownRequestError
         ? error.code === "P2003"
           ? "Data gejala/penyakit tidak valid. Pastikan data master sudah di-seed."
-          : `Koneksi database gagal (${error.code}). Silakan coba lagi.`
+          : error.code === "P2000"
+          ? "Input data terlalu panjang untuk kolom database. Silakan periksa kembali."
+          : `Gagal mengakses database (${error.code}). Silakan coba lagi.`
         : "Gagal menyimpan hasil diagnosis. Silakan coba lagi.";
     redirectWithMessage(diagnosisPath, "error", msg);
   }
