@@ -11,6 +11,31 @@ type ExportButtonsProps = {
   orientation?: "portrait" | "landscape";
 };
 
+async function fetchAndInlineCSS(htmlText: string): Promise<{ section: HTMLElement; css: string }> {
+  const parser = new DOMParser();
+  const parsed = parser.parseFromString(htmlText, "text/html");
+
+  const cssPromises: Promise<string>[] = [];
+  parsed.querySelectorAll('link[rel="stylesheet"]').forEach((link) => {
+    const href = link.getAttribute("href");
+    if (href) {
+      const url = href.startsWith("http") ? href : `${location.origin}${href}`;
+      cssPromises.push(fetch(url).then((r) => r.text()).catch(() => ""));
+    }
+  });
+
+  const fetched = await Promise.all(cssPromises);
+  let css = fetched.join("\n");
+  parsed.querySelectorAll("style").forEach((s) => {
+    css += "\n" + (s.textContent || "");
+  });
+
+  const section = parsed.querySelector("section");
+  if (!section) throw new Error("No printable section found");
+
+  return { section, css };
+}
+
 export function ExportButtons({
   printUrl,
   resultElementId = "diagnosis-result",
@@ -22,49 +47,41 @@ export function ExportButtons({
 
   const handleDownloadPdf = useCallback(async () => {
     setDownloading(true);
-    let iframe: HTMLIFrameElement | null = null;
+    let tempContainer: HTMLDivElement | null = null;
 
     try {
       const html2canvas = (await import("html2canvas")).default;
       const { jsPDF } = await import("jspdf");
 
       let targetNode = document.getElementById(resultElementId);
-
-      // If element is not present on current page, render printUrl inside off-screen visible iframe
-      if (!targetNode) {
-        iframe = document.createElement("iframe");
-        iframe.style.position = "fixed";
-        iframe.style.left = "0";
-        iframe.style.top = "0";
-        iframe.style.width = orientation === "landscape" ? "1100px" : "800px";
-        iframe.style.height = "1200px";
-        iframe.style.border = "none";
-        iframe.style.zIndex = "-99999";
-        iframe.style.opacity = "0.01";
-        iframe.style.pointerEvents = "none";
-        iframe.src = printUrl;
-
-        document.body.appendChild(iframe);
-
-        await new Promise<void>((resolve) => {
-          if (!iframe) return resolve();
-          iframe.onload = () => {
-            setTimeout(resolve, 600);
-          };
-          setTimeout(resolve, 2500);
-        });
-
-        const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
-        targetNode = (iframeDoc?.querySelector("section") || iframeDoc?.body) as HTMLElement | null;
-      }
-
-      if (!targetNode) {
-        throw new Error("Target elemen tidak ditemukan.");
-      }
-
       const isLandscape = orientation === "landscape";
-      const imgWidth = isLandscape ? 297 : 210;
-      const pageHeight = isLandscape ? 210 : 297;
+      const containerWidth = isLandscape ? 1100 : 800;
+
+      if (!targetNode) {
+        const res = await fetch(printUrl, { credentials: "same-origin" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const htmlText = await res.text();
+        const { section, css } = await fetchAndInlineCSS(htmlText);
+
+        tempContainer = document.createElement("div");
+        tempContainer.style.cssText = `position:fixed;left:0;top:0;width:${containerWidth}px;background:#fff;z-index:-99999;opacity:0.01;pointer-events:none;overflow:visible;`;
+
+        const styleEl = document.createElement("style");
+        styleEl.textContent = css;
+        tempContainer.appendChild(styleEl);
+
+        const clone = document.importNode(section, true) as HTMLElement;
+        clone.querySelectorAll("script").forEach((s) => s.remove());
+        tempContainer.appendChild(clone);
+        document.body.appendChild(tempContainer);
+
+        await document.fonts.ready;
+        await new Promise((r) => setTimeout(r, 600));
+
+        targetNode = clone;
+      }
+
+      if (!targetNode) throw new Error("Target element not found");
 
       const canvas = await html2canvas(targetNode, {
         scale: 2,
@@ -73,14 +90,16 @@ export function ExportButtons({
         logging: false,
         scrollX: 0,
         scrollY: 0,
-        windowWidth: targetNode.scrollWidth || (isLandscape ? 1100 : 800),
+        windowWidth: targetNode.scrollWidth || containerWidth,
       });
 
-      if (iframe && iframe.parentNode) {
-        iframe.parentNode.removeChild(iframe);
-        iframe = null;
+      if (tempContainer?.parentNode) {
+        tempContainer.parentNode.removeChild(tempContainer);
+        tempContainer = null;
       }
 
+      const imgWidth = isLandscape ? 297 : 210;
+      const pageHeight = isLandscape ? 210 : 297;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       let heightLeft = imgHeight;
 
@@ -99,8 +118,8 @@ export function ExportButtons({
 
       doc.save(`${fileName}.pdf`);
     } catch (err) {
-      if (iframe && iframe.parentNode) {
-        iframe.parentNode.removeChild(iframe);
+      if (tempContainer?.parentNode) {
+        tempContainer.parentNode.removeChild(tempContainer);
       }
       console.error("Gagal mengunduh PDF:", err);
       window.open(printUrl, "_blank");

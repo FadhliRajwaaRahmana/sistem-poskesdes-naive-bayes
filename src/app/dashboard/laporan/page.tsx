@@ -99,47 +99,47 @@ export default async function LaporanPage({ searchParams }: LaporanPageProps) {
       <section className="min-h-screen bg-white text-slate-900 font-sans print:p-0">
         <style>{`
           @media print {
-            @page { margin: 15mm 12mm; size: A4; }
+            @page { margin: 10mm 10mm; size: A4; }
             body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
           }
           @media screen {
-            section { max-width: 800px; margin: 0 auto; padding: 40px 32px; }
+            section { max-width: 800px; margin: 0 auto; padding: 32px 28px; }
           }
         `}</style>
         <script dangerouslySetInnerHTML={{ __html: `window.addEventListener("load",function(){setTimeout(function(){window.print()},400)});` }} />
 
         {/* Header */}
-        <div className="border-b-[3px] border-slate-900 pb-6 mb-8">
+        <div className="border-b-[3px] border-slate-800 pb-3 mb-5">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Sistem Diagnosis Gizi — POSYANDU</p>
-              <h1 className="text-[28px] font-black tracking-tight leading-tight">Laporan Rekap Diagnosis</h1>
-              <p className="mt-2 text-base font-bold text-slate-700">Periode: {periodLabel}</p>
+              <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-slate-400 mb-1">Sistem Diagnosis Gizi — POSYANDU</p>
+              <h1 className="text-xl font-black tracking-tight leading-tight">Laporan Rekap Diagnosis</h1>
+              <p className="mt-1 text-sm font-bold text-slate-700">Periode: {periodLabel}</p>
             </div>
             <div className="text-right shrink-0">
-              <p className="text-xs font-bold text-slate-500">Tanggal Cetak</p>
-              <p className="text-sm font-black">{dateFormatter.format(new Date())}</p>
+              <p className="text-[8.5px] font-bold uppercase tracking-widest text-slate-400">Tanggal Cetak</p>
+              <p className="text-xs font-black">{dateFormatter.format(new Date())}</p>
             </div>
           </div>
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
-          <div className="rounded-xl border-2 border-slate-200 p-5 text-center">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Total Diagnosis</p>
-            <p className="text-3xl font-black text-slate-900">{totalDiagnosis}</p>
+        <div className="grid grid-cols-3 gap-3 mb-5">
+          <div className="rounded-lg border-2 border-slate-200 p-4 text-center" style={{ backgroundColor: "#f8fafc" }}>
+            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Total Diagnosis</p>
+            <p className="text-2xl font-black text-slate-900">{totalDiagnosis}</p>
           </div>
-          <div className="rounded-xl border-2 border-emerald-200 bg-emerald-50 p-5 text-center">
-            <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500 mb-2">Gizi Baik</p>
-            <p className="text-3xl font-black text-emerald-700">{giziBaikCount}</p>
-            <p className="text-xs font-bold text-emerald-500 mt-1">
+          <div className="rounded-lg border-2 border-emerald-300 p-4 text-center" style={{ backgroundColor: "#ecfdf5" }}>
+            <p className="text-[9px] font-black uppercase tracking-widest mb-1" style={{ color: "#059669" }}>Gizi Baik</p>
+            <p className="text-2xl font-black" style={{ color: "#065f46" }}>{giziBaikCount}</p>
+            <p className="text-xs font-bold mt-0.5" style={{ color: "#059669" }}>
               {totalDiagnosis > 0 ? `${((giziBaikCount / totalDiagnosis) * 100).toFixed(1)}%` : "0%"}
             </p>
           </div>
-          <div className="rounded-xl border-2 border-rose-200 bg-rose-50 p-5 text-center">
-            <p className="text-[10px] font-black uppercase tracking-widest text-rose-500 mb-2">Gizi Buruk</p>
-            <p className="text-3xl font-black text-rose-700">{giziBurukCount}</p>
-            <p className="text-xs font-bold text-rose-500 mt-1">
+          <div className="rounded-lg border-2 border-rose-300 p-4 text-center" style={{ backgroundColor: "#fff1f2" }}>
+            <p className="text-[9px] font-black uppercase tracking-widest mb-1" style={{ color: "#e11d48" }}>Gizi Buruk</p>
+            <p className="text-2xl font-black" style={{ color: "#9f1239" }}>{giziBurukCount}</p>
+            <p className="text-xs font-bold mt-0.5" style={{ color: "#e11d48" }}>
               {totalDiagnosis > 0 ? `${((giziBurukCount / totalDiagnosis) * 100).toFixed(1)}%` : "0%"}
             </p>
           </div>
@@ -147,24 +147,24 @@ export default async function LaporanPage({ searchParams }: LaporanPageProps) {
 
         {/* Distribusi Hasil */}
         {sortedResults.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-xs font-black uppercase tracking-[0.15em] text-slate-500 mb-4 pb-2 border-b border-slate-200">
+          <div className="mb-5">
+            <h2 className="text-[9.5px] font-black uppercase tracking-[0.18em] text-slate-500 mb-2 pb-1 border-b-2 border-slate-100">
               Distribusi Hasil Diagnosis
             </h2>
             <table className="w-full text-sm border-collapse">
               <thead>
-                <tr className="border-b-2 border-slate-900 text-left">
-                  <th className="p-3 font-black text-xs uppercase tracking-wider">Hasil Diagnosis</th>
-                  <th className="p-3 font-black text-xs uppercase tracking-wider text-right">Jumlah</th>
-                  <th className="p-3 font-black text-xs uppercase tracking-wider text-right">Persentase</th>
+                <tr className="border-b-2 border-slate-800 text-left" style={{ backgroundColor: "#f1f5f9" }}>
+                  <th className="p-2.5 font-black text-[10px] uppercase tracking-wider">Hasil Diagnosis</th>
+                  <th className="p-2.5 font-black text-[10px] uppercase tracking-wider text-right">Jumlah</th>
+                  <th className="p-2.5 font-black text-[10px] uppercase tracking-wider text-right">Persentase</th>
                 </tr>
               </thead>
               <tbody>
-                {sortedResults.map(([result, count]) => (
-                  <tr key={result} className="border-b border-slate-200">
-                    <td className="p-3 font-bold">{result}</td>
-                    <td className="p-3 text-right font-black">{count}</td>
-                    <td className="p-3 text-right font-bold text-slate-600">
+                {sortedResults.map(([result, count], i) => (
+                  <tr key={result} className="border-b border-slate-200" style={{ backgroundColor: i % 2 === 1 ? "#f8fafc" : "transparent" }}>
+                    <td className="p-2.5 font-bold" style={{ color: result === "Gizi Baik" ? "#059669" : "#e11d48" }}>{result}</td>
+                    <td className="p-2.5 text-right font-black">{count}</td>
+                    <td className="p-2.5 text-right font-bold text-slate-600">
                       {totalDiagnosis > 0 ? `${((count / totalDiagnosis) * 100).toFixed(1)}%` : "0%"}
                     </td>
                   </tr>
@@ -176,26 +176,26 @@ export default async function LaporanPage({ searchParams }: LaporanPageProps) {
 
         {/* Distribusi Dusun */}
         {sortedDusun.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-xs font-black uppercase tracking-[0.15em] text-slate-500 mb-4 pb-2 border-b border-slate-200">
+          <div className="mb-5">
+            <h2 className="text-[9.5px] font-black uppercase tracking-[0.18em] text-slate-500 mb-2 pb-1 border-b-2 border-slate-100">
               Distribusi per Dusun
             </h2>
             <table className="w-full text-sm border-collapse">
               <thead>
-                <tr className="border-b-2 border-slate-900 text-left">
-                  <th className="p-3 font-black text-xs uppercase tracking-wider">Dusun</th>
-                  <th className="p-3 font-black text-xs uppercase tracking-wider text-right">Total</th>
-                  <th className="p-3 font-black text-xs uppercase tracking-wider text-right">Gizi Baik</th>
-                  <th className="p-3 font-black text-xs uppercase tracking-wider text-right">Gizi Buruk</th>
+                <tr className="border-b-2 border-slate-800 text-left" style={{ backgroundColor: "#f1f5f9" }}>
+                  <th className="p-2.5 font-black text-[10px] uppercase tracking-wider">Dusun</th>
+                  <th className="p-2.5 font-black text-[10px] uppercase tracking-wider text-right">Total</th>
+                  <th className="p-2.5 font-black text-[10px] uppercase tracking-wider text-right">Gizi Baik</th>
+                  <th className="p-2.5 font-black text-[10px] uppercase tracking-wider text-right">Gizi Buruk</th>
                 </tr>
               </thead>
               <tbody>
-                {sortedDusun.map(([dusun, data]) => (
-                  <tr key={dusun} className="border-b border-slate-200">
-                    <td className="p-3 font-bold">{dusun}</td>
-                    <td className="p-3 text-right font-black">{data.total}</td>
-                    <td className="p-3 text-right font-bold text-emerald-700">{data.baik}</td>
-                    <td className="p-3 text-right font-bold text-rose-700">{data.buruk}</td>
+                {sortedDusun.map(([dusun, data], i) => (
+                  <tr key={dusun} className="border-b border-slate-200" style={{ backgroundColor: i % 2 === 1 ? "#f8fafc" : "transparent" }}>
+                    <td className="p-2.5 font-bold text-slate-900">{dusun}</td>
+                    <td className="p-2.5 text-right font-black">{data.total}</td>
+                    <td className="p-2.5 text-right font-bold" style={{ color: "#059669" }}>{data.baik}</td>
+                    <td className="p-2.5 text-right font-bold" style={{ color: "#e11d48" }}>{data.buruk}</td>
                   </tr>
                 ))}
               </tbody>
@@ -205,13 +205,13 @@ export default async function LaporanPage({ searchParams }: LaporanPageProps) {
 
         {/* Daftar Detail */}
         {records.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-xs font-black uppercase tracking-[0.15em] text-slate-500 mb-4 pb-2 border-b border-slate-200">
+          <div className="mb-5">
+            <h2 className="text-[9.5px] font-black uppercase tracking-[0.18em] text-slate-500 mb-2 pb-1 border-b-2 border-slate-100">
               Daftar Detail Diagnosis ({records.length} data)
             </h2>
             <table className="w-full text-[11px] border-collapse">
               <thead>
-                <tr className="border-b-2 border-slate-900 text-left">
+                <tr className="border-b-2 border-slate-800 text-left" style={{ backgroundColor: "#f1f5f9" }}>
                   <th className="p-2 font-black text-[10px] uppercase tracking-wider">No</th>
                   <th className="p-2 font-black text-[10px] uppercase tracking-wider">Tanggal</th>
                   <th className="p-2 font-black text-[10px] uppercase tracking-wider">Nama</th>
@@ -224,15 +224,15 @@ export default async function LaporanPage({ searchParams }: LaporanPageProps) {
               </thead>
               <tbody>
                 {records.map((r, i) => (
-                  <tr key={r.id} className="border-b border-slate-100">
-                    <td className="p-2">{i + 1}</td>
+                  <tr key={r.id} className="border-b border-slate-100" style={{ backgroundColor: i % 2 === 1 ? "#f8fafc" : "transparent" }}>
+                    <td className="p-2 font-semibold text-slate-500">{i + 1}</td>
                     <td className="p-2">{dateFormatter.format(r.tanggal)}</td>
-                    <td className="p-2 font-bold">{r.namaBalita}</td>
+                    <td className="p-2 font-bold text-slate-900">{r.namaBalita}</td>
                     <td className="p-2">{r.jenisKelamin === "LAKI_LAKI" ? "L" : "P"}</td>
                     <td className="p-2">{r.dusun}</td>
                     <td className="p-2">{r.umurBulan} bln</td>
                     <td className="p-2">{r.beratBadan}/{r.tinggiBadan}</td>
-                    <td className="p-2 font-bold">{r.hasilDiagnosis}</td>
+                    <td className="p-2 font-bold" style={{ color: r.hasilDiagnosis === "Gizi Baik" ? "#059669" : "#e11d48" }}>{r.hasilDiagnosis}</td>
                   </tr>
                 ))}
               </tbody>
@@ -241,8 +241,8 @@ export default async function LaporanPage({ searchParams }: LaporanPageProps) {
         )}
 
         {/* Footer */}
-        <div className="border-t-2 border-slate-900 pt-6 mt-12">
-          <div className="flex items-center justify-between text-xs text-slate-500 font-semibold">
+        <div className="border-t-[3px] border-slate-800 pt-3 mt-6">
+          <div className="flex items-center justify-between text-[9px] text-slate-500 font-bold">
             <p>Sistem Diagnosis Gizi Balita — Metode Naive Bayes</p>
             <p>Dicetak: {dateFormatter.format(new Date())}</p>
           </div>
