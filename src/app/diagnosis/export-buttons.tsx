@@ -1,72 +1,94 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
-import { Printer, ImageDown, Loader2 } from "lucide-react";
+import { useCallback, useState } from "react";
+import { Printer, FileDown, Loader2 } from "lucide-react";
 
 type ExportButtonsProps = {
   printUrl: string;
-  resultElementId: string;
-  fileName: string;
+  resultElementId?: string;
+  fileName?: string;
 };
 
-export function ExportButtons({ printUrl, resultElementId, fileName }: ExportButtonsProps) {
-  const [saving, setSaving] = useState(false);
-  const abortRef = useRef(false);
+export function ExportButtons({
+  printUrl,
+  resultElementId = "diagnosis-result",
+  fileName = "Laporan-Diagnosis-Balita",
+}: ExportButtonsProps) {
+  const [downloading, setDownloading] = useState(false);
 
-  const savePng = useCallback(async () => {
-    const node = document.getElementById(resultElementId);
-    if (!node) return;
-
-    setSaving(true);
-    abortRef.current = false;
-
+  const handleDownloadPdf = useCallback(async () => {
+    setDownloading(true);
     try {
-      const { toPng } = await import("html-to-image");
-      const dataUrl = await toPng(node, {
-        pixelRatio: 2,
+      const node = document.getElementById(resultElementId);
+      if (!node) {
+        window.open(printUrl, "_blank");
+        setDownloading(false);
+        return;
+      }
+
+      const html2canvas = (await import("html2canvas")).default;
+      const { jsPDF } = await import("jspdf");
+
+      const canvas = await html2canvas(node, {
+        scale: 2,
+        useCORS: true,
         backgroundColor: "#ffffff",
-        style: {
-          borderRadius: "0",
-          boxShadow: "none",
-        },
+        logging: false,
       });
 
-      if (abortRef.current) return;
+      const imgWidth = 210; // A4 width mm
+      const pageHeight = 297; // A4 height mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
 
-      const link = document.createElement("a");
-      link.download = `${fileName}.png`;
-      link.href = dataUrl;
-      link.click();
+      const doc = new jsPDF("p", "mm", "a4");
+      let position = 0;
+
+      doc.addImage(canvas.toDataURL("image/png"), "PNG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        doc.addPage();
+        doc.addImage(canvas.toDataURL("image/png"), "PNG", 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      doc.save(`${fileName}.pdf`);
     } catch {
-      alert("Gagal menyimpan gambar. Silakan coba lagi.");
+      alert("Gagal mengunduh PDF. Mengalihkan ke jendela cetak...");
+      window.open(printUrl, "_blank");
     } finally {
-      setSaving(false);
+      setDownloading(false);
     }
-  }, [resultElementId, fileName]);
+  }, [resultElementId, fileName, printUrl]);
 
   return (
-    <div className="flex flex-wrap gap-3">
+    <div className="flex flex-wrap items-center gap-3 my-2">
+      {/* Tombol 1: Cetak Print */}
       <a
         href={printUrl}
         target="_blank"
         rel="noreferrer"
-        className="inline-flex h-12 items-center justify-center gap-2.5 rounded-xl bg-slate-900 px-6 text-sm font-bold text-white shadow-lg transition-all hover:bg-slate-800 active:scale-95"
+        className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border-2 border-slate-300 bg-white px-5 text-sm font-extrabold text-slate-800 shadow-sm transition-all hover:bg-slate-100 hover:border-slate-400 hover:text-slate-900 active:scale-95 shrink-0"
       >
-        <Printer className="size-4.5" />
-        Cetak / PDF
+        <Printer className="size-4 text-slate-700 stroke-[2.5]" />
+        <span>Cetak Print</span>
       </a>
+
+      {/* Tombol 2: Cetak PDF */}
       <button
         type="button"
-        onClick={savePng}
-        disabled={saving}
-        className="inline-flex h-12 items-center justify-center gap-2.5 rounded-xl border-2 border-primary bg-primary/5 px-6 text-sm font-bold text-primary shadow-sm transition-all hover:bg-primary/10 active:scale-95 disabled:opacity-60 disabled:cursor-wait"
+        onClick={handleDownloadPdf}
+        disabled={downloading}
+        className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border-2 border-rose-300 bg-rose-50 px-5 text-sm font-extrabold text-rose-800 shadow-sm transition-all hover:bg-rose-100 hover:border-rose-400 hover:text-rose-900 active:scale-95 disabled:opacity-60 disabled:cursor-wait shrink-0"
       >
-        {saving ? (
-          <Loader2 className="size-4.5 animate-spin" />
+        {downloading ? (
+          <Loader2 className="size-4 animate-spin text-rose-700" />
         ) : (
-          <ImageDown className="size-4.5" />
+          <FileDown className="size-4 text-rose-700 stroke-[2.5]" />
         )}
-        {saving ? "Menyimpan..." : "Simpan Gambar"}
+        <span>{downloading ? "Mengunduh PDF..." : "Cetak PDF"}</span>
       </button>
     </div>
   );

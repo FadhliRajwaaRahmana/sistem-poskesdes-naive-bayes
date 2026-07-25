@@ -352,9 +352,10 @@ export default async function RiwayatDiagnosisPage({ searchParams }: RiwayatDiag
                 href={buildHref(basePath, { ...filterParams, print: "1" })}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex h-12 items-center gap-2.5 rounded-xl bg-slate-900 px-6 text-sm font-bold text-white shadow-lg hover:bg-slate-800 active:scale-95 transition-all"
+                className="inline-flex h-11 items-center gap-2 rounded-xl border-2 border-slate-300 bg-white px-5 text-sm font-extrabold text-slate-800 shadow-sm transition-all hover:bg-slate-100 hover:border-slate-400 hover:text-slate-900 active:scale-95"
               >
-                <Printer className="h-4.5 w-4.5" /> Cetak / PDF
+                <Printer className="size-4 text-slate-700 stroke-[2.5]" />
+                <span>Cetak Print</span>
               </a>
             </div>
           </div>
