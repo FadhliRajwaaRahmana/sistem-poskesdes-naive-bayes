@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
+import { Suspense } from "react";
 import { Toaster } from "sonner";
+import { ToastNotifier } from "@/components/ui/toast-notifier";
 import "./globals.css";
 
 const fontSans = Plus_Jakarta_Sans({
@@ -50,6 +52,9 @@ export default function RootLayout({
   return (
     <html lang="id" className="scroll-smooth">
       <body className={`${fontSans.variable} font-sans antialiased text-slate-800 bg-slate-50 min-h-screen selection:bg-teal-500/30 selection:text-teal-900`}>
+        <Suspense>
+          <ToastNotifier />
+        </Suspense>
         {children}
         <Toaster
           position="top-right"

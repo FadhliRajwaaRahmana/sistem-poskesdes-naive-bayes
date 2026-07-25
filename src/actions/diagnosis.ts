@@ -33,16 +33,16 @@ const diagnosisPath = "/diagnosis";
 
 const diagnosisInputSchema = z.object({
   tanggal: z.string().min(1, "Tanggal wajib diisi."),
-  namaBalita: z.string().trim().min(1, "Nama balita wajib diisi.").max(100),
-  nik: z.string().trim().min(1, "NIK wajib diisi.").max(30),
+  namaBalita: z.string().trim().min(1, "Nama balita wajib diisi.").max(200),
+  nik: z.string().trim().min(1, "NIK wajib diisi.").max(50),
   jenisKelamin: z.enum(["LAKI_LAKI", "PEREMPUAN"], { message: "Jenis kelamin wajib dipilih." }),
-  namaIbu: z.string().trim().min(1, "Nama ibu wajib diisi.").max(100),
-  dusun: z.string().trim().min(1, "Dusun wajib diisi.").max(100),
+  namaIbu: z.string().trim().min(1, "Nama ibu wajib diisi.").max(200),
+  dusun: z.string().trim().min(1, "Dusun wajib diisi.").max(200),
   tanggalLahir: z.string().optional(),
-  umurBulan: z.coerce.number().int().min(0, "Umur tidak valid.").max(60, "Umur maksimal 60 bulan."),
-  beratBadan: z.coerce.number().min(0.1, "Berat badan tidak valid.").max(50),
-  tinggiBadan: z.coerce.number().min(1, "Tinggi badan tidak valid.").max(150),
-  lila: z.coerce.number().min(0).max(30).optional().nullable(),
+  umurBulan: z.coerce.number().int().min(0, "Umur tidak valid.").max(240, "Umur tidak valid."),
+  beratBadan: z.coerce.number().min(0.1, "Berat badan tidak valid.").max(200, "Berat badan tidak valid."),
+  tinggiBadan: z.coerce.number().min(0.1, "Tinggi badan tidak valid.").max(300, "Tinggi badan tidak valid."),
+  lila: z.coerce.number().min(0).max(200).optional().nullable(),
   gejalaIds: z.array(z.string().trim().min(1)),
 });
 

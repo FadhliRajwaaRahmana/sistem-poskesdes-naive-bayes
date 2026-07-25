@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
+import { toast } from "sonner";
 import { submitDiagnosis } from "@/actions/diagnosis";
 import { evaluateAutoSymptoms } from "@/lib/who-standards";
 import type { AutoSymptomResult } from "@/lib/who-standards";
@@ -41,8 +42,11 @@ export function DiagnosisForm({ gejalaList }: DiagnosisFormProps) {
           (now.getFullYear() - birthDate.getFullYear()) * 12 +
           (now.getMonth() - birthDate.getMonth());
         const adjustedMonths = now.getDate() < birthDate.getDate() ? months - 1 : months;
-        const clampedMonths = Math.max(0, Math.min(60, adjustedMonths));
-        setUmurBulan(clampedMonths);
+        const calculatedMonths = Math.max(0, adjustedMonths);
+        setUmurBulan(calculatedMonths);
+        if (calculatedMonths > 60) {
+          toast.warning("Umur balita melebihi 60 bulan (standar WHO 0-60 bulan).");
+        }
       }
     }
   }, []);
@@ -93,7 +97,7 @@ export function DiagnosisForm({ gejalaList }: DiagnosisFormProps) {
 
   const waktuRef = useRef<HTMLInputElement>(null);
 
-  const handleSubmit = useCallback(() => {
+  const handleSubmit = useCallback((e: React.FormEvent<HTMLFormElement>) => {
     if (waktuRef.current) {
       const now = new Date();
       const h = String(now.getHours()).padStart(2, "0");
@@ -101,7 +105,26 @@ export function DiagnosisForm({ gejalaList }: DiagnosisFormProps) {
       const s = String(now.getSeconds()).padStart(2, "0");
       waktuRef.current.value = `${h}:${m}:${s}`;
     }
-  }, []);
+
+    if (umurBulan === "") {
+      toast.error("Umur balita wajib diisi (0-120 bulan).");
+      return;
+    }
+    if (beratBadan === "") {
+      toast.error("Berat badan balita wajib diisi.");
+      return;
+    }
+    if (tinggiBadan === "") {
+      toast.error("Tinggi badan balita wajib diisi.");
+      return;
+    }
+    if (!jenisKelamin) {
+      toast.error("Jenis kelamin wajib dipilih.");
+      return;
+    }
+
+    toast.info("Memproses diagnosis Naive Bayes...", { duration: 3000 });
+  }, [umurBulan, beratBadan, tinggiBadan, jenisKelamin]);
 
   return (
     <form action={submitDiagnosis} onSubmit={handleSubmit} className="mt-8 space-y-10">
@@ -230,10 +253,15 @@ export function DiagnosisForm({ gejalaList }: DiagnosisFormProps) {
                 type="number"
                 name="umurBulan"
                 min={0}
-                max={60}
-                placeholder="0-60"
+                placeholder="Contoh: 24"
                 value={umurBulan}
-                onChange={(e) => setUmurBulan(numVal(e.target.value))}
+                onChange={(e) => {
+                  const val = numVal(e.target.value);
+                  setUmurBulan(val);
+                  if (typeof val === "number" && val > 60) {
+                    toast.warning("Umur balita di atas 60 bulan (menggunakan acuan standar WHO 60 bulan).");
+                  }
+                }}
                 className="input-field pr-16"
                 required
               />
@@ -247,11 +275,16 @@ export function DiagnosisForm({ gejalaList }: DiagnosisFormProps) {
                 type="number"
                 name="beratBadan"
                 min={0.1}
-                max={50}
                 step={0.1}
                 placeholder="Contoh: 8.5"
                 value={beratBadan}
-                onChange={(e) => setBeratBadan(numVal(e.target.value))}
+                onChange={(e) => {
+                  const val = numVal(e.target.value);
+                  setBeratBadan(val);
+                  if (typeof val === "number" && val > 50) {
+                    toast.warning("Berat badan balita di atas 50 kg (melebihi rentang wajar balita).");
+                  }
+                }}
                 className="input-field pr-12"
                 required
               />
@@ -265,11 +298,16 @@ export function DiagnosisForm({ gejalaList }: DiagnosisFormProps) {
                 type="number"
                 name="tinggiBadan"
                 min={1}
-                max={150}
                 step={0.1}
                 placeholder="Contoh: 68.5"
                 value={tinggiBadan}
-                onChange={(e) => setTinggiBadan(numVal(e.target.value))}
+                onChange={(e) => {
+                  const val = numVal(e.target.value);
+                  setTinggiBadan(val);
+                  if (typeof val === "number" && val > 150) {
+                    toast.warning("Tinggi badan balita di atas 150 cm (melebihi rentang wajar balita).");
+                  }
+                }}
                 className="input-field pr-12"
                 required
               />
@@ -285,11 +323,16 @@ export function DiagnosisForm({ gejalaList }: DiagnosisFormProps) {
                 type="number"
                 name="lila"
                 min={0}
-                max={30}
                 step={0.1}
                 placeholder={showLila ? "Contoh: 12.5" : "Tidak berlaku"}
                 value={lila}
-                onChange={(e) => setLila(numVal(e.target.value))}
+                onChange={(e) => {
+                  const val = numVal(e.target.value);
+                  setLila(val);
+                  if (typeof val === "number" && val > 30) {
+                    toast.warning("LiLA di atas 30 cm (melebihi rentang wajar balita).");
+                  }
+                }}
                 className="input-field pr-12"
                 disabled={!showLila}
               />

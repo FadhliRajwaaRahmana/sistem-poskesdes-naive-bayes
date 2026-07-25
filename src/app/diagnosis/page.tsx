@@ -17,6 +17,7 @@ import {
   Calendar,
   CreditCard,
   Weight,
+  AlertTriangle,
 } from "lucide-react";
 
 type PageSearchParams = Record<string, string | string[] | undefined>;
@@ -34,6 +35,8 @@ export default async function PublicDiagnosisPage({ searchParams }: DiagnosisPag
   const gejalaList = await prisma.gejala.findMany({ orderBy: { kode: "asc" } });
   const diagnosisId = getSearchValue(params.diagnosisId);
   const isPrint = getSearchValue(params.print) === "1";
+  const errorMessage = getSearchValue(params.error);
+  const successMessage = getSearchValue(params.success);
 
   const savedDiagnosis = diagnosisId
     ? await prisma.diagnosisBalita.findUnique({
@@ -246,6 +249,34 @@ export default async function PublicDiagnosisPage({ searchParams }: DiagnosisPag
       <div className="grid gap-8 xl:grid-cols-[1.3fr_1fr]">
         {/* Form Card */}
         <div className="stagger-3 animate-slide-up card-container">
+          {errorMessage && (
+            <div className="mb-6 rounded-2xl border-2 border-rose-300 bg-rose-50 p-5 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="rounded-xl bg-rose-100 p-2 text-rose-700">
+                  <AlertTriangle className="size-6 stroke-[2.5]" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-black text-rose-900">Gagal Memproses Diagnosis</h4>
+                  <p className="text-xs font-bold text-rose-700 mt-0.5">{errorMessage}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {successMessage && (
+            <div className="mb-6 rounded-2xl border-2 border-emerald-300 bg-emerald-50 p-5 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="rounded-xl bg-emerald-100 p-2 text-emerald-700">
+                  <CheckCircle2 className="size-6 stroke-[2.5]" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-black text-emerald-900">Diagnosis Berhasil</h4>
+                  <p className="text-xs font-bold text-emerald-700 mt-0.5">{successMessage}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="flex items-center gap-4 border-b border-slate-100 pb-6">
             <div className="rounded-2xl bg-primary/10 border border-primary/20 p-3 text-primary shadow-sm">
               <HeartPulse className="size-6 stroke-[2.5]" />
