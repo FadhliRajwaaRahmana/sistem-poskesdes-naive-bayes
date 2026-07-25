@@ -38,7 +38,7 @@ Branch utama repository ini adalah `master`.
 | --- | --- |
 | Frontend | Next.js 16 App Router, React 19, Tailwind CSS 4, Framer Motion, Lucide React |
 | Backend | Next.js Server Components, Server Actions, Better Auth |
-| Database | MySQL (XAMPP), Prisma ORM |
+| Database | MySQL (XAMPP lokal / Aiven cloud), Prisma ORM |
 | Validasi | Zod |
 | Tooling | TypeScript, ESLint, tsx |
 
@@ -452,7 +452,7 @@ npm run auth:bootstrap   # Buat akun admin
 Contoh `DATABASE_URL` untuk MySQL cloud:
 
 ```env
-DATABASE_URL="mysql://username:password@host:port/poskesdes_db?sslaccept=strict"
+DATABASE_URL="mysql://username:password@host:port/poskesdes_db?sslaccept=accept_invalid_certs"
 ```
 
 > Setelah selesai, Anda bisa kembalikan `DATABASE_URL` ke database lokal jika mau tetap develop di lokal.
@@ -470,7 +470,7 @@ Di halaman konfigurasi project Vercel (Settings → Environment Variables), tamb
 
 | Variable | Nilai | Keterangan |
 | --- | --- | --- |
-| `DATABASE_URL` | `mysql://username:password@host:port/poskesdes_db?sslaccept=strict` | Connection string database MySQL cloud |
+| `DATABASE_URL` | `mysql://username:password@host:port/poskesdes_db?sslaccept=accept_invalid_certs` | Connection string database MySQL cloud |
 | `BETTER_AUTH_SECRET` | *(secret yang sama dengan saat bootstrap)* | **Wajib sama** dengan yang dipakai saat `auth:bootstrap` |
 | `BETTER_AUTH_URL` | `https://nama-project.vercel.app` | URL production Vercel Anda |
 | `NEXT_PUBLIC_APP_NAME` | `Sistem Diagnosis POSYANDU` | Nama aplikasi |
@@ -548,7 +548,7 @@ Cukup ganti nilai `DATABASE_URL` di file `.env`:
 DATABASE_URL="mysql://root:@localhost:3306/poskesdes_db"
 
 # Cloud (contoh):
-DATABASE_URL="mysql://username:password@host:port/poskesdes_db?sslaccept=strict"
+DATABASE_URL="mysql://username:password@host:port/poskesdes_db?sslaccept=accept_invalid_certs"
 ```
 
 Setelah ganti, restart dev server (tutup terminal lama, jalankan `npm run dev` lagi). Tidak perlu ubah kode apapun.

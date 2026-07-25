@@ -124,72 +124,75 @@ const standarPertumbuhanSeed: {
 ];
 
 async function main() {
-  await prisma.$transaction(async (tx) => {
-    // 1. Upsert gejala
-    for (const item of gejalaSeed) {
-      await tx.gejala.upsert({
-        where: { kode: item.kode },
-        update: { nama: item.nama },
-        create: item,
-      });
-    }
-
-    // 2. Upsert penyakit
-    for (const item of penyakitSeed) {
-      await tx.penyakit.upsert({
-        where: { kode: item.kode },
-        update: {
-          nama: item.nama,
-          deskripsi: item.deskripsi,
-          saranPenanganan: item.saranPenanganan,
-        },
-        create: item,
-      });
-    }
-
-    // 3. Rebuild ID maps
-    const gejalaList = await tx.gejala.findMany();
-    const gejalaMap = new Map(gejalaList.map((g) => [g.kode, g.id]));
-
-    const penyakitList = await tx.penyakit.findMany();
-    const penyakitMap = new Map(penyakitList.map((p) => [p.kode, p.id]));
-
-    // 4. Upsert rule values (binary 1/0)
-    for (const [gejalaKode, penyakitValues] of Object.entries(ruleTable)) {
-      const gejalaId = gejalaMap.get(gejalaKode);
-      if (!gejalaId) throw new Error(`Gejala tidak ditemukan: ${gejalaKode}`);
-
-      for (const [penyakitKode, ruleValue] of Object.entries(penyakitValues)) {
-        const penyakitId = penyakitMap.get(penyakitKode);
-        if (!penyakitId) throw new Error(`Penyakit tidak ditemukan: ${penyakitKode}`);
-
-        await tx.penyakitGejala.upsert({
-          where: { penyakitId_gejalaId: { penyakitId, gejalaId } },
-          update: { likelihood: ruleValue },
-          create: { penyakitId, gejalaId, likelihood: ruleValue },
+  await prisma.$transaction(
+    async (tx) => {
+      // 1. Upsert gejala
+      for (const item of gejalaSeed) {
+        await tx.gejala.upsert({
+          where: { kode: item.kode },
+          update: { nama: item.nama },
+          create: item,
         });
       }
-    }
 
-    // 5. Upsert standar pertumbuhan WHO
-    for (const item of standarPertumbuhanSeed) {
-      await tx.standarPertumbuhan.upsert({
-        where: {
-          umurBulan_jenisKelamin: {
-            umurBulan: item.umurBulan,
-            jenisKelamin: item.jenisKelamin,
+      // 2. Upsert penyakit
+      for (const item of penyakitSeed) {
+        await tx.penyakit.upsert({
+          where: { kode: item.kode },
+          update: {
+            nama: item.nama,
+            deskripsi: item.deskripsi,
+            saranPenanganan: item.saranPenanganan,
           },
-        },
-        update: {
-          bbMin: item.bbMin,
-          bbMax: item.bbMax,
-          tbMin: item.tbMin,
-          tbMax: item.tbMax,
-        },
-        create: item,
-      });
-    }
-  });
+          create: item,
+        });
+      }
+
+      // 3. Rebuild ID maps
+      const gejalaList = await tx.gejala.findMany();
+      const gejalaMap = new Map(gejalaList.map((g) => [g.kode, g.id]));
+
+      const penyakitList = await tx.penyakit.findMany();
+      const penyakitMap = new Map(penyakitList.map((p) => [p.kode, p.id]));
+
+      // 4. Upsert rule values (binary 1/0)
+      for (const [gejalaKode, penyakitValues] of Object.entries(ruleTable)) {
+        const gejalaId = gejalaMap.get(gejalaKode);
+        if (!gejalaId) throw new Error(`Gejala tidak ditemukan: ${gejalaKode}`);
+
+        for (const [penyakitKode, ruleValue] of Object.entries(penyakitValues)) {
+          const penyakitId = penyakitMap.get(penyakitKode);
+          if (!penyakitId) throw new Error(`Penyakit tidak ditemukan: ${penyakitKode}`);
+
+          await tx.penyakitGejala.upsert({
+            where: { penyakitId_gejalaId: { penyakitId, gejalaId } },
+            update: { likelihood: ruleValue },
+            create: { penyakitId, gejalaId, likelihood: ruleValue },
+          });
+        }
+      }
+
+      // 5. Upsert standar pertumbuhan WHO
+      for (const item of standarPertumbuhanSeed) {
+        await tx.standarPertumbuhan.upsert({
+          where: {
+            umurBulan_jenisKelamin: {
+              umurBulan: item.umurBulan,
+              jenisKelamin: item.jenisKelamin,
+            },
+          },
+          update: {
+            bbMin: item.bbMin,
+            bbMax: item.bbMax,
+            tbMin: item.tbMin,
+            tbMax: item.tbMax,
+          },
+          create: item,
+        });
+      }
+    },
+    { maxWait: 10000, timeout: 60000 },
+  );
 
   console.log("Seed berhasil: 5 penyakit, 20 gejala, 100 rule, 20 standar WHO.");
 }
