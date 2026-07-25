@@ -8,50 +8,54 @@ import { LogoutButton } from "@/components/auth/logout-button";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
-  Stethoscope,
   ClipboardCheck,
   HeartPulse,
   FileText,
-  Users,
   History,
   Menu,
   X,
   ActivitySquare,
   ShieldCheck,
-  UserCircle,
   PanelLeftClose,
-  PanelLeftOpen
+  PanelLeftOpen,
+  ChevronDown,
+  Database,
+  Table2,
+  BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type MenuItem = { href: string; label: string; icon: typeof LayoutDashboard };
+type MenuItem = {
+  href: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  children?: MenuItem[];
+};
 
 const adminMenu: MenuItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/diagnosis", label: "Diagnosis Balita", icon: Stethoscope },
-  { href: "/dashboard/gejala", label: "Data Gejala", icon: ClipboardCheck },
-  { href: "/dashboard/penyakit", label: "Data Penyakit", icon: HeartPulse },
-  { href: "/dashboard/rekam-medis", label: "Rekam Medis", icon: FileText },
-  { href: "/dashboard/pengguna", label: "Kelola Pengguna", icon: Users },
-];
-
-const userMenu: MenuItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/diagnosis", label: "Diagnosis Balita", icon: Stethoscope },
-  { href: "/dashboard/riwayat", label: "Riwayat Saya", icon: History },
+  {
+    href: "#data-input",
+    label: "Data Input",
+    icon: Database,
+    children: [
+      { href: "/dashboard/gejala", label: "Data Gejala", icon: ClipboardCheck },
+      { href: "/dashboard/penyakit", label: "Data Penyakit", icon: HeartPulse },
+      { href: "/dashboard/rule", label: "Data Rule", icon: Table2 },
+    ],
+  },
+  { href: "/dashboard/riwayat-diagnosis", label: "Riwayat Diagnosis", icon: History },
+  { href: "/dashboard/laporan", label: "Data Laporan", icon: BarChart3 },
 ];
 
 const sidebarCollapsedStorageKey = "sidebar-collapsed";
 const sidebarCollapsedEvent = "sidebar-collapsed-change";
+const submenuOpenStorageKey = "submenu-open";
 
 function subscribeToSidebarPreference(onStoreChange: () => void) {
-  if (typeof window === "undefined") {
-    return () => undefined;
-  }
-
+  if (typeof window === "undefined") return () => undefined;
   window.addEventListener("storage", onStoreChange);
   window.addEventListener(sidebarCollapsedEvent, onStoreChange);
-
   return () => {
     window.removeEventListener("storage", onStoreChange);
     window.removeEventListener(sidebarCollapsedEvent, onStoreChange);
@@ -59,11 +63,159 @@ function subscribeToSidebarPreference(onStoreChange: () => void) {
 }
 
 function getSidebarCollapsedSnapshot() {
-  if (typeof window === "undefined") {
-    return false;
+  if (typeof window === "undefined") return false;
+  return window.localStorage.getItem(sidebarCollapsedStorageKey) === "true";
+}
+
+function NavLink({
+  item,
+  pathname,
+  onNavigate,
+  isCollapsed = false,
+}: {
+  item: MenuItem;
+  pathname: string;
+  onNavigate?: () => void;
+  isCollapsed?: boolean;
+}) {
+  const hasChildren = Boolean(item.children?.length);
+  const isChildActive = hasChildren && item.children!.some((c) => pathname.startsWith(c.href));
+  const isDirectActive = !hasChildren && (item.href === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(item.href));
+  const isActive = isDirectActive || isChildActive;
+
+  const [open, setOpen] = useState(() => {
+    if (!hasChildren) return false;
+    if (typeof window !== "undefined") {
+      return window.localStorage.getItem(submenuOpenStorageKey) === "true" || isChildActive;
+    }
+    return isChildActive;
+  });
+
+  if (hasChildren) {
+    if (isCollapsed) {
+      return (
+        <div className="space-y-1">
+          {item.children!.map((child) => (
+            <NavLink key={child.href} item={child} pathname={pathname} onNavigate={onNavigate} isCollapsed />
+          ))}
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-1">
+        <button
+          type="button"
+          onClick={() => {
+            const next = !open;
+            setOpen(next);
+            if (typeof window !== "undefined") {
+              window.localStorage.setItem(submenuOpenStorageKey, String(next));
+            }
+          }}
+          className={cn(
+            "group relative flex w-full items-center gap-3 rounded-xl px-4 py-3 transition-all duration-300",
+            isChildActive
+              ? "bg-primary/10 text-primary"
+              : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+          )}
+        >
+          <item.icon className={cn("size-5 shrink-0 transition-transform duration-300", !isChildActive && "group-hover:scale-110")} />
+          <span className="text-sm font-bold whitespace-nowrap flex-1 text-left">{item.label}</span>
+          <ChevronDown className={cn("size-4 transition-transform duration-300", open && "rotate-180")} />
+        </button>
+        <AnimatePresence initial={false}>
+          {open && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+              <div className="ml-4 space-y-1 border-l-2 border-slate-200 pl-3">
+                {item.children!.map((child) => {
+                  const childActive = pathname.startsWith(child.href);
+                  return (
+                    <Link
+                      key={child.href}
+                      href={child.href}
+                      onClick={onNavigate}
+                      className={cn(
+                        "group relative flex items-center gap-3 rounded-xl px-4 py-2.5 transition-all duration-300",
+                        childActive
+                          ? "text-primary-foreground"
+                          : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                      )}
+                    >
+                      {childActive && (
+                        <motion.div
+                          layoutId="activeNavIndicator"
+                          className="absolute inset-0 bg-primary rounded-xl shadow-[var(--shadow-button)]"
+                          initial={false}
+                          transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                        />
+                      )}
+                      <child.icon className={cn("relative z-10 size-4 shrink-0", childActive && "text-white")} />
+                      <span className={cn("relative z-10 text-sm font-bold whitespace-nowrap", childActive ? "text-white" : "text-slate-500 group-hover:text-slate-900")}>
+                        {child.label}
+                      </span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
   }
 
-  return window.localStorage.getItem(sidebarCollapsedStorageKey) === "true";
+  return (
+    <Link
+      href={item.href}
+      onClick={onNavigate}
+      title={isCollapsed ? item.label : undefined}
+      className={cn(
+        "group relative flex items-center rounded-xl transition-all duration-300",
+        isCollapsed ? "justify-center p-3" : "gap-3 px-4 py-3",
+        isActive
+          ? "text-primary-foreground"
+          : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+      )}
+    >
+      {isActive && (
+        <motion.div
+          layoutId="activeNavIndicator"
+          className="absolute inset-0 bg-primary rounded-xl shadow-[var(--shadow-button)]"
+          initial={false}
+          transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+        />
+      )}
+      <item.icon
+        className={cn(
+          "relative z-10 shrink-0 transition-transform duration-300",
+          isCollapsed ? "size-6" : "size-5",
+          !isActive && "group-hover:scale-110",
+          isActive && "text-white"
+        )}
+      />
+      <span
+        className={cn(
+          "relative z-10 text-sm font-bold whitespace-nowrap transition-all duration-300",
+          isActive ? "text-white" : "text-slate-500 group-hover:text-slate-900",
+          isCollapsed ? "opacity-0 w-0 hidden" : "opacity-100 w-auto block"
+        )}
+      >
+        {item.label}
+      </span>
+      {isCollapsed && (
+        <div className="absolute left-14 rounded-lg bg-slate-800 px-3 py-1.5 text-xs font-semibold text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 pointer-events-none z-50 whitespace-nowrap">
+          {item.label}
+        </div>
+      )}
+    </Link>
+  );
 }
 
 function NavLinks({
@@ -79,62 +231,9 @@ function NavLinks({
 }) {
   return (
     <nav className="flex-1 space-y-1.5 px-3 py-4 overflow-y-auto overflow-x-hidden clean-scroll">
-      {menu.map((item) => {
-        const isActive =
-          item.href === "/dashboard"
-            ? pathname === "/dashboard"
-            : pathname.startsWith(item.href);
-
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            onClick={onNavigate}
-            title={isCollapsed ? item.label : undefined}
-            className={cn(
-              "group relative flex items-center rounded-xl transition-all duration-300",
-              isCollapsed ? "justify-center p-3" : "gap-3 px-4 py-3",
-              isActive
-                ? "text-primary-foreground"
-                : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
-            )}
-          >
-            {isActive && (
-              <motion.div
-                layoutId="activeNavIndicator"
-                className="absolute inset-0 bg-primary rounded-xl shadow-[var(--shadow-button)]"
-                initial={false}
-                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-              />
-            )}
-
-            <item.icon
-              className={cn(
-                "relative z-10 shrink-0 transition-transform duration-300",
-                isCollapsed ? "size-6" : "size-5",
-                !isActive && "group-hover:scale-110",
-                isActive && "text-white"
-              )}
-            />
-
-            <span
-              className={cn(
-                "relative z-10 text-sm font-bold whitespace-nowrap transition-all duration-300",
-                isActive ? "text-white" : "text-slate-500 group-hover:text-slate-900",
-                isCollapsed ? "opacity-0 w-0 hidden" : "opacity-100 w-auto block"
-              )}
-            >
-              {item.label}
-            </span>
-
-            {isCollapsed && (
-              <div className="absolute left-14 rounded-lg bg-slate-800 px-3 py-1.5 text-xs font-semibold text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 pointer-events-none z-50 whitespace-nowrap">
-                {item.label}
-              </div>
-            )}
-          </Link>
-        );
-      })}
+      {menu.map((item) => (
+        <NavLink key={item.href} item={item} pathname={pathname} onNavigate={onNavigate} isCollapsed={isCollapsed} />
+      ))}
     </nav>
   );
 }
@@ -142,7 +241,6 @@ function NavLinks({
 export function DashboardShell({
   children,
   userName,
-  userRole,
 }: {
   children: ReactNode;
   userName: string;
@@ -163,10 +261,7 @@ export function DashboardShell({
   };
 
   const getInitials = (name: string) => name.substring(0, 2).toUpperCase();
-  const isAdmin = userRole === "ADMIN";
-  const menu = isAdmin ? adminMenu : userMenu;
-  const roleLabel = isAdmin ? "Administrator" : "Pengguna";
-  const RoleIcon = isAdmin ? ShieldCheck : UserCircle;
+  const menu = adminMenu;
 
   return (
     <div className="flex min-h-screen bg-slate-50 font-sans">
@@ -213,37 +308,27 @@ export function DashboardShell({
                     <ActivitySquare className="size-5" />
                   </div>
                   <div>
-                    <h1 className="text-base font-extrabold tracking-tight text-slate-900">
-                      POSYANDU
-                    </h1>
+                    <h1 className="text-base font-extrabold tracking-tight text-slate-900">POSYANDU</h1>
                     <p className="text-[11px] text-slate-500 font-bold uppercase tracking-wider">Naive Bayes</p>
                   </div>
                 </div>
-                <button
-                  onClick={() => setMobileOpen(false)}
-                  className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
-                >
+                <button onClick={() => setMobileOpen(false)} className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors">
                   <X className="size-5" />
                 </button>
               </div>
 
               <div className="flex-1 flex flex-col overflow-hidden">
-                <NavLinks
-                  menu={menu}
-                  pathname={pathname}
-                  onNavigate={() => setMobileOpen(false)}
-                  isCollapsed={false}
-                />
+                <NavLinks menu={menu} pathname={pathname} onNavigate={() => setMobileOpen(false)} isCollapsed={false} />
               </div>
 
               <div className="border-t border-slate-100 p-4 bg-slate-50/50">
                 <div className="flex items-center gap-3 mb-4 px-2">
                   <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-teal-100 text-teal-700">
-                    <RoleIcon className="size-5" />
+                    <ShieldCheck className="size-5" />
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-bold text-slate-900 truncate">{userName}</p>
-                    <p className="text-xs text-slate-500 font-medium">{roleLabel}</p>
+                    <p className="text-xs text-slate-500 font-medium">Administrator</p>
                   </div>
                 </div>
                 <LogoutButton variant="sidebar" isCollapsed={false} />
@@ -266,17 +351,9 @@ export function DashboardShell({
           <div className="flex items-center justify-center rounded-xl bg-gradient-to-br from-primary to-teal-500 text-white shadow-lg shadow-primary/20 shrink-0 size-11 transition-all duration-300">
             <ActivitySquare className="size-6" />
           </div>
-
-          <div className={cn(
-            "transition-all duration-300",
-            isCollapsed ? "opacity-0 w-0 hidden" : "opacity-100 w-auto block"
-          )}>
-            <h1 className="text-xl font-extrabold tracking-tight text-slate-900">
-              POSYANDU
-            </h1>
-            <p className="text-[10px] text-teal-600 font-bold tracking-widest uppercase mt-0.5">
-              Naive Bayes
-            </p>
+          <div className={cn("transition-all duration-300", isCollapsed ? "opacity-0 w-0 hidden" : "opacity-100 w-auto block")}>
+            <h1 className="text-xl font-extrabold tracking-tight text-slate-900">POSYANDU</h1>
+            <p className="text-[10px] text-teal-600 font-bold tracking-widest uppercase mt-0.5">Naive Bayes</p>
           </div>
         </div>
 
@@ -285,27 +362,19 @@ export function DashboardShell({
         </div>
 
         {/* User Profile Area */}
-        <div className={cn(
-          "border-t border-slate-100 bg-slate-50/50 transition-all duration-300",
-          isCollapsed ? "p-3" : "p-5"
-        )}>
+        <div className={cn("border-t border-slate-100 bg-slate-50/50 transition-all duration-300", isCollapsed ? "p-3" : "p-5")}>
           <div className={cn(
             "flex items-center mb-4 rounded-xl bg-white border border-slate-200 shadow-sm transition-all duration-300 overflow-hidden",
             isCollapsed ? "justify-center p-2" : "gap-3 p-3"
           )}>
             <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-teal-50 text-teal-700 font-bold">
-              {isCollapsed ? getInitials(userName) : <RoleIcon className="size-5" />}
+              {isCollapsed ? getInitials(userName) : <ShieldCheck className="size-5" />}
             </div>
-
-            <div className={cn(
-              "flex-1 min-w-0 transition-all duration-300",
-              isCollapsed ? "opacity-0 w-0 hidden" : "opacity-100 w-auto block"
-            )}>
+            <div className={cn("flex-1 min-w-0 transition-all duration-300", isCollapsed ? "opacity-0 w-0 hidden" : "opacity-100 w-auto block")}>
               <p className="text-sm font-bold text-slate-900 truncate">{userName}</p>
-              <p className="text-xs text-slate-500 font-medium">{roleLabel}</p>
+              <p className="text-xs text-slate-500 font-medium">Administrator</p>
             </div>
           </div>
-
           <LogoutButton variant="sidebar" isCollapsed={isCollapsed} />
         </div>
 
@@ -316,11 +385,7 @@ export function DashboardShell({
             className="flex size-7 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 shadow-sm transition-all hover:bg-teal-50 hover:text-teal-600 hover:border-teal-200 hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
             title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
           >
-            {isCollapsed ? (
-              <PanelLeftOpen className="size-4" />
-            ) : (
-              <PanelLeftClose className="size-4" />
-            )}
+            {isCollapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}
           </button>
         </div>
       </motion.aside>

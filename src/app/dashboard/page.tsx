@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/session";
-import { hasAdminRole } from "@/lib/session-guards";
 import {
   ClipboardCheck,
   HeartPulse,
@@ -19,10 +18,7 @@ const dateFormatter = new Intl.DateTimeFormat("id-ID", {
 });
 
 export default async function DashboardPage() {
-  const session = await requireSession();
-  const isAdmin = hasAdminRole(session.user.role);
-
-  const userFilter = isAdmin ? {} : { userId: session.user.id };
+  await requireSession();
 
   const [
     totalGejala,
@@ -34,24 +30,22 @@ export default async function DashboardPage() {
   ] = await Promise.all([
     prisma.gejala.count(),
     prisma.penyakit.count(),
-    prisma.diagnosisBalita.count({ where: userFilter }),
-    prisma.diagnosisBalita.findMany({
-      where: userFilter,
-      select: { nik: true },
-      distinct: ["nik"],
-    }).then((r) => r.length),
+    prisma.diagnosisBalita.count(),
+    prisma.diagnosisBalita
+      .findMany({
+        select: { nik: true },
+        distinct: ["nik"],
+      })
+      .then((r) => r.length),
     prisma.diagnosisBalita.findFirst({
-      where: userFilter,
       orderBy: { createdAt: "desc" },
       include: { penyakit: true },
     }),
     prisma.diagnosisBalita.findMany({
-      where: userFilter,
       take: 5,
       orderBy: { tanggal: "desc" },
       include: {
         penyakit: true,
-        user: true,
         diagnosisGejala: {
           include: { gejala: true },
           orderBy: { gejala: { kode: "asc" } },
@@ -61,13 +55,11 @@ export default async function DashboardPage() {
   ]);
 
   const stats = [
-    { label: "Total Gejala", value: totalGejala, hint: "Gejala klinis terdaftar", icon: ClipboardCheck, href: isAdmin ? "/dashboard/gejala" : "/dashboard/diagnosis", color: "text-secondary bg-secondary/10 border-secondary/20" },
-    { label: "Total Penyakit", value: totalPenyakit, hint: "Klasifikasi gizi buruk", icon: HeartPulse, href: isAdmin ? "/dashboard/penyakit" : "/dashboard/diagnosis", color: "text-rose-600 bg-rose-100 border-rose-200" },
-    { label: "Total Balita", value: totalBalita, hint: "Balita unik (NIK)", icon: Baby, href: isAdmin ? "/dashboard/rekam-medis" : "/dashboard/riwayat", color: "text-amber-600 bg-amber-100 border-amber-200" },
-    { label: "Total Diagnosis", value: totalDiagnosis, hint: "Riwayat pemeriksaan", icon: FileText, href: isAdmin ? "/dashboard/rekam-medis" : "/dashboard/riwayat", color: "text-emerald-600 bg-emerald-100 border-emerald-200" },
+    { label: "Total Gejala", value: totalGejala, hint: "Gejala klinis terdaftar", icon: ClipboardCheck, href: "/dashboard/gejala", color: "text-secondary bg-secondary/10 border-secondary/20" },
+    { label: "Total Penyakit", value: totalPenyakit, hint: "Klasifikasi gizi buruk", icon: HeartPulse, href: "/dashboard/penyakit", color: "text-rose-600 bg-rose-100 border-rose-200" },
+    { label: "Total Balita", value: totalBalita, hint: "Balita unik (NIK)", icon: Baby, href: "/dashboard/riwayat-diagnosis", color: "text-amber-600 bg-amber-100 border-amber-200" },
+    { label: "Total Diagnosis", value: totalDiagnosis, hint: "Riwayat pemeriksaan", icon: FileText, href: "/dashboard/riwayat-diagnosis", color: "text-emerald-600 bg-emerald-100 border-emerald-200" },
   ];
-
-  const riwayatHref = isAdmin ? "/dashboard/rekam-medis" : "/dashboard/riwayat";
 
   return (
     <section className="space-y-6 pb-10">
@@ -79,21 +71,19 @@ export default async function DashboardPage() {
         <div className="relative z-10 max-w-2xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-white text-xs font-bold mb-4 backdrop-blur-md">
             <ActivitySquare className="size-4" />
-            <span>{isAdmin ? "Dashboard Admin" : "Dashboard"}</span>
+            <span>Dashboard Admin</span>
           </div>
           <h2 className="text-3xl font-black tracking-tight text-white sm:text-4xl">
             Sistem Diagnosis Gizi Buruk
           </h2>
           <p className="mt-3 text-base font-medium text-slate-300 max-w-lg leading-relaxed">
-            {isAdmin
-              ? "Pantau data statistik POSYANDU secara real-time. Kelola penyakit, gejala, dan evaluasi diagnosis gizi buruk balita dengan metode Naive Bayes."
-              : "Lakukan diagnosis gizi balita dan pantau riwayat pemeriksaan anak Anda."}
+            Pantau data statistik POSYANDU secara real-time. Kelola penyakit, gejala, dan evaluasi diagnosis gizi buruk balita dengan metode Naive Bayes.
           </p>
         </div>
 
         <div className="relative z-10 flex w-full flex-col gap-3 sm:max-w-sm lg:w-auto lg:min-w-[250px] shrink-0">
           <Link
-            href="/dashboard/diagnosis"
+            href="/diagnosis"
             className="inline-flex h-14 w-full items-center justify-center gap-3 rounded-2xl bg-gradient-to-br from-primary to-teal-500 px-6 py-3 text-sm font-bold text-white shadow-[var(--shadow-button)] transition-all hover:-translate-y-0.5 hover:shadow-lg active:scale-95"
           >
             <Stethoscope className="size-5 shrink-0 text-white" />
@@ -177,7 +167,7 @@ export default async function DashboardPage() {
             </div>
           </div>
           <Link
-            href={riwayatHref}
+            href="/dashboard/riwayat-diagnosis"
             className="mt-4 sm:mt-0 inline-flex items-center justify-center h-11 px-5 rounded-xl bg-white text-sm font-bold text-slate-700 shadow-sm border border-slate-200 hover:border-primary hover:text-primary hover:shadow-md transition-all active:scale-95"
           >
             Lihat Semua
@@ -200,7 +190,7 @@ export default async function DashboardPage() {
                   <div>
                     <h4 className="text-lg font-black text-slate-900 group-hover:text-primary transition-colors">{item.namaBalita}</h4>
                     <p className="text-sm font-semibold text-slate-500 mt-1">
-                      {dateFormatter.format(item.tanggal)} <span className="mx-2 text-slate-300">•</span> {item.dusun}
+                      {dateFormatter.format(item.tanggal)} <span className="mx-2 text-slate-300">&bull;</span> {item.dusun}
                     </p>
                     <div className="mt-3">
                        <span className={`inline-flex items-center rounded-lg px-3 py-1.5 text-sm font-bold border ${

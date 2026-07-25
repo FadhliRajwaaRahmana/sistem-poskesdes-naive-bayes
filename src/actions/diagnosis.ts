@@ -4,15 +4,14 @@ import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { getDiagnosisComputation } from "@/lib/naive-bayes";
+import { calculateDiagnosis } from "@/lib/naive-bayes";
 import { parseDiagnosisDate, resolveSelectedGejala } from "@/lib/diagnosis-validation";
 import { getDiagnosisActionErrorMessage } from "@/lib/prisma-action-errors";
 import { prisma } from "@/lib/prisma";
-import { requireSession } from "@/lib/session";
+import { getSession } from "@/lib/session";
 import { evaluateAutoSymptoms } from "@/lib/who-standards";
 
-const diagnosisPath = "/dashboard/diagnosis";
-const rekamMedisPath = "/dashboard/rekam-medis";
+const diagnosisPath = "/diagnosis";
 
 const diagnosisInputSchema = z.object({
   tanggal: z.string().min(1, "Tanggal wajib diisi."),
@@ -21,6 +20,7 @@ const diagnosisInputSchema = z.object({
   jenisKelamin: z.enum(["LAKI_LAKI", "PEREMPUAN"], { message: "Jenis kelamin wajib dipilih." }),
   namaIbu: z.string().trim().min(1, "Nama ibu wajib diisi.").max(100),
   dusun: z.string().trim().min(1, "Dusun wajib diisi.").max(100),
+  tanggalLahir: z.string().optional(),
   umurBulan: z.coerce.number().int().min(0, "Umur tidak valid.").max(60, "Umur maksimal 60 bulan."),
   beratBadan: z.coerce.number().min(0.1, "Berat badan tidak valid.").max(50),
   tinggiBadan: z.coerce.number().min(1, "Tinggi badan tidak valid.").max(150),
@@ -44,7 +44,7 @@ function redirectWithMessage(path: string, type: "success" | "error", message: s
 }
 
 export async function submitDiagnosis(formData: FormData) {
-  const session = await requireSession();
+  const session = await getSession();
 
   const parsed = diagnosisInputSchema.safeParse({
     tanggal: getStringValue(formData.get("tanggal")),
@@ -53,6 +53,7 @@ export async function submitDiagnosis(formData: FormData) {
     jenisKelamin: getStringValue(formData.get("jenisKelamin")),
     namaIbu: getStringValue(formData.get("namaIbu")),
     dusun: getStringValue(formData.get("dusun")),
+    tanggalLahir: getStringValue(formData.get("tanggalLahir")) || undefined,
     umurBulan: getStringValue(formData.get("umurBulan")),
     beratBadan: getStringValue(formData.get("beratBadan")),
     tinggiBadan: getStringValue(formData.get("tinggiBadan")),
@@ -79,7 +80,14 @@ export async function submitDiagnosis(formData: FormData) {
     redirectWithMessage(diagnosisPath, "error", "Tanggal diagnosis tidak valid.");
   }
 
-  // WHO preprocessing: auto-detect gejala dari pengukuran
+  let tanggalLahirDate: Date | null = null;
+  if (data.tanggalLahir) {
+    const parsed = new Date(data.tanggalLahir);
+    if (!Number.isNaN(parsed.getTime())) {
+      tanggalLahirDate = parsed;
+    }
+  }
+
   const autoResult = evaluateAutoSymptoms(
     data.umurBulan,
     data.jenisKelamin,
@@ -88,7 +96,6 @@ export async function submitDiagnosis(formData: FormData) {
     data.lila ?? null,
   );
 
-  // Resolve auto gejala IDs from kode
   const autoGejalaCodes = autoResult.autoGejalaKodes;
   let autoGejalaIds: string[] = [];
   if (autoGejalaCodes.length > 0) {
@@ -99,9 +106,7 @@ export async function submitDiagnosis(formData: FormData) {
     autoGejalaIds = autoGejalaRecords.map((g) => g.id);
   }
 
-  // Merge auto + manual gejala (deduplicated)
   const allGejalaIds = Array.from(new Set([...autoGejalaIds, ...data.gejalaIds]));
-
   const isGiziBaikCase = allGejalaIds.length === 0;
 
   let hasilDiagnosis: string;
@@ -122,7 +127,6 @@ export async function submitDiagnosis(formData: FormData) {
     hasilDiagnosis = "Gizi Baik";
     keterangan = "Semua pengukuran dalam batas normal, tidak ada gejala klinis.";
   } else {
-    // Validate gejala exist in DB
     const availableGejala = await prisma.gejala.findMany({
       where: { id: { in: allGejalaIds } },
       select: { id: true, kode: true, nama: true },
@@ -136,7 +140,7 @@ export async function submitDiagnosis(formData: FormData) {
 
     let diagnosis;
     try {
-      diagnosis = await getDiagnosisComputation(selectedIds);
+      diagnosis = await calculateDiagnosis(selectedIds);
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         redirectWithMessage(diagnosisPath, "error", getDiagnosisActionErrorMessage(error.code));
@@ -149,14 +153,14 @@ export async function submitDiagnosis(formData: FormData) {
     keterangan = diagnosis.saranPenanganan || null;
 
     diagnosisGejalaCreate = selectedIds.map((gejalaId) => ({ gejalaId }));
-    diagnosisRankingCreate = diagnosis.ranked.map((item, index) => ({
+    diagnosisRankingCreate = diagnosis.ranked.map((item) => ({
       penyakitId: item.penyakitId,
       kodePenyakit: item.kodePenyakit,
       namaPenyakit: item.namaPenyakit,
       prior: item.prior,
       posterior: item.posterior,
       score: item.score,
-      peringkat: index + 1,
+      peringkat: item.peringkat,
     }));
   }
 
@@ -171,6 +175,7 @@ export async function submitDiagnosis(formData: FormData) {
         jenisKelamin: data.jenisKelamin,
         namaIbu: data.namaIbu,
         dusun: data.dusun,
+        tanggalLahir: tanggalLahirDate,
         umurBulan: data.umurBulan,
         beratBadan: data.beratBadan,
         tinggiBadan: data.tinggiBadan,
@@ -178,7 +183,7 @@ export async function submitDiagnosis(formData: FormData) {
         hasilDiagnosis,
         penyakitId,
         keterangan,
-        userId: session.user.id,
+        userId: session?.user?.id ?? null,
         diagnosisGejala: {
           create: diagnosisGejalaCreate,
         },
@@ -195,9 +200,14 @@ export async function submitDiagnosis(formData: FormData) {
   }
 
   revalidatePath(diagnosisPath);
-  revalidatePath(rekamMedisPath);
-  revalidatePath("/dashboard/riwayat");
+  revalidatePath("/dashboard/riwayat-diagnosis");
   revalidatePath("/dashboard");
 
   redirect(`${diagnosisPath}?success=${encodeURIComponent("Diagnosis berhasil diproses dan disimpan.")}&diagnosisId=${savedDiagnosis.id}`);
+}
+
+export async function deleteDiagnosis(id: string) {
+  await prisma.diagnosisBalita.delete({ where: { id } });
+  revalidatePath("/dashboard/riwayat-diagnosis");
+  revalidatePath("/dashboard");
 }

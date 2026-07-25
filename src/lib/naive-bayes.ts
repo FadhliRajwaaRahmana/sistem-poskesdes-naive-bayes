@@ -1,7 +1,5 @@
 import { prisma } from "@/lib/prisma";
 
-// ────────────────────────────── Types ──────────────────────────────
-
 export type RankedDiagnosis = {
   penyakitId: string;
   kodePenyakit: string;
@@ -11,23 +9,7 @@ export type RankedDiagnosis = {
   prior: number;
   score: number;
   posterior: number;
-};
-
-export type DiagnosisStep = {
-  kodeGejala: string;
-  namaGejala: string;
-  likelihood: number;
-};
-
-export type DiagnosisBreakdown = {
-  penyakitId: string;
-  kodePenyakit: string;
-  namaPenyakit: string;
-  prior: number;
-  steps: DiagnosisStep[];
-  likelihoodProduct: number;
-  score: number;
-  posterior: number;
+  peringkat: number;
 };
 
 export type DiagnosisResult = {
@@ -39,89 +21,39 @@ export type DiagnosisResult = {
   topResult: RankedDiagnosis | null;
 };
 
-export type DiagnosisComputation = DiagnosisResult & {
-  totalScore: number;
-  breakdown: DiagnosisBreakdown[];
-};
+// Laplacian smoothing parameters
+const M = 20; // total gejala
+const P_PRIOR = 1 / 5; // 1/jumlah penyakit = 0.2
 
-export type LikelihoodCell = {
-  kodeGejala: string;
-  namaGejala: string;
-  value: number;
-};
-
-export type LikelihoodRow = {
-  kodePenyakit: string;
-  namaPenyakit: string;
-  cells: LikelihoodCell[];
-};
-
-export type PriorRow = {
-  kodePenyakit: string;
-  namaPenyakit: string;
-  prior: number;
-};
-
-export type NaiveBayesOverview = {
-  totalPenyakit: number;
-  totalGejala: number;
-  gejalaList: { id: string; kode: string; nama: string }[];
-  priorTable: PriorRow[];
-  likelihoodMatrix: LikelihoodRow[];
-};
-
-export type NaiveBayesPageData = {
-  overview: NaiveBayesOverview;
-  simulation: DiagnosisComputation | null;
-};
-
-// ────────────────────────────── Helpers ──────────────────────────────
-
-function roundScore(value: number, decimals = 6): number {
-  const factor = 10 ** decimals;
-  return Math.round(value * factor) / factor;
+function laplacianP(nc: number): number {
+  // P(Ai|Vj) = (nc + m*p) / (n + m) = (nc + 20*0.2) / (1 + 20) = (nc + 4) / 21
+  return (nc + M * P_PRIOR) / (1 + M);
 }
 
-type NaiveBayesContext = {
-  penyakitList: {
-    id: string;
-    kode: string;
-    nama: string;
-    deskripsi: string | null;
-    saranPenanganan: string | null;
-    penyakitGejala: { gejalaId: string; likelihood: number }[];
-  }[];
-  gejalaList: { id: string; kode: string; nama: string }[];
-  totalPenyakit: number;
-};
-
-async function loadNaiveBayesContext(): Promise<NaiveBayesContext> {
-  const [penyakitList, gejalaList] = await Promise.all([
-    prisma.penyakit.findMany({
-      orderBy: { kode: "asc" },
-      include: {
-        penyakitGejala: {
-          select: { gejalaId: true, likelihood: true },
-        },
-      },
-    }),
-    prisma.gejala.findMany({ orderBy: { kode: "asc" } }),
-  ]);
-
-  return {
-    penyakitList,
-    gejalaList,
-    totalPenyakit: penyakitList.length,
-  };
-}
-
-// ────────────────────────────── Core ──────────────────────────────
-
-function buildDiagnosisComputation(
-  ctx: NaiveBayesContext,
+export async function calculateDiagnosis(
   selectedGejalaIds: string[],
-): DiagnosisComputation {
-  if (selectedGejalaIds.length === 0 || ctx.totalPenyakit === 0) {
+): Promise<DiagnosisResult> {
+  if (selectedGejalaIds.length === 0) {
+    return {
+      status: "gizi_baik",
+      resultText: "Gizi Baik",
+      deskripsi: "Semua pengukuran dalam batas normal, tidak ada gejala klinis.",
+      saranPenanganan: "",
+      ranked: [],
+      topResult: null,
+    };
+  }
+
+  const penyakitList = await prisma.penyakit.findMany({
+    orderBy: { kode: "asc" },
+    include: {
+      penyakitGejala: {
+        select: { gejalaId: true, likelihood: true },
+      },
+    },
+  });
+
+  if (penyakitList.length === 0) {
     return {
       status: "unknown",
       resultText: "Tidak dapat menentukan diagnosis.",
@@ -129,144 +61,54 @@ function buildDiagnosisComputation(
       saranPenanganan: "",
       ranked: [],
       topResult: null,
-      totalScore: 0,
-      breakdown: [],
     };
   }
 
-  const gejalaMap = new Map(ctx.gejalaList.map((g) => [g.id, g]));
-  const prior = roundScore(1 / ctx.totalPenyakit);
+  const totalPenyakit = penyakitList.length;
+  const prior = 1 / totalPenyakit;
 
-  const breakdown: DiagnosisBreakdown[] = ctx.penyakitList.map((penyakit) => {
-    const likelihoodMap = new Map(
+  const ranked: RankedDiagnosis[] = penyakitList.map((penyakit) => {
+    const ruleMap = new Map(
       penyakit.penyakitGejala.map((pg) => [pg.gejalaId, pg.likelihood]),
     );
 
-    const steps: DiagnosisStep[] = selectedGejalaIds.map((gejalaId) => {
-      const gejala = gejalaMap.get(gejalaId);
-      // Epsilon kecil agar zero-probability tidak mematikan seluruh score penyakit
-      const likelihood = likelihoodMap.get(gejalaId) ?? 0.001;
-      return {
-        kodeGejala: gejala?.kode ?? "?",
-        namaGejala: gejala?.nama ?? "Tidak diketahui",
-        likelihood: roundScore(likelihood),
-      };
-    });
-
-    const likelihoodProduct = roundScore(
-      steps.reduce((acc, step) => acc * step.likelihood, 1),
-    );
-    const score = roundScore(prior * likelihoodProduct);
+    let score = prior;
+    for (const gejalaId of selectedGejalaIds) {
+      const nc = ruleMap.get(gejalaId) ?? 0;
+      score *= laplacianP(nc);
+    }
 
     return {
       penyakitId: penyakit.id,
       kodePenyakit: penyakit.kode,
       namaPenyakit: penyakit.nama,
+      deskripsi: penyakit.deskripsi ?? "",
+      saranPenanganan: penyakit.saranPenanganan ?? "",
       prior,
-      steps,
-      likelihoodProduct,
       score,
       posterior: 0,
+      peringkat: 0,
     };
   });
 
-  const totalScore = roundScore(breakdown.reduce((sum, b) => sum + b.score, 0));
-
-  for (const b of breakdown) {
-    b.posterior = totalScore > 0 ? roundScore((b.score / totalScore) * 100) : 0;
+  const totalScore = ranked.reduce((sum, r) => sum + r.score, 0);
+  for (const r of ranked) {
+    r.posterior = totalScore > 0 ? (r.score / totalScore) * 100 : 0;
   }
 
-  breakdown.sort((a, b) => b.score - a.score);
-
-  const ranked: RankedDiagnosis[] = breakdown.map((b) => {
-    const penyakit = ctx.penyakitList.find((p) => p.id === b.penyakitId)!;
-    return {
-      penyakitId: b.penyakitId,
-      kodePenyakit: b.kodePenyakit,
-      namaPenyakit: b.namaPenyakit,
-      deskripsi: penyakit.deskripsi ?? "",
-      saranPenanganan: penyakit.saranPenanganan ?? "",
-      prior: b.prior,
-      score: b.score,
-      posterior: b.posterior,
-    };
+  ranked.sort((a, b) => b.score - a.score);
+  ranked.forEach((r, i) => {
+    r.peringkat = i + 1;
   });
 
   const topResult = ranked[0] ?? null;
-  const hasResult = topResult !== null && topResult.posterior > 0;
 
   return {
-    status: hasResult ? "known" : "unknown",
-    resultText: hasResult ? topResult.namaPenyakit : "Tidak dapat menentukan diagnosis.",
-    deskripsi: hasResult ? topResult.deskripsi : "",
-    saranPenanganan: hasResult ? topResult.saranPenanganan : "",
+    status: topResult ? "known" : "unknown",
+    resultText: topResult?.namaPenyakit ?? "Tidak dapat menentukan diagnosis.",
+    deskripsi: topResult?.deskripsi ?? "",
+    saranPenanganan: topResult?.saranPenanganan ?? "",
     ranked,
     topResult,
-    totalScore,
-    breakdown,
   };
-}
-
-function buildOverview(ctx: NaiveBayesContext): NaiveBayesOverview {
-  const prior = ctx.totalPenyakit > 0 ? roundScore(1 / ctx.totalPenyakit) : 0;
-
-  const priorTable: PriorRow[] = ctx.penyakitList.map((p) => ({
-    kodePenyakit: p.kode,
-    namaPenyakit: p.nama,
-    prior,
-  }));
-
-  const likelihoodMatrix: LikelihoodRow[] = ctx.penyakitList.map((penyakit) => {
-    const likelihoodMap = new Map(
-      penyakit.penyakitGejala.map((pg) => [pg.gejalaId, pg.likelihood]),
-    );
-
-    const cells: LikelihoodCell[] = ctx.gejalaList.map((gejala) => ({
-      kodeGejala: gejala.kode,
-      namaGejala: gejala.nama,
-      value: likelihoodMap.get(gejala.id) ?? 0,
-    }));
-
-    return {
-      kodePenyakit: penyakit.kode,
-      namaPenyakit: penyakit.nama,
-      cells,
-    };
-  });
-
-  return {
-    totalPenyakit: ctx.totalPenyakit,
-    totalGejala: ctx.gejalaList.length,
-    gejalaList: ctx.gejalaList.map((g) => ({ id: g.id, kode: g.kode, nama: g.nama })),
-    priorTable,
-    likelihoodMatrix,
-  };
-}
-
-// ────────────────────────────── Public API ──────────────────────────────
-
-export async function getDiagnosisComputation(
-  gejalaIds: string[],
-): Promise<DiagnosisComputation> {
-  const ctx = await loadNaiveBayesContext();
-  return buildDiagnosisComputation(ctx, gejalaIds);
-}
-
-export async function calculateDiagnosis(
-  gejalaIds: string[],
-): Promise<DiagnosisResult> {
-  const computation = await getDiagnosisComputation(gejalaIds);
-  const { totalScore: _, breakdown: __, ...result } = computation;
-  return result;
-}
-
-export async function getNaiveBayesPageData(
-  gejalaIds: string[],
-): Promise<NaiveBayesPageData> {
-  const ctx = await loadNaiveBayesContext();
-  const overview = buildOverview(ctx);
-  const simulation =
-    gejalaIds.length > 0 ? buildDiagnosisComputation(ctx, gejalaIds) : null;
-
-  return { overview, simulation };
 }

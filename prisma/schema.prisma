@@ -140,6 +140,7 @@ model DiagnosisBalita {
   jenisKelamin    JenisKelamin
   namaIbu         String
   dusun           String
+  tanggalLahir    DateTime?
   umurBulan       Int
   beratBadan      Float
   tinggiBadan     Float
@@ -147,10 +148,10 @@ model DiagnosisBalita {
   hasilDiagnosis  String
   penyakitId      String?
   keterangan      String?
-  userId          String
+  userId          String?
   createdAt       DateTime            @default(now())
   penyakit        Penyakit?           @relation(fields: [penyakitId], references: [id], onDelete: SetNull)
-  user            User                @relation(fields: [userId], references: [id], onDelete: Restrict)
+  user            User?               @relation(fields: [userId], references: [id], onDelete: SetNull)
   diagnosisGejala DiagnosisGejala[]
   diagnosisRanking DiagnosisRanking[]
 

@@ -4,15 +4,15 @@ const prisma = new PrismaClient();
 
 const penyakitSeed = [
   {
-    kode: "C1",
+    kode: "P01",
     nama: "Marasmus",
     deskripsi:
       "Kekurangan asupan energi dan kalori kronis, anak tampak sangat kurus, wajah keriput, dan kulit tampak tua.",
     saranPenanganan:
-      "Segera rujuk ke Rumah Sakit, pantau gula darah, berikan asupan kalori Formula F75, pemberian suplemen A dan Zink sesuai pengawasan medis.",
+      "Pantau gula darah, berikan asupan kalori Formula F75, pemberian suplemen A dan Zink sesuai pengawasan medis.",
   },
   {
-    kode: "C2",
+    kode: "P02",
     nama: "Kwashiorkor",
     deskripsi:
       "Kekurangan asupan protein, tubuh membengkak (edema), rambut kemerahan/jagung, dan perut buncit.",
@@ -20,23 +20,23 @@ const penyakitSeed = [
       "Intervensi protein intensif, berikan makanan tinggi protein hewani dan obati infeksi penyerta. Pemberian suplemen A dan Zink sesuai pengawasan medis.",
   },
   {
-    kode: "C3",
+    kode: "P03",
     nama: "Marasmik-Kwashiorkor",
     deskripsi:
       "Gabungan kekurangan kalori dan protein ditandai badan kurus serta pembengkakan pada kaki/tangan.",
     saranPenanganan:
-      "Penanganan Darurat/Rawat Inap, stabilisasi tanda vital dan pemberian nutrisi di faskes.",
+      "Pemeriksaan lebih lanjut di fasilitas pelayanan kesehatan untuk mendapatkan penanganan sesuai kondisi klinis, seperti stabilisasi kondisi umum, terapi nutrisi bertahap, dan pemantauan komplikasi oleh tenaga kesehatan.",
   },
   {
-    kode: "C4",
+    kode: "P04",
     nama: "Gizi Kurang",
     deskripsi:
       "Pola makan tidak teratur, berat badan di bawah standar usia (garis kuning KMS), anak tampak lemas.",
     saranPenanganan:
-      "Pemberian makanan tambahan dan edukasi gizi seimbang bagi orang tua, vitamin dan pemantauan berat badan rutin di Posyandu.",
+      "Pemberian makanan tambahan dan edukasi gizi seimbang bagi orang tua, vitamin dan pemantauan berat badan.",
   },
   {
-    kode: "C5",
+    kode: "P05",
     nama: "Stunting",
     deskripsi:
       "Kekurangan gizi kronis dan infeksi berulang pada 1000 HPK, tinggi badan anak di bawah standar usianya.",
@@ -50,7 +50,7 @@ const gejalaSeed = [
   { kode: "G02", nama: "Wajah tampak seperti orang tua" },
   { kode: "G03", nama: "Tampak sangat kurus (tulang membungkus kulit)" },
   { kode: "G04", nama: "Edema (bengkak) pada kedua punggung kaki" },
-  { kode: "G05", nama: "Perut tampak buncit atau cekung" },
+  { kode: "G05", nama: "Perut tampak buncit" },
   { kode: "G06", nama: "Rambut kusam, tipis, dan mudah dicabut" },
   { kode: "G07", nama: "Perubahan warna rambut (kemerahan seperti jagung)" },
   { kode: "G08", nama: "Kulit tampak keriput (Baggy Pants pada bokong)" },
@@ -68,31 +68,31 @@ const gejalaSeed = [
   { kode: "G20", nama: "Riwayat berat badan lahir rendah (BBLR)" },
 ];
 
-// likelihood[gejalaKode][penyakitKode] — dari tabel pakar
-const likelihoodTable: Record<string, Record<string, number>> = {
-  G01: { C1: 0.9, C2: 0.5, C3: 0.8, C4: 0.1, C5: 0.2 },
-  G02: { C1: 1.0, C2: 0.1, C3: 0.9, C4: 0.0, C5: 0.0 },
-  G03: { C1: 1.0, C2: 0.2, C3: 0.9, C4: 0.4, C5: 0.0 },
-  G04: { C1: 0.0, C2: 1.0, C3: 1.0, C4: 0.0, C5: 0.0 },
-  G05: { C1: 0.8, C2: 0.9, C3: 0.9, C4: 0.2, C5: 0.0 },
-  G06: { C1: 0.6, C2: 0.9, C3: 0.9, C4: 0.3, C5: 0.1 },
-  G07: { C1: 0.3, C2: 1.0, C3: 0.9, C4: 0.1, C5: 0.1 },
-  G08: { C1: 1.0, C2: 0.1, C3: 0.9, C4: 0.2, C5: 0.0 },
-  G09: { C1: 0.0, C2: 0.8, C3: 0.7, C4: 0.0, C5: 0.0 },
-  G10: { C1: 0.9, C2: 0.8, C3: 1.0, C4: 0.2, C5: 0.1 },
-  G11: { C1: 0.9, C2: 0.7, C3: 0.9, C4: 0.5, C5: 0.2 },
-  G12: { C1: 0.9, C2: 0.6, C3: 0.9, C4: 0.6, C5: 0.2 },
-  G13: { C1: 0.7, C2: 0.5, C3: 0.7, C4: 0.4, C5: 1.0 },
-  G14: { C1: 0.8, C2: 0.8, C3: 0.9, C4: 0.4, C5: 0.3 },
-  G15: { C1: 1.0, C2: 0.5, C3: 0.9, C4: 0.3, C5: 0.0 },
-  G16: { C1: 1.0, C2: 0.6, C3: 1.0, C4: 0.3, C5: 0.1 },
-  G17: { C1: 0.9, C2: 0.7, C3: 0.9, C4: 0.2, C5: 0.1 },
-  G18: { C1: 0.0, C2: 0.9, C3: 0.8, C4: 0.0, C5: 0.0 },
-  G19: { C1: 0.7, C2: 0.7, C3: 0.7, C4: 0.5, C5: 0.6 },
-  G20: { C1: 0.6, C2: 0.6, C3: 0.6, C4: 0.5, C5: 0.8 },
+// Rule table biner: 1 = gejala terdapat pada penyakit, 0 = tidak
+// ruleTable[gejalaKode][penyakitKode]
+const ruleTable: Record<string, Record<string, number>> = {
+  G01: { P01: 1, P02: 1, P03: 1, P04: 1, P05: 0 },
+  G02: { P01: 1, P02: 0, P03: 1, P04: 0, P05: 0 },
+  G03: { P01: 1, P02: 0, P03: 1, P04: 0, P05: 0 },
+  G04: { P01: 0, P02: 1, P03: 1, P04: 0, P05: 0 },
+  G05: { P01: 1, P02: 1, P03: 1, P04: 0, P05: 0 },
+  G06: { P01: 0, P02: 1, P03: 1, P04: 0, P05: 0 },
+  G07: { P01: 0, P02: 1, P03: 1, P04: 0, P05: 0 },
+  G08: { P01: 1, P02: 0, P03: 1, P04: 0, P05: 0 },
+  G09: { P01: 0, P02: 1, P03: 1, P04: 0, P05: 0 },
+  G10: { P01: 1, P02: 1, P03: 1, P04: 0, P05: 0 },
+  G11: { P01: 1, P02: 1, P03: 1, P04: 1, P05: 0 },
+  G12: { P01: 1, P02: 1, P03: 1, P04: 1, P05: 0 },
+  G13: { P01: 0, P02: 0, P03: 1, P04: 0, P05: 1 },
+  G14: { P01: 1, P02: 1, P03: 1, P04: 1, P05: 1 },
+  G15: { P01: 1, P02: 0, P03: 1, P04: 0, P05: 0 },
+  G16: { P01: 1, P02: 0, P03: 1, P04: 0, P05: 0 },
+  G17: { P01: 1, P02: 1, P03: 1, P04: 0, P05: 0 },
+  G18: { P01: 0, P02: 1, P03: 1, P04: 0, P05: 0 },
+  G19: { P01: 1, P02: 1, P03: 1, P04: 1, P05: 1 },
+  G20: { P01: 1, P02: 1, P03: 1, P04: 1, P05: 1 },
 };
 
-// Standar pertumbuhan WHO (min-max normal per umur & jenis kelamin)
 const standarPertumbuhanSeed: {
   umurBulan: number;
   jenisKelamin: JenisKelamin;
@@ -101,7 +101,6 @@ const standarPertumbuhanSeed: {
   tbMin: number;
   tbMax: number;
 }[] = [
-  // Laki-laki
   { umurBulan: 0, jenisKelamin: "LAKI_LAKI", bbMin: 2.5, bbMax: 3.9, tbMin: 48.0, tbMax: 51.8 },
   { umurBulan: 3, jenisKelamin: "LAKI_LAKI", bbMin: 5.7, bbMax: 7.2, tbMin: 59.9, tbMax: 63.9 },
   { umurBulan: 6, jenisKelamin: "LAKI_LAKI", bbMin: 7.1, bbMax: 8.8, tbMin: 65.9, tbMax: 70.3 },
@@ -112,7 +111,6 @@ const standarPertumbuhanSeed: {
   { umurBulan: 36, jenisKelamin: "LAKI_LAKI", bbMin: 12.7, bbMax: 16.2, tbMin: 92.4, tbMax: 99.1 },
   { umurBulan: 48, jenisKelamin: "LAKI_LAKI", bbMin: 14.3, bbMax: 18.5, tbMin: 99.1, tbMax: 106.7 },
   { umurBulan: 60, jenisKelamin: "LAKI_LAKI", bbMin: 16.0, bbMax: 21.0, tbMin: 105.3, tbMax: 113.9 },
-  // Perempuan
   { umurBulan: 0, jenisKelamin: "PEREMPUAN", bbMin: 2.4, bbMax: 3.7, tbMin: 47.3, tbMax: 51.0 },
   { umurBulan: 3, jenisKelamin: "PEREMPUAN", bbMin: 5.2, bbMax: 6.6, tbMin: 58.2, tbMax: 62.1 },
   { umurBulan: 6, jenisKelamin: "PEREMPUAN", bbMin: 6.5, bbMax: 8.2, tbMin: 64.1, tbMax: 68.5 },
@@ -156,19 +154,19 @@ async function main() {
     const penyakitList = await tx.penyakit.findMany();
     const penyakitMap = new Map(penyakitList.map((p) => [p.kode, p.id]));
 
-    // 4. Upsert likelihood values
-    for (const [gejalaKode, penyakitValues] of Object.entries(likelihoodTable)) {
+    // 4. Upsert rule values (binary 1/0)
+    for (const [gejalaKode, penyakitValues] of Object.entries(ruleTable)) {
       const gejalaId = gejalaMap.get(gejalaKode);
       if (!gejalaId) throw new Error(`Gejala tidak ditemukan: ${gejalaKode}`);
 
-      for (const [penyakitKode, likelihood] of Object.entries(penyakitValues)) {
+      for (const [penyakitKode, ruleValue] of Object.entries(penyakitValues)) {
         const penyakitId = penyakitMap.get(penyakitKode);
         if (!penyakitId) throw new Error(`Penyakit tidak ditemukan: ${penyakitKode}`);
 
         await tx.penyakitGejala.upsert({
           where: { penyakitId_gejalaId: { penyakitId, gejalaId } },
-          update: { likelihood },
-          create: { penyakitId, gejalaId, likelihood },
+          update: { likelihood: ruleValue },
+          create: { penyakitId, gejalaId, likelihood: ruleValue },
         });
       }
     }
@@ -193,7 +191,7 @@ async function main() {
     }
   });
 
-  console.log("Seed berhasil: 5 penyakit, 20 gejala, 100 likelihood, 20 standar WHO.");
+  console.log("Seed berhasil: 5 penyakit, 20 gejala, 100 rule, 20 standar WHO.");
 }
 
 main()

@@ -12,6 +12,7 @@ import {
   Stethoscope,
   AlertTriangle,
   Info,
+  CalendarDays,
 } from "lucide-react";
 
 type Gejala = { id: string; kode: string; nama: string };
@@ -23,11 +24,28 @@ type DiagnosisFormProps = {
 const AUTO_KODES = new Set(["G01", "G13", "G16"]);
 
 export function DiagnosisForm({ gejalaList }: DiagnosisFormProps) {
+  const [tanggalLahir, setTanggalLahir] = useState("");
   const [umurBulan, setUmurBulan] = useState<number | "">("");
   const [jenisKelamin, setJenisKelamin] = useState<"LAKI_LAKI" | "PEREMPUAN" | "">("");
   const [beratBadan, setBeratBadan] = useState<number | "">("");
   const [tinggiBadan, setTinggiBadan] = useState<number | "">("");
   const [lila, setLila] = useState<number | "">("");
+
+  const handleTanggalLahirChange = useCallback((value: string) => {
+    setTanggalLahir(value);
+    if (value) {
+      const birthDate = new Date(value);
+      const now = new Date();
+      if (!Number.isNaN(birthDate.getTime())) {
+        const months =
+          (now.getFullYear() - birthDate.getFullYear()) * 12 +
+          (now.getMonth() - birthDate.getMonth());
+        const adjustedMonths = now.getDate() < birthDate.getDate() ? months - 1 : months;
+        const clampedMonths = Math.max(0, Math.min(60, adjustedMonths));
+        setUmurBulan(clampedMonths);
+      }
+    }
+  }, []);
 
   const autoResult: AutoSymptomResult | null = useMemo(() => {
     if (umurBulan === "" || !jenisKelamin || beratBadan === "" || tinggiBadan === "") {
@@ -174,6 +192,19 @@ export function DiagnosisForm({ gejalaList }: DiagnosisFormProps) {
               placeholder="Contoh: Sei Jambu"
               className="input-field"
               required
+            />
+          </div>
+          <div className="space-y-2.5">
+            <label className="text-sm font-bold text-slate-700 ml-1 flex items-center gap-2">
+              <CalendarDays className="size-4 text-primary" />
+              Tanggal Lahir
+            </label>
+            <input
+              type="date"
+              name="tanggalLahir"
+              value={tanggalLahir}
+              onChange={(e) => handleTanggalLahirChange(e.target.value)}
+              className="input-field"
             />
           </div>
         </div>

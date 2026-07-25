@@ -10,7 +10,7 @@ import { requireAdminSession } from "@/lib/session";
 
 const gejalaPath = "/dashboard/gejala";
 const penyakitPath = "/dashboard/penyakit";
-const diagnosisPath = "/dashboard/diagnosis";
+const diagnosisPath = "/diagnosis";
 
 const gejalaSchema = z.object({
   kode: z.string().trim().min(1, "Kode gejala wajib diisi.").max(10, "Kode gejala maksimal 10 karakter."),

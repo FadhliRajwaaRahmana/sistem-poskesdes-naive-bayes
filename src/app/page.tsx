@@ -1,9 +1,13 @@
 import { redirect } from "next/navigation";
-import { hasAdminRole } from "@/lib/session-guards";
 import { getSession } from "@/lib/session";
+import { hasAdminRole } from "@/lib/session-guards";
 
 export default async function HomePage() {
   const session = await getSession();
 
-  redirect(session?.user && hasAdminRole(session.user.role) ? "/dashboard" : "/login");
+  if (session?.user && hasAdminRole(session.user.role)) {
+    redirect("/dashboard");
+  }
+
+  redirect("/diagnosis");
 }

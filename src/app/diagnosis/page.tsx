@@ -1,19 +1,16 @@
 import { DiagnosisForm } from "./diagnosis-form";
 import { prisma } from "@/lib/prisma";
-import { getDiagnosisComputation } from "@/lib/naive-bayes";
-import { requireSession } from "@/lib/session";
 import {
   Stethoscope,
   CheckCircle2,
   Printer,
-  Award,
   ShieldAlert,
   HeartPulse,
-  Calculator,
-  CalendarDays,
   BookOpen,
   Lightbulb,
+  Award,
 } from "lucide-react";
+import Script from "next/script";
 
 type PageSearchParams = Record<string, string | string[] | undefined>;
 
@@ -25,11 +22,11 @@ function getSearchValue(value: string | string[] | undefined) {
   return typeof value === "string" ? value : undefined;
 }
 
-export default async function DiagnosisPage({ searchParams }: DiagnosisPageProps) {
-  await requireSession();
+export default async function PublicDiagnosisPage({ searchParams }: DiagnosisPageProps) {
   const params = searchParams ? await searchParams : {};
   const gejalaList = await prisma.gejala.findMany({ orderBy: { kode: "asc" } });
   const diagnosisId = getSearchValue(params.diagnosisId);
+  const isPrint = getSearchValue(params.print) === "1";
 
   const savedDiagnosis = diagnosisId
     ? await prisma.diagnosisBalita.findUnique({
@@ -40,18 +37,70 @@ export default async function DiagnosisPage({ searchParams }: DiagnosisPageProps
             include: { gejala: true },
             orderBy: { gejala: { kode: "asc" } },
           },
-          diagnosisRanking: {
-            orderBy: { peringkat: "asc" },
-          },
         },
       })
     : null;
 
-  const computation = savedDiagnosis && savedDiagnosis.diagnosisGejala.length > 0
-    ? await getDiagnosisComputation(savedDiagnosis.diagnosisGejala.map((dg) => dg.gejalaId))
-    : null;
-
   const isGiziBaik = savedDiagnosis?.hasilDiagnosis === "Gizi Baik";
+
+  const dateFormatter = new Intl.DateTimeFormat("id-ID", {
+    dateStyle: "long",
+  });
+
+  if (isPrint && savedDiagnosis) {
+    return (
+      <section className="space-y-6 bg-white text-black print:p-0 font-sans">
+        <Script id="print-trigger" strategy="afterInteractive">
+          {`window.addEventListener("load",function(){setTimeout(function(){window.print()},300)});`}
+        </Script>
+        <div className="border-b-2 border-slate-900 pb-5">
+          <h1 className="text-3xl font-black tracking-tight">Laporan Hasil Diagnosis POSYANDU</h1>
+          <p className="mt-2 text-sm font-bold text-slate-500">
+            Tanggal Cetak: {dateFormatter.format(new Date())}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4 text-sm">
+          <div><p className="font-black text-slate-500 text-xs uppercase mb-1">Nama Balita</p><p className="font-bold">{savedDiagnosis.namaBalita}</p></div>
+          <div><p className="font-black text-slate-500 text-xs uppercase mb-1">NIK</p><p className="font-bold">{savedDiagnosis.nik}</p></div>
+          <div><p className="font-black text-slate-500 text-xs uppercase mb-1">Jenis Kelamin</p><p className="font-bold">{savedDiagnosis.jenisKelamin === "LAKI_LAKI" ? "Laki-laki" : "Perempuan"}</p></div>
+          <div><p className="font-black text-slate-500 text-xs uppercase mb-1">Nama Ibu</p><p className="font-bold">{savedDiagnosis.namaIbu}</p></div>
+          <div><p className="font-black text-slate-500 text-xs uppercase mb-1">Dusun</p><p className="font-bold">{savedDiagnosis.dusun}</p></div>
+          <div><p className="font-black text-slate-500 text-xs uppercase mb-1">Umur</p><p className="font-bold">{savedDiagnosis.umurBulan} bulan</p></div>
+          <div><p className="font-black text-slate-500 text-xs uppercase mb-1">BB / TB</p><p className="font-bold">{savedDiagnosis.beratBadan} kg / {savedDiagnosis.tinggiBadan} cm</p></div>
+          {savedDiagnosis.lila && <div><p className="font-black text-slate-500 text-xs uppercase mb-1">LiLA</p><p className="font-bold">{savedDiagnosis.lila} cm</p></div>}
+          {savedDiagnosis.tanggalLahir && <div><p className="font-black text-slate-500 text-xs uppercase mb-1">Tanggal Lahir</p><p className="font-bold">{dateFormatter.format(savedDiagnosis.tanggalLahir)}</p></div>}
+          <div><p className="font-black text-slate-500 text-xs uppercase mb-1">Tanggal Periksa</p><p className="font-bold">{dateFormatter.format(savedDiagnosis.tanggal)}</p></div>
+          <div><p className="font-black text-primary text-xs uppercase mb-1">Hasil Diagnosis</p><p className="font-black text-lg">{savedDiagnosis.hasilDiagnosis}</p></div>
+        </div>
+
+        {savedDiagnosis.penyakit?.deskripsi && (
+          <div className="border border-slate-200 rounded-lg p-4">
+            <p className="font-black text-slate-500 text-xs uppercase mb-1">Deskripsi</p>
+            <p className="font-semibold text-sm">{savedDiagnosis.penyakit.deskripsi}</p>
+          </div>
+        )}
+
+        {savedDiagnosis.keterangan && (
+          <div className="border border-slate-200 rounded-lg p-4">
+            <p className="font-black text-slate-500 text-xs uppercase mb-1">Saran Penanganan</p>
+            <p className="font-semibold text-sm">{savedDiagnosis.keterangan}</p>
+          </div>
+        )}
+
+        <div>
+          <p className="font-black text-slate-500 text-xs uppercase mb-2">Gejala Klinis</p>
+          <div className="flex flex-wrap gap-1.5">
+            {savedDiagnosis.diagnosisGejala.map((g) => (
+              <span key={g.id} className="rounded border border-slate-300 bg-slate-50 px-2 py-1 text-xs font-bold">
+                {g.gejala.kode} - {g.gejala.nama}
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="animate-fade-in space-y-8 pb-12">
@@ -115,7 +164,7 @@ export default async function DiagnosisPage({ searchParams }: DiagnosisPageProps
                       <h4 className="text-2xl font-black text-slate-900">{savedDiagnosis.namaBalita}</h4>
                     </div>
                     <a
-                      href={`/dashboard/rekam-medis?diagnosisId=${savedDiagnosis.id}&print=1`}
+                      href={`/diagnosis?diagnosisId=${savedDiagnosis.id}&print=1`}
                       target="_blank"
                       rel="noreferrer"
                       className="inline-flex h-10 items-center justify-center rounded-xl bg-white border border-slate-200 px-4 text-xs font-bold text-slate-700 shadow-sm transition-all hover:border-primary hover:text-primary hover:bg-slate-50 active:scale-95 shrink-0"
@@ -125,19 +174,10 @@ export default async function DiagnosisPage({ searchParams }: DiagnosisPageProps
                     </a>
                   </div>
 
-                  {/* Detail Info */}
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div className="rounded-lg bg-white border border-slate-100 p-3">
                       <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Tanggal</p>
-                      <p className="font-bold text-slate-800 flex items-center gap-1.5">
-                        <CalendarDays className="size-3.5 text-slate-400" />
-                        {savedDiagnosis.tanggal.toLocaleDateString("id-ID", {
-                          weekday: "long",
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        })}
-                      </p>
+                      <p className="font-bold text-slate-800">{dateFormatter.format(savedDiagnosis.tanggal)}</p>
                     </div>
                     <div className="rounded-lg bg-white border border-slate-100 p-3">
                       <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">NIK</p>
@@ -167,15 +207,15 @@ export default async function DiagnosisPage({ searchParams }: DiagnosisPageProps
                       <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Tinggi Badan</p>
                       <p className="font-bold text-slate-800">{savedDiagnosis.tinggiBadan} cm</p>
                     </div>
-                    {savedDiagnosis.lila !== null && (
+                    {savedDiagnosis.tanggalLahir && (
                       <div className="rounded-lg bg-white border border-slate-100 p-3 col-span-2">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">LiLA</p>
-                        <p className="font-bold text-slate-800">{savedDiagnosis.lila} cm</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Tanggal Lahir</p>
+                        <p className="font-bold text-slate-800">{dateFormatter.format(savedDiagnosis.tanggalLahir)}</p>
                       </div>
                     )}
                   </div>
 
-                  {/* Diagnosis Result */}
+                  {/* Diagnosis Result - NO PERCENTAGE */}
                   <div className="pt-4 border-t border-slate-100">
                     <div className="flex items-center gap-2 text-sm mb-3">
                       {isGiziBaik ? (
@@ -194,11 +234,7 @@ export default async function DiagnosisPage({ searchParams }: DiagnosisPageProps
                             ? "text-emerald-600 bg-emerald-50 border-emerald-100"
                             : "text-rose-600 bg-rose-50 border-rose-100"
                         }`}>
-                          {!isGiziBaik && savedDiagnosis.penyakit ? `[${savedDiagnosis.penyakit.kode}] ` : ""}
                           {savedDiagnosis.hasilDiagnosis}
-                          {!isGiziBaik && savedDiagnosis.diagnosisRanking[0]
-                            ? ` (${savedDiagnosis.diagnosisRanking[0].posterior.toFixed(2)}%)`
-                            : ""}
                         </span>
                       </span>
                     </div>
@@ -256,127 +292,6 @@ export default async function DiagnosisPage({ searchParams }: DiagnosisPageProps
                         {item.gejala.nama}
                       </span>
                     ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Probability Ranking */}
-              {savedDiagnosis.diagnosisRanking.length > 0 && (
-                <div className="space-y-4 pt-4 border-t border-slate-100">
-                  <p className="text-sm font-bold text-slate-800">Ranking Probabilitas</p>
-                  <div className="space-y-3">
-                    {savedDiagnosis.diagnosisRanking.map((item, index) => (
-                      <div
-                        key={item.id}
-                        className="group flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-300 hover:border-primary/50 hover:shadow-md"
-                      >
-                        <div className="flex items-center gap-4">
-                          <span
-                            className={`flex size-10 items-center justify-center rounded-xl text-sm font-black shadow-sm border ${
-                              index === 0
-                                ? "bg-primary border-primary text-white"
-                                : index === 1
-                                ? "bg-slate-100 border-slate-200 text-slate-700"
-                                : index === 2
-                                ? "bg-slate-50 border-slate-200 text-slate-500"
-                                : "bg-white border-slate-100 text-slate-400"
-                            }`}
-                          >
-                            #{index + 1}
-                          </span>
-                          <div className="flex flex-col gap-1">
-                            <span className={`text-sm font-black ${index === 0 ? "text-primary" : "text-slate-800"}`}>
-                              {item.namaPenyakit}
-                            </span>
-                            <span className="text-[10px] font-bold text-slate-500 tracking-wider uppercase">
-                              KODE: {item.kodePenyakit}
-                            </span>
-                          </div>
-                        </div>
-                        <span
-                          className={`rounded-lg px-3 py-1.5 text-sm font-black shadow-sm border ${
-                            index === 0
-                              ? "bg-primary/10 text-primary border-primary/20"
-                              : "bg-slate-50 text-slate-600 border-slate-200"
-                          }`}
-                        >
-                          {item.posterior.toFixed(2)}%
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Step-by-Step NB Calculation */}
-              {computation && computation.breakdown.length > 0 && (
-                <div className="space-y-4 pt-4 border-t border-slate-100">
-                  <div className="flex items-center gap-2">
-                    <Calculator className="size-4 text-violet-600" />
-                    <p className="text-sm font-bold text-slate-800">Detail Perhitungan Naive Bayes</p>
-                  </div>
-
-                  <div className="space-y-4">
-                    {computation.breakdown.map((bd) => (
-                      <div
-                        key={bd.penyakitId}
-                        className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden"
-                      >
-                        <div className="flex items-center justify-between bg-slate-50 border-b border-slate-200 px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-black text-rose-600 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-md">
-                              {bd.kodePenyakit}
-                            </span>
-                            <span className="text-sm font-bold text-slate-800">{bd.namaPenyakit}</span>
-                          </div>
-                          <span className="text-sm font-black text-primary">
-                            {bd.posterior.toFixed(2)}%
-                          </span>
-                        </div>
-
-                        <div className="p-4 space-y-3 text-xs">
-                          <div className="flex items-center justify-between bg-sky-50 border border-sky-100 rounded-lg px-3 py-2">
-                            <span className="font-bold text-sky-700">Prior P({bd.kodePenyakit})</span>
-                            <span className="font-black text-sky-800">{bd.prior}</span>
-                          </div>
-
-                          <div className="space-y-1.5">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Likelihood per Gejala</p>
-                            {bd.steps.map((step) => (
-                              <div
-                                key={step.kodeGejala}
-                                className="flex items-center justify-between rounded-lg border border-slate-100 px-3 py-2"
-                              >
-                                <span className="font-medium text-slate-600">
-                                  P(<span className="font-bold text-primary">{step.kodeGejala}</span> | {bd.kodePenyakit})
-                                </span>
-                                <span className="font-black text-slate-800">{step.likelihood}</span>
-                              </div>
-                            ))}
-                          </div>
-
-                          <div className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
-                            <span className="font-bold text-slate-600">Likelihood Product</span>
-                            <span className="font-black text-slate-800">{bd.likelihoodProduct}</span>
-                          </div>
-
-                          <div className="flex items-center justify-between bg-violet-50 border border-violet-200 rounded-lg px-3 py-2">
-                            <span className="font-bold text-violet-700">Score = Prior × Likelihood</span>
-                            <span className="font-black text-violet-800">{bd.score}</span>
-                          </div>
-
-                          <div className="flex items-center justify-between bg-primary/5 border border-primary/20 rounded-lg px-3 py-2">
-                            <span className="font-bold text-primary">Posterior = Score / Total × 100%</span>
-                            <span className="font-black text-primary">{bd.posterior.toFixed(2)}%</span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-
-                    <div className="flex items-center justify-between bg-slate-900 text-white rounded-xl px-4 py-3">
-                      <span className="text-xs font-bold">Total Score (Σ semua penyakit)</span>
-                      <span className="text-sm font-black">{computation.totalScore}</span>
-                    </div>
                   </div>
                 </div>
               )}
