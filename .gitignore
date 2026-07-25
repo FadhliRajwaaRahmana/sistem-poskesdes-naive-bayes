@@ -40,6 +40,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# panduan instalasi internal (tidak untuk repo publik)
+PANDUAN-INSTALASI-CLIENT.txt
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
