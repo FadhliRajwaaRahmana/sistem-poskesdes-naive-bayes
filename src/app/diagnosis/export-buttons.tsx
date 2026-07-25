@@ -22,7 +22,7 @@ export function ExportButtons({
 
   const handleDownloadPdf = useCallback(async () => {
     setDownloading(true);
-    let cleanupFn: (() => void) | null = null;
+    let iframe: HTMLIFrameElement | null = null;
 
     try {
       const html2canvas = (await import("html2canvas")).default;
@@ -30,35 +30,32 @@ export function ExportButtons({
 
       let targetNode = document.getElementById(resultElementId);
 
-      // If element is not present on current page (e.g. from table row or report),
-      // fetch printUrl HTML in background with cookies/credentials and render in hidden container
+      // If element is not present on current page, render printUrl inside off-screen visible iframe
       if (!targetNode) {
-        const res = await fetch(printUrl, { credentials: "same-origin" });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const htmlText = await res.text();
+        iframe = document.createElement("iframe");
+        iframe.style.position = "fixed";
+        iframe.style.left = "0";
+        iframe.style.top = "0";
+        iframe.style.width = orientation === "landscape" ? "1100px" : "800px";
+        iframe.style.height = "1200px";
+        iframe.style.border = "none";
+        iframe.style.zIndex = "-99999";
+        iframe.style.opacity = "0.01";
+        iframe.style.pointerEvents = "none";
+        iframe.src = printUrl;
 
-        const container = document.createElement("div");
-        container.style.position = "fixed";
-        container.style.left = "-9999px";
-        container.style.top = "-9999px";
-        container.style.width = orientation === "landscape" ? "1100px" : "800px";
-        container.style.backgroundColor = "#ffffff";
-        container.style.zIndex = "-9999";
-        container.innerHTML = htmlText;
+        document.body.appendChild(iframe);
 
-        // Ensure section content inside container is visible
-        const section = container.querySelector("section");
-        if (section) {
-          section.style.minHeight = "auto";
-          section.style.padding = "20px";
-        }
+        await new Promise<void>((resolve) => {
+          if (!iframe) return resolve();
+          iframe.onload = () => {
+            setTimeout(resolve, 600);
+          };
+          setTimeout(resolve, 2500);
+        });
 
-        document.body.appendChild(container);
-        cleanupFn = () => {
-          if (container.parentNode) container.parentNode.removeChild(container);
-        };
-
-        targetNode = (section || container) as HTMLElement;
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+        targetNode = (iframeDoc?.querySelector("section") || iframeDoc?.body) as HTMLElement | null;
       }
 
       if (!targetNode) {
@@ -79,7 +76,10 @@ export function ExportButtons({
         windowWidth: targetNode.scrollWidth || (isLandscape ? 1100 : 800),
       });
 
-      if (cleanupFn) cleanupFn();
+      if (iframe && iframe.parentNode) {
+        iframe.parentNode.removeChild(iframe);
+        iframe = null;
+      }
 
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       let heightLeft = imgHeight;
@@ -99,9 +99,10 @@ export function ExportButtons({
 
       doc.save(`${fileName}.pdf`);
     } catch (err) {
-      if (cleanupFn) cleanupFn();
-      console.error("Gagal mengunduh PDF secara langsung:", err);
-      // Quiet fallback without annoying alert popups
+      if (iframe && iframe.parentNode) {
+        iframe.parentNode.removeChild(iframe);
+      }
+      console.error("Gagal mengunduh PDF:", err);
       window.open(printUrl, "_blank");
     } finally {
       setDownloading(false);
@@ -140,7 +141,6 @@ export function ExportButtons({
 
   return (
     <div className="flex flex-wrap items-center gap-3 my-2">
-      {/* Tombol 1: Cetak Print */}
       <a
         href={printUrl}
         target="_blank"
@@ -151,7 +151,6 @@ export function ExportButtons({
         <span>Cetak Print</span>
       </a>
 
-      {/* Tombol 2: Cetak PDF */}
       <button
         type="button"
         onClick={handleDownloadPdf}
