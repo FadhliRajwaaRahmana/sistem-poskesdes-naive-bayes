@@ -31,6 +31,13 @@ function getSearchValue(value: string | string[] | undefined) {
   return typeof value === "string" ? value : undefined;
 }
 
+function formatNilai(value: number) {
+  if (value >= 0.000001) {
+    return value.toLocaleString("id-ID", { minimumFractionDigits: 6, maximumFractionDigits: 6 });
+  }
+  return value.toLocaleString("id-ID", { maximumSignificantDigits: 3 });
+}
+
 export default async function PublicDiagnosisPage({ searchParams }: DiagnosisPageProps) {
   const params = searchParams ? await searchParams : {};
   const gejalaList = await prisma.gejala.findMany({ orderBy: { kode: "asc" } });
@@ -237,9 +244,7 @@ export default async function PublicDiagnosisPage({ searchParams }: DiagnosisPag
                 <tr className="border-b-2 border-slate-300" style={{ backgroundColor: "#f1f5f9" }}>
                   <th className="p-2 text-left font-black text-[9px] uppercase tracking-wider text-slate-600">No</th>
                   <th className="p-2 text-left font-black text-[9px] uppercase tracking-wider text-slate-600">Penyakit</th>
-                  <th className="p-2 text-right font-black text-[9px] uppercase tracking-wider text-slate-600">Prior</th>
-                  <th className="p-2 text-right font-black text-[9px] uppercase tracking-wider text-slate-600">Likelihood</th>
-                  <th className="p-2 text-right font-black text-[9px] uppercase tracking-wider text-slate-600">Posterior</th>
+                  <th className="p-2 text-right font-black text-[9px] uppercase tracking-wider text-slate-600">Nilai</th>
                 </tr>
               </thead>
               <tbody>
@@ -250,9 +255,7 @@ export default async function PublicDiagnosisPage({ searchParams }: DiagnosisPag
                       <span className="font-black text-[10px] px-1 py-0.5 rounded mr-1" style={{ backgroundColor: "#e0e7ff", color: "#4338ca" }}>{r.kodePenyakit}</span>
                       {r.namaPenyakit}
                     </td>
-                    <td className="p-2 text-right font-mono font-bold text-slate-700">{r.prior.toFixed(4)}</td>
-                    <td className="p-2 text-right font-mono font-bold text-slate-700">{r.score.toFixed(10)}</td>
-                    <td className="p-2 text-right font-black" style={{ color: i === 0 ? "#059669" : "#64748b" }}>{r.posterior.toFixed(2)}%</td>
+                    <td className="p-2 text-right font-mono font-bold" style={{ color: i === 0 ? "#059669" : "#64748b" }}>{formatNilai(r.score)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -534,9 +537,7 @@ export default async function PublicDiagnosisPage({ searchParams }: DiagnosisPag
                           <tr className="border-b border-slate-200">
                             <th className="p-3 text-left">No</th>
                             <th className="p-3 text-left">Penyakit</th>
-                            <th className="p-3 text-right">Prior</th>
-                            <th className="p-3 text-right">Likelihood</th>
-                            <th className="p-3 text-right">Posterior</th>
+                            <th className="p-3 text-right">Nilai</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -547,13 +548,11 @@ export default async function PublicDiagnosisPage({ searchParams }: DiagnosisPag
                                 <span className="font-black text-primary mr-1.5">{r.kodePenyakit}</span>
                                 <span className="font-bold text-slate-800">{r.namaPenyakit}</span>
                               </td>
-                              <td className="p-3 text-right font-mono text-xs font-bold text-slate-600">{r.prior.toFixed(4)}</td>
-                              <td className="p-3 text-right font-mono text-xs font-bold text-slate-600">{r.score.toFixed(10)}</td>
                               <td className="p-3 text-right">
-                                <span className={`inline-block rounded-lg px-2 py-0.5 text-xs font-black ${
-                                  i === 0 ? "bg-emerald-100 text-emerald-700 border border-emerald-200" : "text-slate-500"
+                                <span className={`font-mono text-xs font-black ${
+                                  i === 0 ? "text-emerald-700" : "text-slate-500"
                                 }`}>
-                                  {r.posterior.toFixed(2)}%
+                                  {formatNilai(r.score)}
                                 </span>
                               </td>
                             </tr>
