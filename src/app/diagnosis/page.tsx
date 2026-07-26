@@ -1,5 +1,6 @@
 import { DiagnosisForm } from "./diagnosis-form";
 import { ExportButtons } from "./export-buttons";
+import { PrintOrPdfTrigger } from "./print-trigger";
 import { prisma } from "@/lib/prisma";
 import {
   Stethoscope,
@@ -35,6 +36,7 @@ export default async function PublicDiagnosisPage({ searchParams }: DiagnosisPag
   const gejalaList = await prisma.gejala.findMany({ orderBy: { kode: "asc" } });
   const diagnosisId = getSearchValue(params.diagnosisId);
   const isPrint = getSearchValue(params.print) === "1";
+  const isAutoPdf = getSearchValue(params.autoDownloadPdf) === "1";
   const errorMessage = getSearchValue(params.error);
   const successMessage = getSearchValue(params.success);
 
@@ -51,6 +53,7 @@ export default async function PublicDiagnosisPage({ searchParams }: DiagnosisPag
       })
     : null;
 
+  const pdfFileName = getSearchValue(params.fileName) || `Diagnosis-${savedDiagnosis?.namaBalita?.replace(/\s+/g, "-") || "Balita"}`;
   const isGiziBaik = savedDiagnosis?.hasilDiagnosis === "Gizi Baik";
 
   const dateFormatter = new Intl.DateTimeFormat("id-ID", {
@@ -62,7 +65,7 @@ export default async function PublicDiagnosisPage({ searchParams }: DiagnosisPag
     timeStyle: "short",
   });
 
-  if (isPrint && savedDiagnosis) {
+  if ((isPrint || isAutoPdf) && savedDiagnosis) {
     return (
       <section className="min-h-screen bg-white text-slate-900 font-sans print:p-0 print:m-0 print:h-auto print:min-h-0 print:max-h-full">
         <style>{`
@@ -91,7 +94,7 @@ export default async function PublicDiagnosisPage({ searchParams }: DiagnosisPag
             section { max-width: 800px; margin: 0 auto; padding: 32px 28px; }
           }
         `}</style>
-        <script dangerouslySetInnerHTML={{ __html: `window.addEventListener("load",function(){setTimeout(function(){window.print()},400)});` }} />
+        <PrintOrPdfTrigger mode={isAutoPdf ? "pdf" : "print"} fileName={pdfFileName} />
 
         {/* Header */}
         <div className="border-b-[3px] border-slate-800 pb-3 mb-4">

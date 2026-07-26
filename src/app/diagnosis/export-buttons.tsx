@@ -11,31 +11,6 @@ type ExportButtonsProps = {
   orientation?: "portrait" | "landscape";
 };
 
-async function fetchAndInlineCSS(htmlText: string): Promise<{ section: HTMLElement; css: string }> {
-  const parser = new DOMParser();
-  const parsed = parser.parseFromString(htmlText, "text/html");
-
-  const cssPromises: Promise<string>[] = [];
-  parsed.querySelectorAll('link[rel="stylesheet"]').forEach((link) => {
-    const href = link.getAttribute("href");
-    if (href) {
-      const url = href.startsWith("http") ? href : `${location.origin}${href}`;
-      cssPromises.push(fetch(url).then((r) => r.text()).catch(() => ""));
-    }
-  });
-
-  const fetched = await Promise.all(cssPromises);
-  let css = fetched.join("\n");
-  parsed.querySelectorAll("style").forEach((s) => {
-    css += "\n" + (s.textContent || "");
-  });
-
-  const section = parsed.querySelector("section");
-  if (!section) throw new Error("No printable section found");
-
-  return { section, css };
-}
-
 export function ExportButtons({
   printUrl,
   resultElementId = "diagnosis-result",
@@ -47,41 +22,24 @@ export function ExportButtons({
 
   const handleDownloadPdf = useCallback(async () => {
     setDownloading(true);
-    let tempContainer: HTMLDivElement | null = null;
 
     try {
-      const html2canvas = (await import("html2canvas")).default;
-      const { jsPDF } = await import("jspdf");
-
-      let targetNode = document.getElementById(resultElementId);
-      const isLandscape = orientation === "landscape";
-      const containerWidth = isLandscape ? 1100 : 800;
+      const targetNode = document.getElementById(resultElementId);
 
       if (!targetNode) {
-        const res = await fetch(printUrl, { credentials: "same-origin" });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const htmlText = await res.text();
-        const { section, css } = await fetchAndInlineCSS(htmlText);
-
-        tempContainer = document.createElement("div");
-        tempContainer.style.cssText = `position:fixed;left:0;top:0;width:${containerWidth}px;background:#fff;z-index:-99999;opacity:0.01;pointer-events:none;overflow:visible;`;
-
-        const styleEl = document.createElement("style");
-        styleEl.textContent = css;
-        tempContainer.appendChild(styleEl);
-
-        const clone = document.importNode(section, true) as HTMLElement;
-        clone.querySelectorAll("script").forEach((s) => s.remove());
-        tempContainer.appendChild(clone);
-        document.body.appendChild(tempContainer);
-
-        await document.fonts.ready;
-        await new Promise((r) => setTimeout(r, 600));
-
-        targetNode = clone;
+        const sep = printUrl.includes("?") ? "&" : "?";
+        const params = new URLSearchParams({
+          autoDownloadPdf: "1",
+          fileName,
+          orientation,
+        });
+        window.open(`${printUrl}${sep}${params.toString()}`, "_blank");
+        return;
       }
 
-      if (!targetNode) throw new Error("Target element not found");
+      const html2canvas = (await import("html2canvas")).default;
+      const { jsPDF } = await import("jspdf");
+      const isLandscape = orientation === "landscape";
 
       const canvas = await html2canvas(targetNode, {
         scale: 2,
@@ -90,13 +48,8 @@ export function ExportButtons({
         logging: false,
         scrollX: 0,
         scrollY: 0,
-        windowWidth: targetNode.scrollWidth || containerWidth,
+        windowWidth: targetNode.scrollWidth || (isLandscape ? 1100 : 800),
       });
-
-      if (tempContainer?.parentNode) {
-        tempContainer.parentNode.removeChild(tempContainer);
-        tempContainer = null;
-      }
 
       const imgWidth = isLandscape ? 297 : 210;
       const pageHeight = isLandscape ? 210 : 297;
@@ -118,9 +71,6 @@ export function ExportButtons({
 
       doc.save(`${fileName}.pdf`);
     } catch (err) {
-      if (tempContainer?.parentNode) {
-        tempContainer.parentNode.removeChild(tempContainer);
-      }
       console.error("Gagal mengunduh PDF:", err);
       window.open(printUrl, "_blank");
     } finally {

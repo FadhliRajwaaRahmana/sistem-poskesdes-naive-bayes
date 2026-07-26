@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/session";
 import { DeleteDiagnosisButton } from "./delete-button";
 import { ExportButtons } from "@/app/diagnosis/export-buttons";
+import { PrintOrPdfTrigger } from "@/app/diagnosis/print-trigger";
 import {
   FileText,
   Search,
@@ -63,6 +64,9 @@ export default async function RiwayatDiagnosisPage({ searchParams }: RiwayatDiag
   const filterStatus = sv(params.status);
   const diagnosisId = sv(params.diagnosisId);
   const isPrint = sv(params.print) === "1";
+  const isAutoPdf = sv(params.autoDownloadPdf) === "1";
+  const pdfFileName = sv(params.fileName) || "Riwayat-Diagnosis";
+  const pdfOrientation = sv(params.orientation) || "portrait";
   const requestedPage = pv(params.page);
 
   const isSingle = Boolean(diagnosisId);
@@ -74,7 +78,7 @@ export default async function RiwayatDiagnosisPage({ searchParams }: RiwayatDiag
   });
 
   // ── SINGLE DIAGNOSIS PRINT ──
-  if (isSingle && isPrint) {
+  if (isSingle && (isPrint || isAutoPdf)) {
     const rec = await prisma.diagnosisBalita.findUnique({
       where: { id: diagnosisId },
       include: {
@@ -115,7 +119,7 @@ export default async function RiwayatDiagnosisPage({ searchParams }: RiwayatDiag
             section { max-width: 800px; margin: 0 auto; padding: 32px 28px; }
           }
         `}</style>
-        <script dangerouslySetInnerHTML={{ __html: `window.addEventListener("load",function(){setTimeout(function(){window.print()},400)});` }} />
+        <PrintOrPdfTrigger mode={isAutoPdf ? "pdf" : "print"} fileName={pdfFileName} />
 
         {/* Header */}
         <div className="border-b-[3px] border-slate-800 pb-3 mb-4">
@@ -261,7 +265,7 @@ export default async function RiwayatDiagnosisPage({ searchParams }: RiwayatDiag
   const hasFilters = Boolean(q || filterDusun || filterStatus);
 
   // ── PRINT LIST ──
-  if (isPrint) {
+  if (isPrint || (!isSingle && isAutoPdf)) {
     return (
       <section className="min-h-screen bg-white text-slate-900 font-sans print:p-0">
         <style>{`
@@ -273,7 +277,7 @@ export default async function RiwayatDiagnosisPage({ searchParams }: RiwayatDiag
             section { max-width: 1100px; margin: 0 auto; padding: 32px 28px; }
           }
         `}</style>
-        <script dangerouslySetInnerHTML={{ __html: `window.addEventListener("load",function(){setTimeout(function(){window.print()},400)});` }} />
+        <PrintOrPdfTrigger mode={isAutoPdf ? "pdf" : "print"} fileName={pdfFileName} orientation="landscape" />
 
         {/* Header */}
         <div className="border-b-[3px] border-slate-800 pb-4 mb-6">

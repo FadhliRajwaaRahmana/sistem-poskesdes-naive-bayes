@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/session";
 import { ExportButtons } from "@/app/diagnosis/export-buttons";
+import { PrintOrPdfTrigger } from "@/app/diagnosis/print-trigger";
 import {
   BarChart3,
   Calendar,
@@ -31,6 +32,8 @@ export default async function LaporanPage({ searchParams }: LaporanPageProps) {
   const selectedYear = sv(params.tahun) || String(now.getFullYear());
   const selectedMonth = sv(params.bulan);
   const isPrint = sv(params.print) === "1";
+  const isAutoPdf = sv(params.autoDownloadPdf) === "1";
+  const pdfFileName = sv(params.fileName) || `Laporan-Rekap-${selectedYear}`;
 
   const yearNum = Number.parseInt(selectedYear, 10);
 
@@ -94,7 +97,7 @@ export default async function LaporanPage({ searchParams }: LaporanPageProps) {
   if (selectedMonth) printUrl.set("bulan", selectedMonth);
   printUrl.set("print", "1");
 
-  if (isPrint) {
+  if (isPrint || isAutoPdf) {
     return (
       <section className="min-h-screen bg-white text-slate-900 font-sans print:p-0">
         <style>{`
@@ -106,7 +109,7 @@ export default async function LaporanPage({ searchParams }: LaporanPageProps) {
             section { max-width: 800px; margin: 0 auto; padding: 32px 28px; }
           }
         `}</style>
-        <script dangerouslySetInnerHTML={{ __html: `window.addEventListener("load",function(){setTimeout(function(){window.print()},400)});` }} />
+        <PrintOrPdfTrigger mode={isAutoPdf ? "pdf" : "print"} fileName={pdfFileName} />
 
         {/* Header */}
         <div className="border-b-[3px] border-slate-800 pb-3 mb-5">
