@@ -1,6 +1,6 @@
 import { DiagnosisForm } from "./diagnosis-form";
 import { ExportButtons } from "./export-buttons";
-import { PrintOrPdfTrigger } from "./print-trigger";
+import { PrintTrigger } from "./print-trigger";
 import { prisma } from "@/lib/prisma";
 import {
   Stethoscope,
@@ -36,7 +36,6 @@ export default async function PublicDiagnosisPage({ searchParams }: DiagnosisPag
   const gejalaList = await prisma.gejala.findMany({ orderBy: { kode: "asc" } });
   const diagnosisId = getSearchValue(params.diagnosisId);
   const isPrint = getSearchValue(params.print) === "1";
-  const isAutoPdf = getSearchValue(params.autoDownloadPdf) === "1";
   const errorMessage = getSearchValue(params.error);
   const successMessage = getSearchValue(params.success);
 
@@ -49,11 +48,14 @@ export default async function PublicDiagnosisPage({ searchParams }: DiagnosisPag
             include: { gejala: true },
             orderBy: { gejala: { kode: "asc" } },
           },
+          diagnosisRanking: {
+            orderBy: { peringkat: "asc" },
+          },
         },
       })
     : null;
 
-  const pdfFileName = getSearchValue(params.fileName) || `Diagnosis-${savedDiagnosis?.namaBalita?.replace(/\s+/g, "-") || "Balita"}`;
+  const pdfFileName = `Diagnosis-${savedDiagnosis?.namaBalita?.replace(/\s+/g, "-") || "Balita"}`;
   const isGiziBaik = savedDiagnosis?.hasilDiagnosis === "Gizi Baik";
 
   const dateFormatter = new Intl.DateTimeFormat("id-ID", {
@@ -65,7 +67,7 @@ export default async function PublicDiagnosisPage({ searchParams }: DiagnosisPag
     timeStyle: "short",
   });
 
-  if ((isPrint || isAutoPdf) && savedDiagnosis) {
+  if (isPrint && savedDiagnosis) {
     return (
       <section className="min-h-screen bg-white text-slate-900 font-sans print:p-0 print:m-0 print:h-auto print:min-h-0 print:max-h-full">
         <style>{`
@@ -94,7 +96,7 @@ export default async function PublicDiagnosisPage({ searchParams }: DiagnosisPag
             section { max-width: 800px; margin: 0 auto; padding: 32px 28px; }
           }
         `}</style>
-        <PrintOrPdfTrigger mode={isAutoPdf ? "pdf" : "print"} fileName={pdfFileName} />
+        <PrintTrigger />
 
         {/* Header */}
         <div className="border-b-[3px] border-slate-800 pb-3 mb-4">
@@ -224,6 +226,40 @@ export default async function PublicDiagnosisPage({ searchParams }: DiagnosisPag
           </div>
         )}
 
+        {/* Tabel Perhitungan Naive Bayes */}
+        {savedDiagnosis.diagnosisRanking.length > 0 && (
+          <div className="mb-4">
+            <h2 className="text-[9.5px] font-black uppercase tracking-[0.18em] text-slate-500 mb-2 pb-1 border-b-2 border-slate-100">
+              Perhitungan Naive Bayes
+            </h2>
+            <table className="w-full text-[10.5px] border-collapse">
+              <thead>
+                <tr className="border-b-2 border-slate-300" style={{ backgroundColor: "#f1f5f9" }}>
+                  <th className="p-2 text-left font-black text-[9px] uppercase tracking-wider text-slate-600">No</th>
+                  <th className="p-2 text-left font-black text-[9px] uppercase tracking-wider text-slate-600">Penyakit</th>
+                  <th className="p-2 text-right font-black text-[9px] uppercase tracking-wider text-slate-600">Prior</th>
+                  <th className="p-2 text-right font-black text-[9px] uppercase tracking-wider text-slate-600">Likelihood</th>
+                  <th className="p-2 text-right font-black text-[9px] uppercase tracking-wider text-slate-600">Posterior</th>
+                </tr>
+              </thead>
+              <tbody>
+                {savedDiagnosis.diagnosisRanking.map((r, i) => (
+                  <tr key={r.id} className="border-b border-slate-200" style={{ backgroundColor: i === 0 ? "#f0fdf4" : i % 2 === 1 ? "#f8fafc" : "transparent" }}>
+                    <td className="p-2 font-bold text-slate-500">{r.peringkat}</td>
+                    <td className="p-2 font-bold text-slate-900">
+                      <span className="font-black text-[10px] px-1 py-0.5 rounded mr-1" style={{ backgroundColor: "#e0e7ff", color: "#4338ca" }}>{r.kodePenyakit}</span>
+                      {r.namaPenyakit}
+                    </td>
+                    <td className="p-2 text-right font-mono font-bold text-slate-700">{r.prior.toFixed(4)}</td>
+                    <td className="p-2 text-right font-mono font-bold text-slate-700">{r.score.toFixed(10)}</td>
+                    <td className="p-2 text-right font-black" style={{ color: i === 0 ? "#059669" : "#64748b" }}>{r.posterior.toFixed(2)}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
         {/* Footer */}
         <div className="border-t-[3px] border-slate-800 pt-3 mt-4">
           <div className="flex items-center justify-between text-[9px] text-slate-500 font-bold">
@@ -319,8 +355,6 @@ export default async function PublicDiagnosisPage({ searchParams }: DiagnosisPag
               {/* Export Buttons — Prominent */}
               <ExportButtons
                 printUrl={`/diagnosis?diagnosisId=${savedDiagnosis.id}&print=1`}
-                resultElementId="diagnosis-result"
-                fileName={`Diagnosis-${savedDiagnosis.namaBalita.replace(/\s+/g, "-")}-${new Date().toISOString().slice(0, 10)}`}
               />
 
               {/* Result Content — Capture Target */}
@@ -483,6 +517,49 @@ export default async function PublicDiagnosisPage({ searchParams }: DiagnosisPag
                           {item.gejala.nama}
                         </span>
                       ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Perhitungan Naive Bayes */}
+                {savedDiagnosis.diagnosisRanking.length > 0 && (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Activity className="size-4 text-indigo-600" />
+                      <p className="text-sm font-bold text-slate-800">Perhitungan Naive Bayes</p>
+                    </div>
+                    <div className="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
+                      <table className="w-full text-sm">
+                        <thead className="bg-slate-50 text-xs font-black uppercase tracking-wider text-slate-600">
+                          <tr className="border-b border-slate-200">
+                            <th className="p-3 text-left">No</th>
+                            <th className="p-3 text-left">Penyakit</th>
+                            <th className="p-3 text-right">Prior</th>
+                            <th className="p-3 text-right">Likelihood</th>
+                            <th className="p-3 text-right">Posterior</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {savedDiagnosis.diagnosisRanking.map((r, i) => (
+                            <tr key={r.id} className={`border-b border-slate-100 ${i === 0 ? "bg-emerald-50/50" : ""}`}>
+                              <td className="p-3 font-bold text-slate-500">{r.peringkat}</td>
+                              <td className="p-3">
+                                <span className="font-black text-primary mr-1.5">{r.kodePenyakit}</span>
+                                <span className="font-bold text-slate-800">{r.namaPenyakit}</span>
+                              </td>
+                              <td className="p-3 text-right font-mono text-xs font-bold text-slate-600">{r.prior.toFixed(4)}</td>
+                              <td className="p-3 text-right font-mono text-xs font-bold text-slate-600">{r.score.toFixed(10)}</td>
+                              <td className="p-3 text-right">
+                                <span className={`inline-block rounded-lg px-2 py-0.5 text-xs font-black ${
+                                  i === 0 ? "bg-emerald-100 text-emerald-700 border border-emerald-200" : "text-slate-500"
+                                }`}>
+                                  {r.posterior.toFixed(2)}%
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
                 )}
