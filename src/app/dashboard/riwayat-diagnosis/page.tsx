@@ -401,16 +401,9 @@ export default async function RiwayatDiagnosisPage({ searchParams }: RiwayatDiag
       <div className="card-container !p-0 overflow-hidden">
         {/* Filter */}
         <div className="border-b border-slate-200 bg-slate-50/50 p-6 lg:p-8">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div>
-              <h3 className="text-xl font-black text-slate-900 tracking-tight">Filter Pencarian</h3>
-              <p className="mt-1 text-sm font-semibold text-slate-500">Temukan riwayat diagnosis balita dengan cepat.</p>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <ExportButtons
-                printUrl={buildHref(basePath, { ...filterParams, print: "1" })}
-              />
-            </div>
+          <div>
+            <h3 className="text-xl font-black text-slate-900 tracking-tight">Filter Pencarian</h3>
+            <p className="mt-1 text-sm font-semibold text-slate-500">Temukan riwayat diagnosis balita dengan cepat.</p>
           </div>
 
           <form method="get" className="mt-6 grid gap-4 xl:grid-cols-[1fr_180px_180px_auto_auto] xl:items-end border-t border-slate-200 pt-6">
