@@ -253,24 +253,9 @@ export default async function PenyakitPage({ searchParams }: PenyakitPageProps) 
   const penyakitWhere = q
     ? {
         OR: [
-          {
-            kode: {
-              contains: q,
-              mode: "insensitive" as const,
-            },
-          },
-          {
-            nama: {
-              contains: q,
-              mode: "insensitive" as const,
-            },
-          },
-          {
-            deskripsi: {
-              contains: q,
-              mode: "insensitive" as const,
-            },
-          },
+          { kode: { contains: q } },
+          { nama: { contains: q } },
+          { deskripsi: { contains: q } },
         ],
       }
     : {};

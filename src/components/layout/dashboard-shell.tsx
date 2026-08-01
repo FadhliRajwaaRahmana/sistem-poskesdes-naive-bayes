@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import { useState, useSyncExternalStore } from "react";
+import { useState, useEffect, useSyncExternalStore } from "react";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -83,13 +83,17 @@ function NavLink({
   const isDirectActive = !hasChildren && (item.href === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(item.href));
   const isActive = isDirectActive || isChildActive;
 
-  const [open, setOpen] = useState(() => {
-    if (!hasChildren) return false;
-    if (typeof window !== "undefined") {
-      return window.localStorage.getItem(submenuOpenStorageKey) === "true" || isChildActive;
+  const [open, setOpen] = useState(isChildActive);
+
+  // Sync with localStorage after mount to prevent hydration mismatch
+  useEffect(() => {
+    if (hasChildren) {
+      const saved = localStorage.getItem(submenuOpenStorageKey);
+      if (saved !== null) {
+        setOpen(saved === "true" || isChildActive);
+      }
     }
-    return isChildActive;
-  });
+  }, [hasChildren, isChildActive]);
 
   if (hasChildren) {
     if (isCollapsed) {

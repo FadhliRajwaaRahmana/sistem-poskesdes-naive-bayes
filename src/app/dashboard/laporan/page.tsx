@@ -1,7 +1,5 @@
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/session";
-import { ExportButtons } from "@/app/diagnosis/export-buttons";
-import { PrintTrigger } from "@/app/diagnosis/print-trigger";
 import {
   BarChart3,
   Calendar,
@@ -31,7 +29,6 @@ export default async function LaporanPage({ searchParams }: LaporanPageProps) {
   const now = new Date();
   const selectedYear = sv(params.tahun) || String(now.getFullYear());
   const selectedMonth = sv(params.bulan);
-  const isPrint = sv(params.print) === "1";
 
   const yearNum = Number.parseInt(selectedYear, 10);
 
@@ -57,14 +54,6 @@ export default async function LaporanPage({ searchParams }: LaporanPageProps) {
   const giziBaikCount = records.filter((r) => r.hasilDiagnosis === "Gizi Baik").length;
   const giziBurukCount = totalDiagnosis - giziBaikCount;
 
-  const resultCounts = new Map<string, number>();
-  for (const r of records) {
-    const key = r.hasilDiagnosis;
-    resultCounts.set(key, (resultCounts.get(key) ?? 0) + 1);
-  }
-
-  const sortedResults = Array.from(resultCounts.entries()).sort(([, a], [, b]) => b - a);
-
   const dusunCounts = new Map<string, { total: number; baik: number; buruk: number }>();
   for (const r of records) {
     const entry = dusunCounts.get(r.dusun) ?? { total: 0, baik: 0, buruk: 0 };
@@ -80,176 +69,9 @@ export default async function LaporanPage({ searchParams }: LaporanPageProps) {
     ? `${monthNames[Number.parseInt(selectedMonth, 10) - 1]} ${selectedYear}`
     : `Tahun ${selectedYear}`;
 
-  const dateFormatter = new Intl.DateTimeFormat("id-ID", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
-
   const availableYears: number[] = [];
   for (let y = now.getFullYear(); y >= now.getFullYear() - 5; y--) {
     availableYears.push(y);
-  }
-
-  const printUrl = new URLSearchParams();
-  printUrl.set("tahun", selectedYear);
-  if (selectedMonth) printUrl.set("bulan", selectedMonth);
-  printUrl.set("print", "1");
-
-  if (isPrint) {
-    return (
-      <section className="min-h-screen bg-white text-slate-900 font-sans print:p-0">
-        <style>{`
-          @media print {
-            @page { margin: 10mm 10mm; size: A4; }
-            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-          }
-          @media screen {
-            section { max-width: 800px; margin: 0 auto; padding: 32px 28px; }
-          }
-        `}</style>
-        <PrintTrigger />
-
-        {/* Header */}
-        <div className="border-b-[3px] border-slate-800 pb-3 mb-5">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-slate-400 mb-1">Sistem Diagnosis Gizi — POSYANDU</p>
-              <h1 className="text-xl font-black tracking-tight leading-tight">Laporan Rekap Diagnosis</h1>
-              <p className="mt-1 text-sm font-bold text-slate-700">Periode: {periodLabel}</p>
-            </div>
-            <div className="text-right shrink-0">
-              <p className="text-[8.5px] font-bold uppercase tracking-widest text-slate-400">Tanggal Cetak</p>
-              <p className="text-xs font-black">{dateFormatter.format(new Date())}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Summary Cards */}
-        <div className="grid grid-cols-3 gap-3 mb-5">
-          <div className="rounded-lg border-2 border-slate-200 p-4 text-center" style={{ backgroundColor: "#f8fafc" }}>
-            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Total Diagnosis</p>
-            <p className="text-2xl font-black text-slate-900">{totalDiagnosis}</p>
-          </div>
-          <div className="rounded-lg border-2 border-emerald-300 p-4 text-center" style={{ backgroundColor: "#ecfdf5" }}>
-            <p className="text-[9px] font-black uppercase tracking-widest mb-1" style={{ color: "#059669" }}>Gizi Baik</p>
-            <p className="text-2xl font-black" style={{ color: "#065f46" }}>{giziBaikCount}</p>
-            <p className="text-xs font-bold mt-0.5" style={{ color: "#059669" }}>
-              {totalDiagnosis > 0 ? `${((giziBaikCount / totalDiagnosis) * 100).toFixed(1)}%` : "0%"}
-            </p>
-          </div>
-          <div className="rounded-lg border-2 border-rose-300 p-4 text-center" style={{ backgroundColor: "#fff1f2" }}>
-            <p className="text-[9px] font-black uppercase tracking-widest mb-1" style={{ color: "#e11d48" }}>Gizi Buruk</p>
-            <p className="text-2xl font-black" style={{ color: "#9f1239" }}>{giziBurukCount}</p>
-            <p className="text-xs font-bold mt-0.5" style={{ color: "#e11d48" }}>
-              {totalDiagnosis > 0 ? `${((giziBurukCount / totalDiagnosis) * 100).toFixed(1)}%` : "0%"}
-            </p>
-          </div>
-        </div>
-
-        {/* Distribusi Hasil */}
-        {sortedResults.length > 0 && (
-          <div className="mb-5">
-            <h2 className="text-[9.5px] font-black uppercase tracking-[0.18em] text-slate-500 mb-2 pb-1 border-b-2 border-slate-100">
-              Distribusi Hasil Diagnosis
-            </h2>
-            <table className="w-full text-sm border-collapse">
-              <thead>
-                <tr className="border-b-2 border-slate-800 text-left" style={{ backgroundColor: "#f1f5f9" }}>
-                  <th className="p-2.5 font-black text-[10px] uppercase tracking-wider">Hasil Diagnosis</th>
-                  <th className="p-2.5 font-black text-[10px] uppercase tracking-wider text-right">Jumlah</th>
-                  <th className="p-2.5 font-black text-[10px] uppercase tracking-wider text-right">Persentase</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sortedResults.map(([result, count], i) => (
-                  <tr key={result} className="border-b border-slate-200" style={{ backgroundColor: i % 2 === 1 ? "#f8fafc" : "transparent" }}>
-                    <td className="p-2.5 font-bold" style={{ color: result === "Gizi Baik" ? "#059669" : "#e11d48" }}>{result}</td>
-                    <td className="p-2.5 text-right font-black">{count}</td>
-                    <td className="p-2.5 text-right font-bold text-slate-600">
-                      {totalDiagnosis > 0 ? `${((count / totalDiagnosis) * 100).toFixed(1)}%` : "0%"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* Distribusi Dusun */}
-        {sortedDusun.length > 0 && (
-          <div className="mb-5">
-            <h2 className="text-[9.5px] font-black uppercase tracking-[0.18em] text-slate-500 mb-2 pb-1 border-b-2 border-slate-100">
-              Distribusi per Dusun
-            </h2>
-            <table className="w-full text-sm border-collapse">
-              <thead>
-                <tr className="border-b-2 border-slate-800 text-left" style={{ backgroundColor: "#f1f5f9" }}>
-                  <th className="p-2.5 font-black text-[10px] uppercase tracking-wider">Dusun</th>
-                  <th className="p-2.5 font-black text-[10px] uppercase tracking-wider text-right">Total</th>
-                  <th className="p-2.5 font-black text-[10px] uppercase tracking-wider text-right">Gizi Baik</th>
-                  <th className="p-2.5 font-black text-[10px] uppercase tracking-wider text-right">Gizi Buruk</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sortedDusun.map(([dusun, data], i) => (
-                  <tr key={dusun} className="border-b border-slate-200" style={{ backgroundColor: i % 2 === 1 ? "#f8fafc" : "transparent" }}>
-                    <td className="p-2.5 font-bold text-slate-900">{dusun}</td>
-                    <td className="p-2.5 text-right font-black">{data.total}</td>
-                    <td className="p-2.5 text-right font-bold" style={{ color: "#059669" }}>{data.baik}</td>
-                    <td className="p-2.5 text-right font-bold" style={{ color: "#e11d48" }}>{data.buruk}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* Daftar Detail */}
-        {records.length > 0 && (
-          <div className="mb-5">
-            <h2 className="text-[9.5px] font-black uppercase tracking-[0.18em] text-slate-500 mb-2 pb-1 border-b-2 border-slate-100">
-              Daftar Detail Diagnosis ({records.length} data)
-            </h2>
-            <table className="w-full text-[11px] border-collapse">
-              <thead>
-                <tr className="border-b-2 border-slate-800 text-left" style={{ backgroundColor: "#f1f5f9" }}>
-                  <th className="p-2 font-black text-[10px] uppercase tracking-wider">No</th>
-                  <th className="p-2 font-black text-[10px] uppercase tracking-wider">Tanggal</th>
-                  <th className="p-2 font-black text-[10px] uppercase tracking-wider">Nama</th>
-                  <th className="p-2 font-black text-[10px] uppercase tracking-wider">JK</th>
-                  <th className="p-2 font-black text-[10px] uppercase tracking-wider">Dusun</th>
-                  <th className="p-2 font-black text-[10px] uppercase tracking-wider">Umur</th>
-                  <th className="p-2 font-black text-[10px] uppercase tracking-wider">BB/TB</th>
-                  <th className="p-2 font-black text-[10px] uppercase tracking-wider">Hasil</th>
-                </tr>
-              </thead>
-              <tbody>
-                {records.map((r, i) => (
-                  <tr key={r.id} className="border-b border-slate-100" style={{ backgroundColor: i % 2 === 1 ? "#f8fafc" : "transparent" }}>
-                    <td className="p-2 font-semibold text-slate-500">{i + 1}</td>
-                    <td className="p-2">{dateFormatter.format(r.tanggal)}</td>
-                    <td className="p-2 font-bold text-slate-900">{r.namaBalita}</td>
-                    <td className="p-2">{r.jenisKelamin === "LAKI_LAKI" ? "L" : "P"}</td>
-                    <td className="p-2">{r.dusun}</td>
-                    <td className="p-2">{r.umurBulan} bln</td>
-                    <td className="p-2">{r.beratBadan}/{r.tinggiBadan}</td>
-                    <td className="p-2 font-bold" style={{ color: r.hasilDiagnosis === "Gizi Baik" ? "#059669" : "#e11d48" }}>{r.hasilDiagnosis}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* Footer */}
-        <div className="border-t-[3px] border-slate-800 pt-3 mt-6">
-          <div className="flex items-center justify-between text-[9px] text-slate-500 font-bold">
-            <p>Sistem Diagnosis Gizi Balita — Metode Naive Bayes</p>
-            <p>Dicetak: {dateFormatter.format(new Date())}</p>
-          </div>
-        </div>
-      </section>
-    );
   }
 
   return (
@@ -302,11 +124,6 @@ export default async function LaporanPage({ searchParams }: LaporanPageProps) {
               Tampilkan
             </button>
           </form>
-          <div className="flex flex-wrap gap-3">
-            <ExportButtons
-              printUrl={`/dashboard/laporan?${printUrl.toString()}`}
-            />
-          </div>
         </div>
       </div>
 
@@ -338,43 +155,6 @@ export default async function LaporanPage({ searchParams }: LaporanPageProps) {
           </p>
         </div>
       </div>
-
-      {/* Distribution by Result */}
-      {sortedResults.length > 0 && (
-        <div className="card-container !p-0 overflow-hidden">
-          <div className="border-b border-slate-200 bg-slate-50/50 p-6 lg:p-8">
-            <h3 className="text-xl font-black text-slate-900 tracking-tight">Distribusi Hasil Diagnosis</h3>
-            <p className="mt-1 text-sm font-semibold text-slate-500">{periodLabel}</p>
-          </div>
-          <div className="p-6 lg:p-8 space-y-4">
-            {sortedResults.map(([result, count]) => {
-              const pct = totalDiagnosis > 0 ? (count / totalDiagnosis) * 100 : 0;
-              const isGiziBaik = result === "Gizi Baik";
-              return (
-                <div key={result} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      {isGiziBaik ? (
-                        <CheckCircle2 className="size-4 text-emerald-600" />
-                      ) : (
-                        <ShieldAlert className="size-4 text-rose-600" />
-                      )}
-                      <span className="text-sm font-bold text-slate-700">{result}</span>
-                    </div>
-                    <span className="text-sm font-black text-slate-900">{count} <span className="font-semibold text-slate-500">({pct.toFixed(1)}%)</span></span>
-                  </div>
-                  <div className="h-3 w-full rounded-full bg-slate-100 overflow-hidden border border-slate-200">
-                    <div
-                      className={`h-full rounded-full transition-all duration-700 ${isGiziBaik ? "bg-gradient-to-r from-emerald-400 to-emerald-600" : "bg-gradient-to-r from-rose-400 to-rose-600"}`}
-                      style={{ width: `${pct}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       {/* Distribution by Dusun */}
       {sortedDusun.length > 0 && (

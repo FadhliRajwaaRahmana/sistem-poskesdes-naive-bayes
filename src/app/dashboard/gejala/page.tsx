@@ -61,6 +61,8 @@ async function renderGejalaDetail(detailId: string, params: PageSearchParams) {
     },
   });
 
+  const allPenyakit = await prisma.penyakit.findMany({ orderBy: { kode: "asc" } });
+
   if (!gejala) {
     return (
       <section className="animate-fade-in space-y-8 pb-10">
@@ -141,38 +143,42 @@ async function renderGejalaDetail(detailId: string, params: PageSearchParams) {
         </div>
 
         <div className="p-4 lg:p-6 bg-slate-50/30">
-          {gejala.penyakitGejala.length === 0 ? (
+          {allPenyakit.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center border-2 border-dashed border-slate-200 rounded-2xl bg-white">
               <p className="text-lg font-black text-slate-800">Belum Ada Data</p>
               <p className="mt-2 text-sm font-medium text-slate-500">
-                Gejala ini belum terhubung dengan penyakit manapun.
+                Belum ada data penyakit di sistem.
               </p>
             </div>
           ) : (
             <div className="flex flex-col gap-3">
-              {gejala.penyakitGejala.map((pg, idx) => (
-                <div
-                  key={pg.id}
-                  className={`animate-slide-up stagger-${Math.min(idx + 1, 8)} bg-white p-4 border border-slate-200 rounded-xl shadow-sm transition-all hover:shadow-md hover:border-slate-300`}
-                >
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                    <span className="text-xs font-black text-rose-600 bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-lg sm:w-16 text-center shrink-0">
-                      {pg.penyakit.kode}
-                    </span>
-                    <p className="text-sm font-bold text-slate-700 sm:flex-1">
-                      {pg.penyakit.nama}
-                    </p>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                        Likelihood
+              {allPenyakit.map((penyakit, idx) => {
+                const pg = gejala.penyakitGejala.find((r) => r.penyakitId === penyakit.id);
+                const likelihood = pg?.likelihood ?? 0;
+                return (
+                  <div
+                    key={penyakit.id}
+                    className={`animate-slide-up stagger-${Math.min(idx + 1, 8)} bg-white p-4 border border-slate-200 rounded-xl shadow-sm transition-all hover:shadow-md hover:border-slate-300`}
+                  >
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                      <span className="text-xs font-black text-rose-600 bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-lg sm:w-16 text-center shrink-0">
+                        {penyakit.kode}
                       </span>
-                      <span className="text-sm font-black text-sky-700 bg-sky-50 border border-sky-200 px-3 py-1.5 rounded-lg min-w-[60px] text-center">
-                        {pg.likelihood}
-                      </span>
+                      <p className="text-sm font-bold text-slate-700 sm:flex-1">
+                        {penyakit.nama}
+                      </p>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                          Likelihood
+                        </span>
+                        <span className="text-sm font-black text-sky-700 bg-sky-50 border border-sky-200 px-3 py-1.5 rounded-lg min-w-[60px] text-center">
+                          {likelihood}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -196,18 +202,8 @@ export default async function GejalaPage({ searchParams }: GejalaPageProps) {
   const gejalaWhere = q
     ? {
         OR: [
-          {
-            kode: {
-              contains: q,
-              mode: "insensitive" as const,
-            },
-          },
-          {
-            nama: {
-              contains: q,
-              mode: "insensitive" as const,
-            },
-          },
+          { kode: { contains: q } },
+          { nama: { contains: q } },
         ],
       }
     : {};
