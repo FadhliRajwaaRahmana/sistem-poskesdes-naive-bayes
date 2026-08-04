@@ -1,10 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/session";
-import { ExportButtons } from "@/app/diagnosis/export-buttons";
 import { PrintTrigger } from "@/app/diagnosis/print-trigger";
 import {
   BarChart3,
   Calendar,
+  Printer,
 } from "lucide-react";
 
 type PageSearchParams = Record<string, string | string[] | undefined>;
@@ -254,18 +254,15 @@ export default async function LaporanPage({ searchParams }: LaporanPageProps) {
             </div>
             <button
               type="submit"
-              className="inline-flex h-11 items-center justify-center bg-slate-900 hover:bg-slate-800 text-white shadow-md rounded-xl transition-all active:scale-95 px-6 font-bold"
+              formTarget="_blank"
+              name="print"
+              value="1"
+              className="inline-flex h-11 items-center justify-center rounded-xl bg-slate-900 hover:bg-slate-800 text-white shadow-md transition-all active:scale-95 px-6 font-bold gap-2 cursor-pointer"
             >
-              Tampilkan
+              <Printer className="h-4 w-4" />
+              Cetak / PDF
             </button>
           </form>
-
-          {/* Tombol Cetak / PDF untuk Laporan */}
-          <div className="flex flex-wrap gap-3">
-            <ExportButtons
-              printUrl={`/dashboard/laporan?${printUrl.toString()}`}
-            />
-          </div>
         </div>
       </div>
 

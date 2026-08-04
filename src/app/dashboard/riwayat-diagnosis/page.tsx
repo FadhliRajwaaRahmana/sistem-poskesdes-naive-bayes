@@ -406,8 +406,8 @@ export default async function RiwayatDiagnosisPage({ searchParams }: RiwayatDiag
             <p className="mt-1 text-sm font-semibold text-slate-500">Temukan riwayat diagnosis balita dengan cepat.</p>
           </div>
 
-          <form method="get" className="mt-6 grid gap-4 xl:grid-cols-[1fr_180px_180px_auto_auto] xl:items-end border-t border-slate-200 pt-6">
-            <div className="space-y-1.5">
+          <form method="get" className="mt-6 flex flex-wrap items-end gap-4 border-t border-slate-200 pt-6">
+            <div className="space-y-1.5 flex-1 min-w-[240px]">
               <label className="flex items-center gap-1.5 text-xs font-bold text-slate-600 uppercase tracking-widest ml-1">
                 <Search className="h-3.5 w-3.5 text-primary" /> Nama / NIK
               </label>
@@ -419,32 +419,11 @@ export default async function RiwayatDiagnosisPage({ searchParams }: RiwayatDiag
                 className="input-field h-11 bg-white"
               />
             </div>
-            <div className="space-y-1.5">
-              <label className="flex items-center gap-1.5 text-xs font-bold text-slate-600 uppercase tracking-widest ml-1">
-                <MapPin className="h-3.5 w-3.5 text-primary" /> Dusun
-              </label>
-              <select name="dusun" defaultValue={filterDusun} className="input-field h-11 bg-white font-bold cursor-pointer">
-                <option value="">Semua Dusun</option>
-                {dusunList.map((d) => (
-                  <option key={d.dusun} value={d.dusun}>{d.dusun}</option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-1.5">
-              <label className="flex items-center gap-1.5 text-xs font-bold text-slate-600 uppercase tracking-widest ml-1">
-                <Filter className="h-3.5 w-3.5 text-primary" /> Status
-              </label>
-              <select name="status" defaultValue={filterStatus} className="input-field h-11 bg-white font-bold cursor-pointer">
-                <option value="">Semua Status</option>
-                <option value="baik">Gizi Baik</option>
-                <option value="buruk">Gizi Buruk</option>
-              </select>
-            </div>
             <button
               type="submit"
               className="inline-flex h-11 items-center justify-center bg-slate-900 hover:bg-slate-800 text-white shadow-md rounded-xl transition-all active:scale-95 px-6 font-bold"
             >
-              <Search className="mr-2 h-4 w-4" /> Terapkan
+              <Search className="mr-2 h-4 w-4" /> Cari
             </button>
             <a
               href={basePath}
